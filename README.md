@@ -84,11 +84,26 @@ pip install -e .
 python main.py
 ```
 
+### 📁 Example Files
+
+The `examples/` directory contains sample files to help you get started:
+
+- **`env_template.txt`** - Environment configuration template
+- **`recipients_example.csv`** - Sample recipients data
+- **`templates_example.csv`** - Sample message templates
+- **`campaigns_example.csv`** - Sample campaign configurations
+- **`accounts_example.csv`** - Sample account configurations
+- **`spintax_examples.txt`** - Spintax syntax examples
+- **`sample_media_urls.txt`** - Test media URLs
+- **`configurations.md`** - Configuration examples for different use cases
+
+See the [examples/README.md](examples/README.md) for detailed usage instructions.
+
 ### Configuration
 
 1. **Copy environment file**:
    ```bash
-   cp .env.example .env
+   cp examples/env_template.txt .env
    ```
 
 2. **Edit `.env` file** with your Telegram API credentials:

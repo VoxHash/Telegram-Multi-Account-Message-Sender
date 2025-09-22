@@ -59,7 +59,6 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.tab_widget)
         
         # Create tabs
-        self.create_dashboard_tab()
         self.create_accounts_tab()
         self.create_campaigns_tab()
         self.create_templates_tab()
@@ -67,37 +66,9 @@ class MainWindow(QMainWindow):
         self.create_logs_tab()
         self.create_settings_tab()
         self.create_about_tab()
-    
-    def create_dashboard_tab(self):
-        """Create dashboard tab."""
-        dashboard_widget = QWidget()
-        layout = QVBoxLayout(dashboard_widget)
         
-        # Welcome message
-        welcome_label = QLabel("Welcome to Telegram Multi-Account Message Sender")
-        welcome_label.setStyleSheet("font-size: 16px; margin: 20px;")
-        layout.addWidget(welcome_label)
-        
-        # Status overview
-        status_label = QLabel("Status: Ready")
-        status_label.setStyleSheet("font-size: 14px; margin: 10px;")
-        layout.addWidget(status_label)
-        
-        # Quick actions
-        actions_layout = QHBoxLayout()
-        
-        add_account_btn = QPushButton("Add Account")
-        add_account_btn.clicked.connect(self.add_account)
-        actions_layout.addWidget(add_account_btn)
-        
-        create_campaign_btn = QPushButton("Create Campaign")
-        create_campaign_btn.clicked.connect(self.create_campaign)
-        actions_layout.addWidget(create_campaign_btn)
-        
-        layout.addLayout(actions_layout)
-        layout.addStretch()
-        
-        self.tab_widget.addTab(dashboard_widget, "Dashboard")
+        # Set Accounts as the default tab
+        self.tab_widget.setCurrentIndex(0)
     
     def create_accounts_tab(self):
         """Create accounts management tab."""
@@ -169,14 +140,6 @@ class MainWindow(QMainWindow):
         """Set application theme."""
         self.theme_manager.apply_theme(theme)
         self.theme_label.setText(f"Theme: {self.theme_manager.get_current_theme()}")
-    
-    def add_account(self):
-        """Add new account."""
-        QMessageBox.information(self, "Add Account", "Account management coming soon!")
-    
-    def create_campaign(self):
-        """Create new campaign."""
-        QMessageBox.information(self, "Create Campaign", "Campaign management coming soon!")
     
     
     def on_settings_updated(self):

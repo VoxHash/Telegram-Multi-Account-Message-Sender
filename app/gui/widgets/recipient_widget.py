@@ -111,7 +111,7 @@ class RecipientDialog(QDialog):
         self.last_name_edit.setText(self.recipient.last_name or "")
         self.email_edit.setText(self.recipient.email or "")
         self.bio_edit.setText(self.recipient.bio or "")
-        self.tags_edit.setText(", ".join(self.recipient.tags))
+        self.tags_edit.setText(", ".join(self.recipient.get_tags_list()))
         self.notes_edit.setText(self.recipient.notes or "")
     
     def save_recipient(self):
@@ -153,9 +153,10 @@ class RecipientDialog(QDialog):
             # Update tags
             tags_text = self.tags_edit.text().strip()
             if tags_text:
-                self.recipient.tags = [tag.strip() for tag in tags_text.split(',') if tag.strip()]
+                tags_list = [tag.strip() for tag in tags_text.split(',') if tag.strip()]
+                self.recipient.set_tags_list(tags_list)
             else:
-                self.recipient.tags = []
+                self.recipient.set_tags_list([])
             
             # Save to database
             session = get_session()
@@ -357,9 +358,15 @@ class CSVImportDialog(QDialog):
                         last_name=recipient_data.get("last_name"),
                         email=recipient_data.get("email"),
                         bio=recipient_data.get("bio"),
-                        tags=recipient_data.get("tags", "").split(",") if recipient_data.get("tags") else [],
                         source=RecipientSource.CSV_IMPORT
                     )
+                    
+                    # Set tags using proper JSON serialization
+                    if recipient_data.get("tags"):
+                        tags_list = [tag.strip() for tag in recipient_data["tags"].split(",") if tag.strip()]
+                        recipient.set_tags_list(tags_list)
+                    else:
+                        recipient.set_tags_list([])
                     recipients.append(recipient)
             
             # Save to database

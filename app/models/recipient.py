@@ -117,6 +117,60 @@ class Recipient(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         if total_attempted == 0:
             return 0.0
         return (self.total_messages_sent / total_attempted) * 100
+    
+    def get_tags_list(self) -> List[str]:
+        """Get tags as a list."""
+        if self.tags is None:
+            return []
+        try:
+            import json
+            return json.loads(self.tags) if isinstance(self.tags, str) else self.tags
+        except (json.JSONDecodeError, TypeError):
+            return []
+    
+    def set_tags_list(self, tags: List[str]) -> None:
+        """Set tags from a list."""
+        if not tags:
+            self.tags = None
+        else:
+            import json
+            self.tags = json.dumps(tags)
+    
+    def get_source_metadata_dict(self) -> Dict[str, Any]:
+        """Get source metadata as a dictionary."""
+        if self.source_metadata is None:
+            return {}
+        try:
+            import json
+            return json.loads(self.source_metadata) if isinstance(self.source_metadata, str) else self.source_metadata
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    
+    def set_source_metadata_dict(self, metadata: Dict[str, Any]) -> None:
+        """Set source metadata from a dictionary."""
+        if not metadata:
+            self.source_metadata = None
+        else:
+            import json
+            self.source_metadata = json.dumps(metadata)
+    
+    def get_custom_fields_dict(self) -> Dict[str, Any]:
+        """Get custom fields as a dictionary."""
+        if self.custom_fields is None:
+            return {}
+        try:
+            import json
+            return json.loads(self.custom_fields) if isinstance(self.custom_fields, str) else self.custom_fields
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    
+    def set_custom_fields_dict(self, fields: Dict[str, Any]) -> None:
+        """Set custom fields from a dictionary."""
+        if not fields:
+            self.custom_fields = None
+        else:
+            import json
+            self.custom_fields = json.dumps(fields)
 
 
 class RecipientList(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
@@ -164,6 +218,42 @@ class RecipientList(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     def get_active_recipient_count(self) -> int:
         """Get active recipient count."""
         return sum(1 for r in self.recipients if r.recipient.is_contactable())
+    
+    def get_tags_list(self) -> List[str]:
+        """Get tags as a list."""
+        if self.tags is None:
+            return []
+        try:
+            import json
+            return json.loads(self.tags) if isinstance(self.tags, str) else self.tags
+        except (json.JSONDecodeError, TypeError):
+            return []
+    
+    def set_tags_list(self, tags: List[str]) -> None:
+        """Set tags from a list."""
+        if not tags:
+            self.tags = None
+        else:
+            import json
+            self.tags = json.dumps(tags)
+    
+    def get_import_metadata_dict(self) -> Dict[str, Any]:
+        """Get import metadata as a dictionary."""
+        if self.import_metadata is None:
+            return {}
+        try:
+            import json
+            return json.loads(self.import_metadata) if isinstance(self.import_metadata, str) else self.import_metadata
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    
+    def set_import_metadata_dict(self, metadata: Dict[str, Any]) -> None:
+        """Set import metadata from a dictionary."""
+        if not metadata:
+            self.import_metadata = None
+        else:
+            import json
+            self.import_metadata = json.dumps(metadata)
 
 
 class RecipientListRecipient(BaseModel, table=True):

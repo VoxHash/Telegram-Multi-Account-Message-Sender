@@ -39,6 +39,9 @@ class TemplateDialog(QDialog):
         self.setModal(True)
         self.resize(600, 500)
         
+        # Enable help button
+        self.setWindowFlags(self.windowFlags() | Qt.WindowContextHelpButtonHint)
+        
         layout = QVBoxLayout(self)
         
         # Basic Information
@@ -85,6 +88,12 @@ class TemplateDialog(QDialog):
         self.spintax_example_edit.setPlaceholderText("Example: Hello {name|friend|buddy}, welcome to {our company|our service}!")
         spintax_layout.addRow("Spintax Example:", self.spintax_example_edit)
         
+        # Spintax preview button
+        self.preview_spintax_button = QPushButton("Preview Spintax")
+        self.preview_spintax_button.clicked.connect(self.preview_spintax)
+        self.preview_spintax_button.setEnabled(False)
+        spintax_layout.addRow("", self.preview_spintax_button)
+        
         layout.addWidget(spintax_group)
         
         # Tags
@@ -108,9 +117,113 @@ class TemplateDialog(QDialog):
         # Initialize spintax settings as disabled
         self.toggle_spintax_settings(False)
     
+    def event(self, event):
+        """Handle events including help button clicks."""
+        if event.type() == event.EnterWhatsThisMode:
+            self.show_help()
+            return True
+        return super().event(event)
+    
+    def show_help(self):
+        """Show help dialog."""
+        help_text = """
+        <h3>Template Creation Help</h3>
+        
+        <h4>Basic Information:</h4>
+        <ul>
+        <li><b>Name:</b> A unique identifier for your template</li>
+        <li><b>Description:</b> Brief description of the template's purpose</li>
+        </ul>
+        
+        <h4>Message Content:</h4>
+        <ul>
+        <li><b>Message Text:</b> Your main message template</li>
+        <li><b>Variables:</b> Use {name}, {email}, {phone}, {company}, {date}, {time} for personalization</li>
+        </ul>
+        
+        <h4>Spintax Settings:</h4>
+        <ul>
+        <li><b>Enable Spintax:</b> Check to enable message variations</li>
+        <li><b>Spintax Example:</b> Use {option1|option2|option3} syntax for variations</li>
+        <li><b>Example:</b> Hello {name|friend|buddy}, welcome to {our company|our service}!</li>
+        </ul>
+        
+        <h4>Tags:</h4>
+        <ul>
+        <li>Comma-separated keywords for organizing templates</li>
+        <li>Example: welcome, onboarding, marketing</li>
+        </ul>
+        
+        <h4>Spintax Syntax:</h4>
+        <ul>
+        <li>Use {option1|option2|option3} for random selection</li>
+        <li>Nested spintax: {Hello {name|friend}|Hi {buddy|pal}}</li>
+        <li>Empty options: {|option1|option2} (includes empty string)</li>
+        </ul>
+        """
+        
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Template Help")
+        msg.setTextFormat(Qt.RichText)
+        msg.setText(help_text)
+        msg.setIcon(QMessageBox.Information)
+        msg.exec_()
+    
     def toggle_spintax_settings(self, enabled: bool):
         """Toggle spintax settings visibility."""
         self.spintax_example_edit.setEnabled(enabled)
+        self.preview_spintax_button.setEnabled(enabled)
+        
+        # If enabling spintax, validate the current message for spintax syntax
+        if enabled:
+            self.validate_spintax_syntax()
+    
+    def validate_spintax_syntax(self):
+        """Validate spintax syntax in the message."""
+        message_text = self.message_edit.toPlainText()
+        if not message_text.strip():
+            return True
+        
+        try:
+            # Test if the message can be parsed as spintax
+            self.spintax_processor.parse(message_text)
+            return True
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Spintax Validation Error",
+                f"Invalid spintax syntax in message:\n\n{str(e)}\n\n"
+                "Please check your spintax syntax. Use {option1|option2|option3} format."
+            )
+            return False
+    
+    def preview_spintax(self):
+        """Preview spintax generation."""
+        message_text = self.message_edit.toPlainText()
+        if not message_text.strip():
+            QMessageBox.warning(self, "Preview Error", "Please enter a message first.")
+            return
+        
+        try:
+            # Generate multiple variations
+            variations = []
+            for i in range(5):  # Generate 5 variations
+                variation = self.spintax_processor.generate(message_text)
+                variations.append(f"Variation {i+1}: {variation}")
+            
+            preview_text = "Spintax Preview (5 variations):\n\n" + "\n\n".join(variations)
+            
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Spintax Preview")
+            msg.setText(preview_text)
+            msg.setIcon(QMessageBox.Information)
+            msg.exec_()
+            
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Preview Error",
+                f"Error generating spintax preview:\n\n{str(e)}\n\n"
+                "Please check your spintax syntax."
+            )
     
     def load_template_data(self):
         """Load template data into the form."""
@@ -139,6 +252,24 @@ class TemplateDialog(QDialog):
             if not self.message_edit.toPlainText().strip():
                 QMessageBox.warning(self, "Validation Error", "Message text is required")
                 return
+            
+            # Validate spintax if enabled
+            if self.use_spintax_check.isChecked():
+                if not self.validate_spintax_syntax():
+                    return
+                
+                # Validate spintax example if provided
+                spintax_example = self.spintax_example_edit.text().strip()
+                if spintax_example:
+                    try:
+                        self.spintax_processor.parse(spintax_example)
+                    except Exception as e:
+                        QMessageBox.warning(
+                            self, "Spintax Validation Error",
+                            f"Invalid spintax syntax in example:\n\n{str(e)}\n\n"
+                            "Please check your spintax syntax. Use {option1|option2|option3} format."
+                        )
+                        return
             
             # Create or update template
             if self.template:

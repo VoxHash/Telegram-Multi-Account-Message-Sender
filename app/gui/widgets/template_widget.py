@@ -723,12 +723,12 @@ class TemplateListWidget(QWidget):
                 self.templates_table.setRowHidden(row, False)
             return
         
-        # Filter templates
+        # Filter templates (exclude Actions column - column 5)
         for row in range(self.templates_table.rowCount()):
             should_show = False
             
-            # Check all columns for search text
-            for col in range(self.templates_table.columnCount()):
+            # Check all columns except Actions column for search text
+            for col in range(self.templates_table.columnCount() - 1):  # Exclude last column (Actions)
                 item = self.templates_table.item(row, col)
                 if item and search_text in item.text().lower():
                     should_show = True

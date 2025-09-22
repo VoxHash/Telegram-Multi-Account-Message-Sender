@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         """Create campaigns management tab."""
         self.campaigns_widget = CampaignWidget()
         # Connect campaign updates to refresh status
-        self.campaigns_widget.campaign_updated.connect(self.update_status)
+        self.campaigns_widget.campaign_list.campaign_updated.connect(self.update_status)
         self.tab_widget.addTab(self.campaigns_widget, "Campaigns")
     
     def create_templates_tab(self):

@@ -110,6 +110,7 @@ class TelegramWorker(QThread):
             self.progress.emit("Initializing Telegram client...")
             
             # Import here to avoid circular imports
+            import asyncio
             from telethon import TelegramClient
             from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError, ApiIdInvalidError
             
@@ -118,26 +119,47 @@ class TelegramWorker(QThread):
                 self.finished.emit("❌ API credentials are not configured. Please set them in Settings first.", False)
                 return
             
-            # Create client
-            client = TelegramClient(
-                self.session_path or f"app_data/sessions/session_{self.phone_number}",
-                int(self.api_id),
-                self.api_hash
-            )
+            # Create new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             
-            if self._should_stop:
-                return
+            try:
+                # Create client
+                client = TelegramClient(
+                    self.session_path or f"app_data/sessions/session_{self.phone_number}",
+                    int(self.api_id),
+                    self.api_hash
+                )
                 
-            self.progress.emit("Connecting to Telegram...")
-            client.connect()
+                if self._should_stop:
+                    return
+                    
+                self.progress.emit("Connecting to Telegram...")
+                
+                # Run the async operations
+                loop.run_until_complete(self._async_authorize(client))
+                
+            finally:
+                loop.close()
+            
+        except ApiIdInvalidError:
+            self.finished.emit("❌ Invalid API ID or API Hash. Please check your credentials in Settings.", False)
+        except Exception as e:
+            self.logger.error(f"Authorization error: {e}")
+            self.finished.emit(f"❌ Authorization failed: {str(e)}", False)
+    
+    async def _async_authorize(self, client):
+        """Async authorization logic."""
+        try:
+            await client.connect()
             
             if self._should_stop:
-                client.disconnect()
+                await client.disconnect()
                 return
             
-            if not client.is_user_authorized():
+            if not await client.is_user_authorized():
                 self.progress.emit("Sending verification code...")
-                client.send_code_request(self.phone_number)
+                await client.send_code_request(self.phone_number)
                 
                 # Update account status to CONNECTING
                 self._update_account_status(AccountStatus.CONNECTING)
@@ -152,12 +174,10 @@ class TelegramWorker(QThread):
                 self._update_account_status(AccountStatus.ONLINE)
                 self.finished.emit(f"✅ Account {self.account_name} is already authorized!", True)
             
-            client.disconnect()
+            await client.disconnect()
             
-        except ApiIdInvalidError:
-            self.finished.emit("❌ Invalid API ID or API Hash. Please check your credentials in Settings.", False)
         except Exception as e:
-            self.logger.error(f"Authorization error: {e}")
+            self.logger.error(f"Async authorization error: {e}")
             self.finished.emit(f"❌ Authorization failed: {str(e)}", False)
     
     def _test_account(self):
@@ -168,6 +188,7 @@ class TelegramWorker(QThread):
                 
             self.progress.emit("Testing account connection...")
             
+            import asyncio
             from telethon import TelegramClient
             from telethon.errors import ApiIdInvalidError
             
@@ -176,26 +197,48 @@ class TelegramWorker(QThread):
                 self.finished.emit("❌ API credentials are not configured. Please set them in Settings first.", False)
                 return
             
-            # Create client
-            client = TelegramClient(
-                self.session_path or f"app_data/sessions/session_{self.phone_number}",
-                int(self.api_id),
-                self.api_hash
-            )
+            # Create new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             
-            if self._should_stop:
-                return
+            try:
+                # Create client
+                client = TelegramClient(
+                    self.session_path or f"app_data/sessions/session_{self.phone_number}",
+                    int(self.api_id),
+                    self.api_hash
+                )
                 
-            self.progress.emit("Connecting to Telegram...")
-            client.connect()
+                if self._should_stop:
+                    return
+                    
+                self.progress.emit("Connecting to Telegram...")
+                
+                # Run the async operations
+                loop.run_until_complete(self._async_test(client))
+                
+            finally:
+                loop.close()
+            
+        except ApiIdInvalidError:
+            self.finished.emit("❌ Invalid API ID or API Hash. Please check your credentials in Settings.", False)
+        except Exception as e:
+            self.logger.error(f"Test error: {e}")
+            self._update_account_status(AccountStatus.ERROR)
+            self.finished.emit(f"❌ Test failed: {str(e)}", False)
+    
+    async def _async_test(self, client):
+        """Async test logic."""
+        try:
+            await client.connect()
             
             if self._should_stop:
-                client.disconnect()
+                await client.disconnect()
                 return
             
-            if client.is_user_authorized():
+            if await client.is_user_authorized():
                 # Get account info
-                me = client.get_me()
+                me = await client.get_me()
                 self._update_account_status(AccountStatus.ONLINE)
                 self.finished.emit(
                     f"✅ Account test successful!\n\n"
@@ -210,12 +253,10 @@ class TelegramWorker(QThread):
                 self._update_account_status(AccountStatus.OFFLINE)
                 self.finished.emit("❌ Account is not authorized. Please use 'Authorize' first to set up the account.", False)
             
-            client.disconnect()
+            await client.disconnect()
             
-        except ApiIdInvalidError:
-            self.finished.emit("❌ Invalid API ID or API Hash. Please check your credentials in Settings.", False)
         except Exception as e:
-            self.logger.error(f"Test error: {e}")
+            self.logger.error(f"Async test error: {e}")
             self._update_account_status(AccountStatus.ERROR)
             self.finished.emit(f"❌ Test failed: {str(e)}", False)
     
@@ -227,6 +268,7 @@ class TelegramWorker(QThread):
                 
             self.progress.emit("Connecting to account...")
             
+            import asyncio
             from telethon import TelegramClient
             from telethon.errors import ApiIdInvalidError
             
@@ -235,24 +277,46 @@ class TelegramWorker(QThread):
                 self.finished.emit("❌ API credentials are not configured. Please set them in Settings first.", False)
                 return
             
-            # Create client
-            client = TelegramClient(
-                self.session_path or f"app_data/sessions/session_{self.phone_number}",
-                int(self.api_id),
-                self.api_hash
-            )
+            # Create new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             
-            if self._should_stop:
-                return
+            try:
+                # Create client
+                client = TelegramClient(
+                    self.session_path or f"app_data/sessions/session_{self.phone_number}",
+                    int(self.api_id),
+                    self.api_hash
+                )
                 
-            self.progress.emit("Connecting to Telegram...")
-            client.connect()
+                if self._should_stop:
+                    return
+                    
+                self.progress.emit("Connecting to Telegram...")
+                
+                # Run the async operations
+                loop.run_until_complete(self._async_connect(client))
+                
+            finally:
+                loop.close()
+            
+        except ApiIdInvalidError:
+            self.finished.emit("❌ Invalid API ID or API Hash. Please check your credentials in Settings.", False)
+        except Exception as e:
+            self.logger.error(f"Connection error: {e}")
+            self._update_account_status(AccountStatus.ERROR)
+            self.finished.emit(f"❌ Connection failed: {str(e)}", False)
+    
+    async def _async_connect(self, client):
+        """Async connect logic."""
+        try:
+            await client.connect()
             
             if self._should_stop:
-                client.disconnect()
+                await client.disconnect()
                 return
             
-            if client.is_user_authorized():
+            if await client.is_user_authorized():
                 # Update account status in database
                 self._update_account_status(AccountStatus.ONLINE)
                 self.finished.emit(f"✅ Successfully connected to {self.account_name}!\n\nAccount is now online and ready for messaging.", True)
@@ -260,12 +324,10 @@ class TelegramWorker(QThread):
                 self._update_account_status(AccountStatus.OFFLINE)
                 self.finished.emit("❌ Account is not authorized. Please use 'Authorize' first to set up the account.", False)
             
-            client.disconnect()
+            await client.disconnect()
             
-        except ApiIdInvalidError:
-            self.finished.emit("❌ Invalid API ID or API Hash. Please check your credentials in Settings.", False)
         except Exception as e:
-            self.logger.error(f"Connection error: {e}")
+            self.logger.error(f"Async connection error: {e}")
             self._update_account_status(AccountStatus.ERROR)
             self.finished.emit(f"❌ Connection failed: {str(e)}", False)
     

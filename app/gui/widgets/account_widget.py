@@ -134,7 +134,7 @@ class TelegramWorker(QThread):
     progress = pyqtSignal(str)  # progress message
     code_required = pyqtSignal(str)  # phone_number - signal that code is needed
     
-    def __init__(self, operation, account_id, account_name, api_id, api_hash, phone_number, session_path=None, proxy_config=None, verification_code=None, password=None):
+    def __init__(self, operation, account_id, account_name, api_id, api_hash, phone_number, session_path=None, proxy_config=None, verification_code=None, password=None, phone_code_hash=None):
         super().__init__()
         self.operation = operation
         self.account_id = account_id
@@ -146,6 +146,7 @@ class TelegramWorker(QThread):
         self.proxy_config = proxy_config
         self.verification_code = verification_code
         self.password = password
+        self.phone_code_hash = phone_code_hash
         self.logger = get_logger()
         self._should_stop = False
     
@@ -231,19 +232,22 @@ class TelegramWorker(QThread):
                 if not self.verification_code:
                     # First step: send verification code
                     self.progress.emit("Sending verification code...")
-                    await client.send_code_request(self.phone_number)
+                    result = await client.send_code_request(self.phone_number)
                     
                     # Update account status to CONNECTING
                     self._update_account_status(AccountStatus.CONNECTING)
                     
-                    # Emit signal that code is required
-                    self.code_required.emit(self.phone_number)
+                    # Emit signal that code is required with phone_code_hash
+                    self.code_required.emit(f"{self.phone_number}|{result.phone_code_hash}")
                     return
                 else:
                     # Second step: verify code
                     self.progress.emit("Verifying code...")
                     try:
-                        await client.sign_in(self.phone_number, self.verification_code)
+                        if self.phone_code_hash:
+                            await client.sign_in(self.phone_number, self.verification_code, phone_code_hash=self.phone_code_hash)
+                        else:
+                            await client.sign_in(self.phone_number, self.verification_code)
                         
                         # Check if 2FA is required
                         if not await client.is_user_authorized():
@@ -1106,22 +1110,29 @@ class AccountListWidget(QWidget):
             f"The {operation} operation for {account_name} timed out after 30 seconds. Please try again."
         )
     
-    def _handle_code_required(self, progress_dialog, account_id, account_name, phone_number):
+    def _handle_code_required(self, progress_dialog, account_id, account_name, phone_data):
         """Handle when verification code is required."""
         progress_dialog.close()
+        
+        # Parse phone_number and phone_code_hash from the signal data
+        if "|" in phone_data:
+            phone_number, phone_code_hash = phone_data.split("|", 1)
+        else:
+            phone_number = phone_data
+            phone_code_hash = None
         
         # Show verification code dialog
         code_dialog = VerificationCodeDialog(self, phone_number)
         if code_dialog.exec_() == QDialog.Accepted:
             code = code_dialog.get_code()
             if code:
-                # Start second phase of authorization with code
-                self._start_telegram_operation_with_code("authorize", account_id, account_name, code)
+                # Start second phase of authorization with code and phone_code_hash
+                self._start_telegram_operation_with_code("authorize", account_id, account_name, code, phone_code_hash=phone_code_hash)
         else:
             # User cancelled, update status
             self._update_account_status(account_id, AccountStatus.OFFLINE)
     
-    def _start_telegram_operation_with_code(self, operation, account_id, account_name, verification_code, password=None):
+    def _start_telegram_operation_with_code(self, operation, account_id, account_name, verification_code, password=None, phone_code_hash=None):
         """Start a Telegram operation with verification code."""
         try:
             # Get account details from database
@@ -1156,7 +1167,8 @@ class AccountListWidget(QWidget):
                     session_path=account.session_path,
                     proxy_config=None,
                     verification_code=verification_code,
-                    password=password
+                    password=password,
+                    phone_code_hash=phone_code_hash
                 )
                 
                 # Connect signals
@@ -1224,8 +1236,11 @@ class AccountListWidget(QWidget):
                     QLineEdit.Password
                 )
                 if ok and password:
-                    # Restart authorization with password
-                    self._start_telegram_operation_with_code("authorize", account_id, account_name, None, password)
+                    # Restart authorization with password (need to get phone_code_hash from worker)
+                    if hasattr(self, 'worker') and hasattr(self.worker, 'phone_code_hash'):
+                        self._start_telegram_operation_with_code("authorize", account_id, account_name, None, password, self.worker.phone_code_hash)
+                    else:
+                        self._start_telegram_operation_with_code("authorize", account_id, account_name, None, password)
                 else:
                     self._update_account_status(account_id, AccountStatus.OFFLINE)
         else:

@@ -133,27 +133,8 @@ class MainWindow(QMainWindow):
     
     def setup_menu(self):
         """Set up menu bar."""
-        menubar = self.menuBar()
-        
-        # File menu
-        file_menu = menubar.addMenu("File")
-        
-        exit_action = file_menu.addAction("Exit")
-        exit_action.triggered.connect(self.close)
-        
-        # View menu
-        view_menu = menubar.addMenu("View")
-        
-        theme_menu = view_menu.addMenu("Theme")
-        theme_menu.addAction("Auto").triggered.connect(lambda: self.set_theme("auto"))
-        theme_menu.addAction("Light").triggered.connect(lambda: self.set_theme("light"))
-        theme_menu.addAction("Dark").triggered.connect(lambda: self.set_theme("dark"))
-        
-        # Help menu
-        help_menu = menubar.addMenu("Help")
-        
-        about_action = help_menu.addAction("About")
-        about_action.triggered.connect(self.show_about)
+        # Menu bar removed as requested
+        pass
     
     def setup_status_bar(self):
         """Set up status bar."""
@@ -189,16 +170,6 @@ class MainWindow(QMainWindow):
         """Create new campaign."""
         QMessageBox.information(self, "Create Campaign", "Campaign management coming soon!")
     
-    def show_about(self):
-        """Show about dialog."""
-        QMessageBox.about(
-            self,
-            "About",
-            "Telegram Multi-Account Message Sender v1.0.0\n\n"
-            "A production-grade desktop application for managing and sending messages "
-            "across multiple Telegram accounts with advanced features.\n\n"
-            "© 2024 VoxHash"
-        )
     
     def update_status(self):
         """Update status bar."""

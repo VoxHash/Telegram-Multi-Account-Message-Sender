@@ -54,7 +54,7 @@ class SettingsWidget(QWidget):
         
         self.log_level_combo = QComboBox()
         self.log_level_combo.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
-        self.log_level_combo.setCurrentText(self.settings.log_level.value)
+        self.log_level_combo.setCurrentText(self.settings.log_level)
         app_layout.addRow("Log Level:", self.log_level_combo)
         
         general_layout.addWidget(app_group)
@@ -151,7 +151,7 @@ class SettingsWidget(QWidget):
         
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(["auto", "light", "dark"])
-        self.theme_combo.setCurrentText(self.settings.theme.value)
+        self.theme_combo.setCurrentText(self.settings.theme)
         theme_layout.addRow("Theme:", self.theme_combo)
         
         ui_layout.addWidget(theme_group)
@@ -207,6 +207,59 @@ class SettingsWidget(QWidget):
         safety_layout.addWidget(safety_group)
         
         tab_widget.addTab(safety_tab, "Safety")
+        
+        # About Tab
+        about_tab = QWidget()
+        about_layout = QVBoxLayout(about_tab)
+        
+        # About Information
+        about_group = QGroupBox("About Telegram Multi-Account Message Sender")
+        about_form_layout = QFormLayout(about_group)
+        
+        about_text = QTextEdit()
+        about_text.setReadOnly(True)
+        about_text.setMaximumHeight(300)
+        about_text.setHtml("""
+        <h2>🚀 Telegram Multi-Account Message Sender v1.0.0</h2>
+        
+        <p><b>Professional-grade desktop application for managing and sending messages across multiple Telegram accounts safely with advanced features like scheduling, spintax, media support, and compliance controls.</b></p>
+        
+        <h3>✨ Key Features:</h3>
+        <ul>
+        <li><b>🏦 Account Management:</b> Multi-account support with proxy configuration</li>
+        <li><b>📢 Campaign System:</b> Advanced campaign builder with A/B testing</li>
+        <li><b>👥 Recipient Management:</b> Individual management and CSV import</li>
+        <li><b>📊 Analytics & Logging:</b> Real-time logs and performance metrics</li>
+        <li><b>🔒 Safety & Compliance:</b> Rate limiting and safety controls</li>
+        <li><b>🎨 Modern UI:</b> Professional PyQt5 interface with theme support</li>
+        </ul>
+        
+        <h3>🛠️ Technical Stack:</h3>
+        <ul>
+        <li><b>Python:</b> 3.10+ with type hints</li>
+        <li><b>GUI:</b> PyQt5 framework</li>
+        <li><b>Database:</b> SQLModel ORM with SQLite</li>
+        <li><b>API:</b> Telethon for Telegram integration</li>
+        <li><b>Settings:</b> Pydantic configuration management</li>
+        </ul>
+        
+        <h3>📄 License:</h3>
+        <p>BSD 3-Clause License - See LICENSE file for details</p>
+        
+        <h3>👨‍💻 Developer:</h3>
+        <p><b>VoxHash</b> - contact@voxhash.dev</p>
+        
+        <h3>⚠️ Disclaimer:</h3>
+        <p>This application is for educational and legitimate business purposes only. Users are responsible for complying with Telegram's Terms of Service and applicable laws.</p>
+        
+        <p><i>Made with ❤️ by VoxHash</i></p>
+        <p><i>Professional Telegram automation made simple! 🚀</i></p>
+        """)
+        about_form_layout.addRow(about_text)
+        
+        about_layout.addWidget(about_group)
+        
+        tab_widget.addTab(about_tab, "About")
         
         # Buttons
         button_layout = QHBoxLayout()
@@ -298,7 +351,7 @@ TELEGRAM_API_HASH={self.settings.telegram_api_hash or ''}
 
 # Application Settings
 APP_ENV=development
-LOG_LEVEL={self.settings.log_level.value}
+LOG_LEVEL={self.settings.log_level}
 DEBUG={str(self.settings.debug).lower()}
 
 # Database
@@ -316,7 +369,7 @@ WARMUP_MESSAGES={self.settings.warmup_messages}
 WARMUP_INTERVAL_MINUTES={self.settings.warmup_interval_minutes}
 
 # UI Settings
-THEME={self.settings.theme.value}
+THEME={self.settings.theme}
 WINDOW_WIDTH={self.settings.window_width}
 WINDOW_HEIGHT={self.settings.window_height}
 WINDOW_MAXIMIZED={str(self.settings.window_maximized).lower()}
@@ -345,18 +398,21 @@ RETRY_DELAY_SECONDS={self.settings.retry_delay_seconds}
         
         if reply == QMessageBox.Yes:
             # Reload settings from defaults
-            global settings
             from ...services import Settings
             self.settings = Settings()
             self.load_settings()
             self.status_label.setText("Settings reset to defaults")
+            QMessageBox.information(self, "Settings Reset", "Settings have been reset to defaults!")
     
     def reload_settings(self):
         """Reload settings from file."""
         try:
-            self.settings = reload_settings()
+            from ...services import Settings
+            self.settings = Settings()
             self.load_settings()
             self.status_label.setText("Settings reloaded from file")
+            QMessageBox.information(self, "Settings Reloaded", "Settings have been reloaded from file!")
         except Exception as e:
             self.logger.error(f"Error reloading settings: {e}")
             self.status_label.setText(f"Error reloading settings: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to reload settings: {e}")

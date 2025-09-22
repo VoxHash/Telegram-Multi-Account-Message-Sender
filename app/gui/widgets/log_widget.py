@@ -223,7 +223,7 @@ class SendLogWidget(QWidget):
         """Set up the UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(15)
+        layout.setSpacing(8)
         
         # Header section
         header_widget = QWidget()
@@ -231,18 +231,18 @@ class SendLogWidget(QWidget):
             QWidget {
                 background-color: #2d2d2d;
                 border-radius: 8px;
-                padding: 15px;
+                padding: 8px;
             }
         """)
         header_layout = QVBoxLayout(header_widget)
-        header_layout.setContentsMargins(15, 15, 15, 15)
-        header_layout.setSpacing(15)
+        header_layout.setContentsMargins(12, 8, 12, 8)
+        header_layout.setSpacing(6)
         
         # Title and description
         title_layout = QHBoxLayout()
         title_label = QLabel("📊 Send Logs")
-        title_label.setFont(QFont("Arial", 16, QFont.Bold))
-        title_label.setStyleSheet("color: #ffffff; margin-bottom: 5px;")
+        title_label.setFont(QFont("Arial", 14, QFont.Bold))
+        title_label.setStyleSheet("color: #ffffff; margin-bottom: 2px;")
         title_layout.addWidget(title_label)
         
         title_layout.addStretch()
@@ -268,12 +268,12 @@ class SendLogWidget(QWidget):
             QWidget {
                 background-color: #1a1a1a;
                 border-radius: 6px;
-                padding: 10px;
+                padding: 6px;
             }
         """)
         filters_layout = QHBoxLayout(filters_widget)
-        filters_layout.setContentsMargins(15, 10, 15, 10)
-        filters_layout.setSpacing(15)
+        filters_layout.setContentsMargins(12, 6, 12, 6)
+        filters_layout.setSpacing(10)
         
         # Status filter
         status_label = QLabel("Status:")
@@ -476,11 +476,11 @@ class SendLogWidget(QWidget):
             QWidget {
                 background-color: #1a1a1a;
                 border-radius: 4px;
-                padding: 8px;
+                padding: 4px;
             }
         """)
         status_layout = QHBoxLayout(status_widget)
-        status_layout.setContentsMargins(10, 5, 10, 5)
+        status_layout.setContentsMargins(8, 3, 8, 3)
         
         self.status_label = QLabel("📋 Ready - No logs loaded")
         self.status_label.setStyleSheet("color: #cccccc; font-size: 11px;")

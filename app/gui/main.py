@@ -111,15 +111,9 @@ class MainWindow(QMainWindow):
     
     def create_templates_tab(self):
         """Create templates management tab."""
-        templates_widget = QWidget()
-        layout = QVBoxLayout(templates_widget)
-        
-        # Placeholder content
-        placeholder_label = QLabel("Template Management - Coming Soon")
-        placeholder_label.setStyleSheet("font-size: 14px; margin: 20px;")
-        layout.addWidget(placeholder_label)
-        
-        self.tab_widget.addTab(templates_widget, "Templates")
+        from .widgets.template_widget import TemplateWidget
+        self.templates_widget = TemplateWidget()
+        self.tab_widget.addTab(self.templates_widget, "Templates")
     
     def create_recipients_tab(self):
         """Create recipients management tab."""

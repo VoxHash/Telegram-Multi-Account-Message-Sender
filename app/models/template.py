@@ -139,6 +139,23 @@ class MessageTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             self.success_rate = (self.success_rate * (self.usage_count - 1) + 0) / self.usage_count
     
+    def get_tags_list(self) -> List[str]:
+        """Get tags as a list."""
+        if self.tags:
+            import json
+            if isinstance(self.tags, str):
+                try:
+                    return json.loads(self.tags)
+                except (json.JSONDecodeError, TypeError):
+                    return []
+            return self.tags if isinstance(self.tags, list) else []
+        return []
+    
+    def set_tags_list(self, tags: List[str]) -> None:
+        """Set tags from a list."""
+        import json
+        self.tags = json.dumps(tags) if tags else None
+    
     def get_ab_variant(self, recipient_id: int) -> Dict[str, Any]:
         """Get A/B test variant for a recipient."""
         if not self.use_ab_testing or not self.ab_variants:

@@ -10,13 +10,165 @@ from PyQt5.QtWidgets import (
     QMessageBox, QDialog, QDialogButtonBox, QFormLayout,
     QTextEdit, QFileDialog, QProgressBar, QAbstractItemView
 )
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QThread, pyqtSlot
 from PyQt5.QtGui import QFont, QIcon, QPalette, QColor
 
 from ...models import Account, AccountStatus, ProxyType
 from ...models.base import SoftDeleteMixin
 from ...services import get_logger, get_session
 from ...core import TelegramClientManager
+
+
+class TelegramWorker(QThread):
+    """Worker thread for Telegram operations."""
+    
+    finished = pyqtSignal(str, bool)  # message, success
+    progress = pyqtSignal(str)  # progress message
+    
+    def __init__(self, operation, account_id, account_name, api_id, api_hash, phone_number, session_path=None, proxy_config=None):
+        super().__init__()
+        self.operation = operation
+        self.account_id = account_id
+        self.account_name = account_name
+        self.api_id = api_id
+        self.api_hash = api_hash
+        self.phone_number = phone_number
+        self.session_path = session_path
+        self.proxy_config = proxy_config
+        self.logger = get_logger()
+    
+    def run(self):
+        """Run the Telegram operation."""
+        try:
+            if self.operation == "authorize":
+                self._authorize_account()
+            elif self.operation == "test":
+                self._test_account()
+            elif self.operation == "connect":
+                self._connect_account()
+        except Exception as e:
+            self.logger.error(f"Error in Telegram worker: {e}")
+            self.finished.emit(f"Error: {str(e)}", False)
+    
+    def _authorize_account(self):
+        """Authorize account with Telegram."""
+        try:
+            self.progress.emit("Initializing Telegram client...")
+            
+            # Import here to avoid circular imports
+            from telethon import TelegramClient
+            from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
+            
+            # Create client
+            client = TelegramClient(
+                self.session_path or f"app_data/sessions/session_{self.phone_number}",
+                self.api_id,
+                self.api_hash
+            )
+            
+            self.progress.emit("Connecting to Telegram...")
+            client.connect()
+            
+            if not client.is_user_authorized():
+                self.progress.emit("Sending verification code...")
+                client.send_code_request(self.phone_number)
+                
+                # For now, we'll show a message asking user to check their phone
+                # In a real implementation, you'd want to show a dialog for code input
+                self.finished.emit(
+                    f"Verification code sent to {self.phone_number}. Please check your phone and use the 'Connect' action to complete authorization.",
+                    True
+                )
+            else:
+                self.finished.emit(f"Account {self.account_name} is already authorized!", True)
+            
+            client.disconnect()
+            
+        except Exception as e:
+            self.finished.emit(f"Authorization failed: {str(e)}", False)
+    
+    def _test_account(self):
+        """Test account connection."""
+        try:
+            self.progress.emit("Testing account connection...")
+            
+            from telethon import TelegramClient
+            
+            # Create client
+            client = TelegramClient(
+                self.session_path or f"app_data/sessions/session_{self.phone_number}",
+                self.api_id,
+                self.api_hash
+            )
+            
+            self.progress.emit("Connecting to Telegram...")
+            client.connect()
+            
+            if client.is_user_authorized():
+                # Get account info
+                me = client.get_me()
+                self.finished.emit(
+                    f"✅ Account test successful!\n"
+                    f"Name: {me.first_name} {me.last_name or ''}\n"
+                    f"Username: @{me.username or 'N/A'}\n"
+                    f"Phone: {me.phone}\n"
+                    f"ID: {me.id}",
+                    True
+                )
+            else:
+                self.finished.emit("❌ Account is not authorized. Please authorize first.", False)
+            
+            client.disconnect()
+            
+        except Exception as e:
+            self.finished.emit(f"❌ Test failed: {str(e)}", False)
+    
+    def _connect_account(self):
+        """Connect to account (for already authorized accounts)."""
+        try:
+            self.progress.emit("Connecting to account...")
+            
+            from telethon import TelegramClient
+            
+            # Create client
+            client = TelegramClient(
+                self.session_path or f"app_data/sessions/session_{self.phone_number}",
+                self.api_id,
+                self.api_hash
+            )
+            
+            self.progress.emit("Connecting to Telegram...")
+            client.connect()
+            
+            if client.is_user_authorized():
+                # Update account status in database
+                self._update_account_status(AccountStatus.ONLINE)
+                self.finished.emit(f"✅ Successfully connected to {self.account_name}!", True)
+            else:
+                self._update_account_status(AccountStatus.OFFLINE)
+                self.finished.emit("❌ Account is not authorized. Please authorize first.", False)
+            
+            client.disconnect()
+            
+        except Exception as e:
+            self._update_account_status(AccountStatus.ERROR)
+            self.finished.emit(f"❌ Connection failed: {str(e)}", False)
+    
+    def _update_account_status(self, status):
+        """Update account status in database."""
+        try:
+            session = get_session()
+            try:
+                from ...models import Account
+                from sqlmodel import select
+                account = session.exec(select(Account).where(Account.id == self.account_id)).first()
+                if account:
+                    account.status = status
+                    session.commit()
+            finally:
+                session.close()
+        except Exception as e:
+            self.logger.error(f"Error updating account status: {e}")
 
 
 class AccountDialog(QDialog):
@@ -579,33 +731,89 @@ class AccountListWidget(QWidget):
     
     def connect_account(self, account_id, account_name):
         """Connect to account."""
-        try:
-            self.logger.info(f"Connecting to account: {account_name}")
-            # TODO: Implement actual connection logic
-            QMessageBox.information(self, "Connect", f"Connecting to {account_name}...")
-        except Exception as e:
-            self.logger.error(f"Error connecting to account: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
+        self._start_telegram_operation("connect", account_id, account_name)
     
     def test_account(self, account_id, account_name):
         """Test account connection."""
-        try:
-            self.logger.info(f"Testing account: {account_name}")
-            # TODO: Implement actual test logic
-            QMessageBox.information(self, "Test", f"Testing {account_name}...")
-        except Exception as e:
-            self.logger.error(f"Error testing account: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to test: {e}")
+        self._start_telegram_operation("test", account_id, account_name)
     
     def authorize_account(self, account_id, account_name):
         """Authorize account."""
+        self._start_telegram_operation("authorize", account_id, account_name)
+    
+    def _start_telegram_operation(self, operation, account_id, account_name):
+        """Start a Telegram operation in a worker thread."""
         try:
-            self.logger.info(f"Authorizing account: {account_name}")
-            # TODO: Implement actual authorization logic
-            QMessageBox.information(self, "Authorize", f"Authorizing {account_name}...")
+            # Get account details from database
+            session = get_session()
+            try:
+                from ...models import Account
+                from sqlmodel import select
+                account = session.exec(select(Account).where(Account.id == account_id)).first()
+                if not account:
+                    QMessageBox.warning(self, "Error", "Account not found!")
+                    return
+                
+                # Get API credentials from settings
+                from ...services import get_settings
+                settings = get_settings()
+                
+                if not settings.telegram_api_id or not settings.telegram_api_hash:
+                    QMessageBox.warning(
+                        self, 
+                        "API Credentials Required", 
+                        "Please configure your Telegram API ID and API Hash in Settings first."
+                    )
+                    return
+                
+                # Create progress dialog
+                progress_dialog = QMessageBox(self)
+                progress_dialog.setWindowTitle(f"{operation.title()} Account")
+                progress_dialog.setText(f"{operation.title()}ing {account_name}...")
+                progress_dialog.setStandardButtons(QMessageBox.NoButton)
+                progress_dialog.setModal(True)
+                progress_dialog.show()
+                
+                # Create worker thread
+                self.worker = TelegramWorker(
+                    operation=operation,
+                    account_id=account_id,
+                    account_name=account_name,
+                    api_id=settings.telegram_api_id,
+                    api_hash=settings.telegram_api_hash,
+                    phone_number=account.phone_number,
+                    session_path=account.session_path,
+                    proxy_config=None  # TODO: Add proxy support
+                )
+                
+                # Connect signals
+                self.worker.finished.connect(
+                    lambda msg, success: self._on_operation_finished(progress_dialog, msg, success)
+                )
+                self.worker.progress.connect(
+                    lambda msg: progress_dialog.setText(f"{operation.title()}ing {account_name}...\n{msg}")
+                )
+                
+                # Start worker
+                self.worker.start()
+                
+            finally:
+                session.close()
+                
         except Exception as e:
-            self.logger.error(f"Error authorizing account: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to authorize: {e}")
+            self.logger.error(f"Error starting {operation} operation: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to start {operation}: {e}")
+    
+    def _on_operation_finished(self, progress_dialog, message, success):
+        """Handle operation completion."""
+        progress_dialog.close()
+        
+        if success:
+            QMessageBox.information(self, "Success", message)
+            # Refresh accounts to update status
+            self.refresh_accounts()
+        else:
+            QMessageBox.critical(self, "Error", message)
 
     def on_selection_changed(self):
         """Handle selection change."""

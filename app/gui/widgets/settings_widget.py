@@ -14,6 +14,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 
 from ...services import get_logger, get_settings, reload_settings
+from ...services.logger import reload_logger
 
 
 class SettingsWidget(QWidget):
@@ -279,6 +280,9 @@ class SettingsWidget(QWidget):
             # Save to .env file (simplified - in real app would use proper config management)
             self.save_to_env_file()
             
+            # Reload logger with new settings
+            reload_logger()
+            
             self.logger.info("Settings saved successfully")
             self.status_label.setText("Settings saved successfully")
             self.settings_updated.emit()
@@ -349,6 +353,10 @@ RETRY_DELAY_SECONDS={self.settings.retry_delay_seconds}
             from ...services import Settings
             self.settings = Settings()
             self.load_settings()
+            
+            # Reload logger with new settings
+            reload_logger()
+            
             self.status_label.setText("Settings reset to defaults")
             QMessageBox.information(self, "Settings Reset", "Settings have been reset to defaults!")
     
@@ -358,6 +366,10 @@ RETRY_DELAY_SECONDS={self.settings.retry_delay_seconds}
             from ...services import Settings
             self.settings = Settings()
             self.load_settings()
+            
+            # Reload logger with new settings
+            reload_logger()
+            
             self.status_label.setText("Settings reloaded from file")
             QMessageBox.information(self, "Settings Reloaded", "Settings have been reloaded from file!")
         except Exception as e:

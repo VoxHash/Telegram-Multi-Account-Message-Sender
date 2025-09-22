@@ -50,7 +50,18 @@ class AppLogger:
         
         # Create logger
         self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(getattr(logging, self.settings.log_level.value))
+        
+        # Get log level - handle both enum and string values
+        if hasattr(self.settings.log_level, 'value'):
+            log_level = self.settings.log_level.value
+        else:
+            log_level = str(self.settings.log_level)
+        
+        self.logger.setLevel(getattr(logging, log_level))
+        
+        # Set debug level if debug mode is enabled
+        if self.settings.debug:
+            self.logger.setLevel(logging.DEBUG)
         
         # Clear existing handlers
         self.logger.handlers.clear()
@@ -63,7 +74,7 @@ class AppLogger:
             enable_link_path=True,
             markup=True,
         )
-        console_handler.setLevel(getattr(logging, self.settings.log_level.value))
+        console_handler.setLevel(getattr(logging, log_level))
         console_formatter = logging.Formatter(
             fmt="%(message)s",
             datefmt="[%X]"
@@ -156,6 +167,11 @@ class AppLogger:
         """Log performance metrics."""
         self.debug(f"[bold magenta]Performance[/bold magenta] {operation}: {duration_ms:.2f}ms", **kwargs)
     
+    def reload_settings(self):
+        """Reload logger with updated settings."""
+        self.settings = get_settings()
+        self._setup_logging()
+    
     def get_log_file_path(self) -> Path:
         """Get log file path."""
         return self.settings.get_log_file_path()
@@ -213,3 +229,9 @@ def log_safety_event(event_type: str, message: str, **kwargs):
 def log_performance(operation: str, duration_ms: float, **kwargs):
     """Log performance using global logger."""
     logger.log_performance(operation, duration_ms, **kwargs)
+
+
+def reload_logger():
+    """Reload the global logger with updated settings."""
+    global logger
+    logger.reload_settings()

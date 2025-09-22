@@ -206,6 +206,10 @@ build/
 # Test files
 test_files/
 sample_media/
+test_*.py
+*_test.py
+test_*.session
+test_*.log
 
 # Backup files
 *.bak
@@ -291,3 +295,18 @@ app_data/
 sessions/
 logs/
 temp/
+
+# Sensitive data and personal information
+*personal*
+*private*
+*sensitive*
+*credentials*
+*secrets*
+
+# Development and testing files
+dev_*.py
+debug_*.py
+sample_*.py
+create_sample_*.py
+fix_*.py
+migrate_*.py

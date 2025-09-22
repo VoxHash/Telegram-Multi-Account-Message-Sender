@@ -857,17 +857,23 @@ class AccountListWidget(QWidget):
                 background-color: #1a1a1a;
                 gridline-color: #404040;
                 color: white;
+                selection-background-color: #0078d4;
+                selection-color: white;
             }
             QTableWidget::item {
                 padding: 8px;
                 border: none;
             }
             QTableWidget::item:selected {
-                background-color: #0078d4;
-                color: white;
+                background-color: #0078d4 !important;
+                color: white !important;
             }
             QTableWidget::item:alternate {
                 background-color: #2d2d2d;
+            }
+            QTableWidget::item:alternate:selected {
+                background-color: #0078d4 !important;
+                color: white !important;
             }
         """)
         
@@ -896,19 +902,19 @@ class AccountListWidget(QWidget):
             for row, account in enumerate(accounts):
                 # Name - Disabled text field
                 name_item = QTableWidgetItem(account.name)
-                name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
+                name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 # Store account ID in the name item for selection handling
                 name_item.setData(Qt.UserRole, account.id)
                 self.accounts_table.setItem(row, 0, name_item)
                 
                 # Phone - Disabled text field
                 phone_item = QTableWidgetItem(account.phone_number)
-                phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable)
+                phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 self.accounts_table.setItem(row, 1, phone_item)
                 
                 # Status - Enhanced button-like appearance
                 status_item = QTableWidgetItem(account.status.value.title())
-                status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable)
+                status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 
                 # Set status-specific styling with button-like appearance
                 if account.status == AccountStatus.ONLINE:
@@ -933,34 +939,34 @@ class AccountListWidget(QWidget):
                 
                 # Messages sent - Disabled text field
                 messages_item = QTableWidgetItem(str(account.total_messages_sent))
-                messages_item.setFlags(messages_item.flags() & ~Qt.ItemIsEditable)
+                messages_item.setFlags(messages_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 messages_item.setTextAlignment(Qt.AlignCenter)
                 self.accounts_table.setItem(row, 3, messages_item)
                 
                 # Success rate - Disabled text field
                 success_rate = account.get_success_rate()
                 success_item = QTableWidgetItem(f"{success_rate:.1f}%")
-                success_item.setFlags(success_item.flags() & ~Qt.ItemIsEditable)
+                success_item.setFlags(success_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 success_item.setTextAlignment(Qt.AlignCenter)
                 self.accounts_table.setItem(row, 4, success_item)
                 
                 # Last activity - Disabled text field
                 last_activity = account.last_activity.strftime("%Y-%m-%d %H:%M") if account.last_activity else "Never"
                 activity_item = QTableWidgetItem(last_activity)
-                activity_item.setFlags(activity_item.flags() & ~Qt.ItemIsEditable)
+                activity_item.setFlags(activity_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 activity_item.setTextAlignment(Qt.AlignCenter)
                 self.accounts_table.setItem(row, 5, activity_item)
                 
                 # Warmup status - Disabled text field
                 warmup_status = "Complete" if account.is_warmup_complete() else f"{account.warmup_messages_sent}/{account.warmup_target_messages}"
                 warmup_item = QTableWidgetItem(warmup_status)
-                warmup_item.setFlags(warmup_item.flags() & ~Qt.ItemIsEditable)
+                warmup_item.setFlags(warmup_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 warmup_item.setTextAlignment(Qt.AlignCenter)
                 self.accounts_table.setItem(row, 6, warmup_item)
                 
                 # Actions - Create action buttons
                 actions_item = QTableWidgetItem("Connect | Test | Authorize")
-                actions_item.setFlags(actions_item.flags() & ~Qt.ItemIsEditable)
+                actions_item.setFlags(actions_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 actions_item.setTextAlignment(Qt.AlignCenter)
                 actions_item.setData(Qt.UserRole, account.id)  # Store account ID for actions
                 self.accounts_table.setItem(row, 7, actions_item)
@@ -979,7 +985,13 @@ class AccountListWidget(QWidget):
         """Handle cell click events."""
         if column == 7:  # Actions column
             account_id = self.accounts_table.item(row, 0).data(Qt.UserRole)
-            self.show_action_menu(row, column, account_id)
+            if account_id is not None:
+                self.show_action_menu(row, column, account_id)
+        else:
+            # For other columns, ensure the row is selected
+            self.accounts_table.selectRow(row)
+            # Also trigger selection changed manually
+            self.on_selection_changed()
     
     def show_action_menu(self, row, column, account_id):
         """Show action menu for account actions."""
@@ -1251,15 +1263,19 @@ class AccountListWidget(QWidget):
         selected_rows = self.accounts_table.selectionModel().selectedRows()
         has_selection = len(selected_rows) > 0
         
+        self.logger.debug(f"Selection changed: {len(selected_rows)} rows selected")
+        
         self.edit_button.setEnabled(has_selection)
         self.delete_button.setEnabled(has_selection)
         
         if has_selection:
             row = selected_rows[0].row()
+            self.logger.debug(f"Selected row: {row}")
             # Try to get account ID from the first column (Name column)
             name_item = self.accounts_table.item(row, 0)
             if name_item:
                 account_id = name_item.data(Qt.UserRole)
+                self.logger.debug(f"Account ID for row {row}: {account_id}")
                 if account_id is not None:
                     # Emit signal with account ID for further processing
                     self.account_selected.emit(account_id)

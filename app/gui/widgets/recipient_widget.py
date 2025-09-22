@@ -40,35 +40,24 @@ class RecipientDialog(QDialog):
         """Handle recipient type change."""
         recipient_type = self.type_combo.currentText().lower()
         
-        # Show/hide fields based on type
+        # Show/hide field sections based on type
         is_user = recipient_type == "user"
         is_group = recipient_type in ["group", "channel"]
         
-        # User fields
-        self.user_id_edit.setVisible(is_user)
-        self.phone_edit.setVisible(is_user)
-        self.first_name_edit.setVisible(is_user)
-        self.last_name_edit.setVisible(is_user)
+        # Show/hide entire field sections
+        self.user_fields_widget.setVisible(is_user)
+        self.group_fields_widget.setVisible(is_group)
         
-        # Group fields
-        self.group_id_edit.setVisible(is_group)
-        self.group_title_edit.setVisible(is_group)
-        self.group_username_edit.setVisible(is_group)
-        self.group_type_edit.setVisible(is_group)
-        self.member_count_edit.setVisible(is_group)
-        
-        # Update labels and placeholders
+        # Update placeholders
         if is_group:
             self.username_edit.setPlaceholderText("@group_username")
-            # Update group-specific labels
+            # Update group-specific placeholders
             if recipient_type == "group":
                 self.group_title_edit.setPlaceholderText("My Group Name")
                 self.group_username_edit.setPlaceholderText("@mygroup")
-                self.group_type_edit.setPlaceholderText("supergroup")
             else:  # channel
                 self.group_title_edit.setPlaceholderText("My Channel Name")
                 self.group_username_edit.setPlaceholderText("@mychannel")
-                self.group_type_edit.setPlaceholderText("channel")
         else:
             self.username_edit.setPlaceholderText("@username")
             self.user_id_edit.setPlaceholderText("123456789")
@@ -81,8 +70,6 @@ class RecipientDialog(QDialog):
             self.group_id_edit.clear()
             self.group_title_edit.clear()
             self.group_username_edit.clear()
-            self.group_type_edit.clear()
-            self.member_count_edit.clear()
         else:
             self.user_id_edit.clear()
             self.phone_edit.clear()
@@ -110,47 +97,52 @@ class RecipientDialog(QDialog):
         self.type_combo.currentTextChanged.connect(self.on_type_changed)
         basic_layout.addRow("Type:", self.type_combo)
         
+        # Username (always visible)
         self.username_edit = QLineEdit()
         self.username_edit.setPlaceholderText("@username")
         basic_layout.addRow("Username:", self.username_edit)
         
-        # User fields
+        # User fields section
+        self.user_fields_widget = QWidget()
+        user_layout = QFormLayout(self.user_fields_widget)
+        user_layout.setContentsMargins(0, 0, 0, 0)
+        
         self.user_id_edit = QLineEdit()
         self.user_id_edit.setPlaceholderText("123456789")
-        basic_layout.addRow("User ID:", self.user_id_edit)
+        user_layout.addRow("User ID:", self.user_id_edit)
         
         self.phone_edit = QLineEdit()
         self.phone_edit.setPlaceholderText("+1234567890")
-        basic_layout.addRow("Phone Number:", self.phone_edit)
+        user_layout.addRow("Phone Number:", self.phone_edit)
         
         self.first_name_edit = QLineEdit()
         self.first_name_edit.setPlaceholderText("John")
-        basic_layout.addRow("First Name:", self.first_name_edit)
+        user_layout.addRow("First Name:", self.first_name_edit)
         
         self.last_name_edit = QLineEdit()
         self.last_name_edit.setPlaceholderText("Doe")
-        basic_layout.addRow("Last Name:", self.last_name_edit)
+        user_layout.addRow("Last Name:", self.last_name_edit)
         
-        # Group/Channel fields
+        basic_layout.addRow("", self.user_fields_widget)
+        
+        # Group/Channel fields section
+        self.group_fields_widget = QWidget()
+        group_layout = QFormLayout(self.group_fields_widget)
+        group_layout.setContentsMargins(0, 0, 0, 0)
+        
         self.group_id_edit = QLineEdit()
         self.group_id_edit.setPlaceholderText("-1001234567890")
-        basic_layout.addRow("Group ID:", self.group_id_edit)
+        group_layout.addRow("Group ID:", self.group_id_edit)
         
         self.group_title_edit = QLineEdit()
         self.group_title_edit.setPlaceholderText("My Group Name")
-        basic_layout.addRow("Group Title:", self.group_title_edit)
+        group_layout.addRow("Group Title:", self.group_title_edit)
         
         self.group_username_edit = QLineEdit()
         self.group_username_edit.setPlaceholderText("@mygroup")
-        basic_layout.addRow("Group Username:", self.group_username_edit)
+        group_layout.addRow("Group Username:", self.group_username_edit)
         
-        self.group_type_edit = QLineEdit()
-        self.group_type_edit.setPlaceholderText("supergroup")
-        basic_layout.addRow("Group Type:", self.group_type_edit)
-        
-        self.member_count_edit = QLineEdit()
-        self.member_count_edit.setPlaceholderText("150")
-        basic_layout.addRow("Member Count:", self.member_count_edit)
+        basic_layout.addRow("", self.group_fields_widget)
         
         layout.addWidget(basic_group)
         
@@ -217,8 +209,6 @@ class RecipientDialog(QDialog):
             self.group_id_edit.setText(str(self.recipient.group_id) if self.recipient.group_id else "")
             self.group_title_edit.setText(self.recipient.group_title or "")
             self.group_username_edit.setText(self.recipient.group_username or "")
-            self.group_type_edit.setText(self.recipient.group_type or "")
-            self.member_count_edit.setText(str(self.recipient.member_count) if self.recipient.member_count else "")
     
     def save_recipient(self):
         """Save recipient data."""
@@ -267,8 +257,6 @@ class RecipientDialog(QDialog):
                     self.recipient.group_id = int(self.group_id_edit.text().strip()) if self.group_id_edit.text().strip() else None
                     self.recipient.group_title = self.group_title_edit.text().strip() or None
                     self.recipient.group_username = self.group_username_edit.text().strip() or None
-                    self.recipient.group_type = self.group_type_edit.text().strip() or None
-                    self.recipient.member_count = int(self.member_count_edit.text().strip()) if self.member_count_edit.text().strip() else None
             else:
                 # Create new recipient
                 recipient_data = {
@@ -292,8 +280,6 @@ class RecipientDialog(QDialog):
                         "group_id": int(self.group_id_edit.text().strip()) if self.group_id_edit.text().strip() else None,
                         "group_title": self.group_title_edit.text().strip() or None,
                         "group_username": self.group_username_edit.text().strip() or None,
-                        "group_type": self.group_type_edit.text().strip() or None,
-                        "member_count": int(self.member_count_edit.text().strip()) if self.member_count_edit.text().strip() else None,
                     })
                 
                 self.recipient = Recipient(**recipient_data)

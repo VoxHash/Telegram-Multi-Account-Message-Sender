@@ -133,9 +133,7 @@ class LogViewer(QWidget):
                         
                         # Auto-scroll if enabled
                         if self.auto_scroll_check.isChecked():
-                            cursor = self.log_text.textCursor()
-                            cursor.movePosition(QTextCursor.End)
-                            self.log_text.setTextCursor(cursor)
+                            self.scroll_to_bottom()
                         
                         # Update status
                         self.status_label.setText(f"Last updated: {datetime.now().strftime('%H:%M:%S')}")
@@ -145,10 +143,42 @@ class LogViewer(QWidget):
     
     def filter_logs(self, level: str):
         """Filter logs by level."""
-        # This is a simple implementation
-        # In a real application, you might want to reload the entire log file
-        # and filter it properly
-        pass
+        try:
+            if not self.log_file_path.exists():
+                return
+            
+            with open(self.log_file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            if level == "All":
+                # Show all logs
+                self.log_text.setPlainText(content)
+            else:
+                # Filter by level
+                filtered_lines = []
+                for line in content.split('\n'):
+                    if level in line:
+                        filtered_lines.append(line)
+                self.log_text.setPlainText('\n'.join(filtered_lines))
+            
+            # Auto-scroll to bottom if enabled
+            if self.auto_scroll_check.isChecked():
+                cursor = self.log_text.textCursor()
+                cursor.movePosition(QTextCursor.End)
+                self.log_text.setTextCursor(cursor)
+            
+            # Update status
+            self.status_label.setText(f"Filtered by level: {level}")
+            
+        except Exception as e:
+            self.logger.error(f"Error filtering logs: {e}")
+            self.status_label.setText(f"Error filtering logs: {e}")
+    
+    def scroll_to_bottom(self):
+        """Scroll to bottom of log text."""
+        cursor = self.log_text.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        self.log_text.setTextCursor(cursor)
     
     def clear_logs(self):
         """Clear the log display."""

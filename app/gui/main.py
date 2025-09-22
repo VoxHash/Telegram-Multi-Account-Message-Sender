@@ -150,10 +150,12 @@ class MainWindow(QMainWindow):
         
         # Status label
         self.status_label = QLabel("Ready")
+        self.status_label.setStyleSheet("background-color: transparent;")
         self.status_bar.addWidget(self.status_label)
         
         # Theme label
         self.theme_label = QLabel(f"Theme: {self.theme_manager.get_current_theme()}")
+        self.theme_label.setStyleSheet("background-color: transparent;")
         self.status_bar.addPermanentWidget(self.theme_label)
     
     def toggle_theme(self):

@@ -302,19 +302,26 @@ class SendLogWidget(QWidget):
         try:
             from ...services import get_session
             from ...models import SendLog, Campaign, Account
+            from sqlmodel import select, and_
             
             session = get_session()
             try:
-                from ...models import SendLog, Campaign, Account
-                from sqlmodel import select, and_
-                
                 # Build query with filters
                 query = select(SendLog)
                 
                 # Status filter
                 status_filter = self.status_combo.currentText()
                 if status_filter != "All":
-                    query = query.where(SendLog.status == status_filter.lower())
+                    # Map UI status names to enum values
+                    status_mapping = {
+                        "Sent": "sent",
+                        "Failed": "failed", 
+                        "Rate Limited": "rate_limited",
+                        "Skipped": "skipped",
+                        "Pending": "pending"
+                    }
+                    if status_filter in status_mapping:
+                        query = query.where(SendLog.status == status_mapping[status_filter])
                 
                 # Date range filter
                 from_date = self.from_date_edit.dateTime().toPyDateTime()
@@ -327,6 +334,10 @@ class SendLogWidget(QWidget):
                     query = query.join(Campaign).where(Campaign.name == campaign_filter)
                 
                 logs = session.exec(query.order_by(SendLog.created_at.desc()).limit(1000)).all()
+                
+                # Update campaign combo with available campaigns
+                self.update_campaign_combo(session)
+                
             finally:
                 session.close()
             
@@ -388,6 +399,33 @@ class SendLogWidget(QWidget):
         """Apply filters to logs."""
         self.load_send_logs()
     
+    def update_campaign_combo(self, session):
+        """Update campaign combo with available campaigns."""
+        try:
+            from sqlmodel import select
+            
+            # Get all campaigns
+            campaigns = session.exec(select(Campaign).order_by(Campaign.name)).all()
+            
+            # Store current selection
+            current_selection = self.campaign_combo.currentText()
+            
+            # Clear and repopulate
+            self.campaign_combo.clear()
+            self.campaign_combo.addItem("All")
+            
+            for campaign in campaigns:
+                self.campaign_combo.addItem(campaign.name)
+            
+            # Restore selection if it still exists
+            if current_selection in [self.campaign_combo.itemText(i) for i in range(self.campaign_combo.count())]:
+                self.campaign_combo.setCurrentText(current_selection)
+            else:
+                self.campaign_combo.setCurrentText("All")
+                
+        except Exception as e:
+            self.logger.error(f"Error updating campaign combo: {e}")
+
     def export_logs(self):
         """Export logs to CSV."""
         try:

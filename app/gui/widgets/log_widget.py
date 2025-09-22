@@ -660,7 +660,7 @@ class SendLogWidget(QWidget):
             # Store current selection
             current_selection = self.campaign_combo.currentText()
             
-            # Clear and repopulate - ensure complete clear
+            # Clear and repopulate
             self.campaign_combo.clear()
             self.campaign_combo.addItem("All")
             

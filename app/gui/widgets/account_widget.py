@@ -19,6 +19,47 @@ from ...services import get_logger, get_session
 from ...core import TelegramClientManager
 
 
+class ProgressDialog(QDialog):
+    """Custom progress dialog for Telegram operations."""
+    
+    def __init__(self, parent=None, title="Operation", initial_text="Processing..."):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setModal(True)
+        self.setFixedSize(400, 150)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        
+        layout = QVBoxLayout(self)
+        
+        # Progress bar
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 0)  # Indeterminate progress
+        layout.addWidget(self.progress_bar)
+        
+        # Status label
+        self.status_label = QLabel(initial_text)
+        self.status_label.setWordWrap(True)
+        layout.addWidget(self.status_label)
+        
+        # Cancel button
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.reject)
+        layout.addWidget(self.cancel_button)
+    
+    def update_status(self, text):
+        """Update the status text."""
+        self.status_label.setText(text)
+    
+    def set_determinate(self, maximum):
+        """Set progress bar to determinate mode."""
+        self.progress_bar.setRange(0, maximum)
+        self.progress_bar.setValue(0)
+    
+    def set_progress(self, value):
+        """Set progress bar value."""
+        self.progress_bar.setValue(value)
+
+
 class TelegramWorker(QThread):
     """Worker thread for Telegram operations."""
     
@@ -36,10 +77,20 @@ class TelegramWorker(QThread):
         self.session_path = session_path
         self.proxy_config = proxy_config
         self.logger = get_logger()
+        self._should_stop = False
+    
+    def stop(self):
+        """Stop the worker thread."""
+        self._should_stop = True
+        self.quit()
+        self.wait(5000)  # Wait up to 5 seconds for thread to finish
     
     def run(self):
         """Run the Telegram operation."""
         try:
+            if self._should_stop:
+                return
+                
             if self.operation == "authorize":
                 self._authorize_account()
             elif self.operation == "test":
@@ -53,104 +104,168 @@ class TelegramWorker(QThread):
     def _authorize_account(self):
         """Authorize account with Telegram."""
         try:
+            if self._should_stop:
+                return
+                
             self.progress.emit("Initializing Telegram client...")
             
             # Import here to avoid circular imports
             from telethon import TelegramClient
-            from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
+            from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError, ApiIdInvalidError
+            
+            # Validate API credentials
+            if not self.api_id or not self.api_hash:
+                self.finished.emit("❌ API credentials are not configured. Please set them in Settings first.", False)
+                return
             
             # Create client
             client = TelegramClient(
                 self.session_path or f"app_data/sessions/session_{self.phone_number}",
-                self.api_id,
+                int(self.api_id),
                 self.api_hash
             )
             
+            if self._should_stop:
+                return
+                
             self.progress.emit("Connecting to Telegram...")
             client.connect()
+            
+            if self._should_stop:
+                client.disconnect()
+                return
             
             if not client.is_user_authorized():
                 self.progress.emit("Sending verification code...")
                 client.send_code_request(self.phone_number)
                 
-                # For now, we'll show a message asking user to check their phone
-                # In a real implementation, you'd want to show a dialog for code input
+                # Update account status to CONNECTING
+                self._update_account_status(AccountStatus.CONNECTING)
+                
                 self.finished.emit(
-                    f"Verification code sent to {self.phone_number}. Please check your phone and use the 'Connect' action to complete authorization.",
+                    f"✅ Verification code sent to {self.phone_number}!\n\n"
+                    f"Please check your phone for the Telegram verification code.\n"
+                    f"Once you receive it, use the 'Connect' action to complete authorization.",
                     True
                 )
             else:
-                self.finished.emit(f"Account {self.account_name} is already authorized!", True)
+                self._update_account_status(AccountStatus.ONLINE)
+                self.finished.emit(f"✅ Account {self.account_name} is already authorized!", True)
             
             client.disconnect()
             
+        except ApiIdInvalidError:
+            self.finished.emit("❌ Invalid API ID or API Hash. Please check your credentials in Settings.", False)
         except Exception as e:
-            self.finished.emit(f"Authorization failed: {str(e)}", False)
+            self.logger.error(f"Authorization error: {e}")
+            self.finished.emit(f"❌ Authorization failed: {str(e)}", False)
     
     def _test_account(self):
         """Test account connection."""
         try:
+            if self._should_stop:
+                return
+                
             self.progress.emit("Testing account connection...")
             
             from telethon import TelegramClient
+            from telethon.errors import ApiIdInvalidError
+            
+            # Validate API credentials
+            if not self.api_id or not self.api_hash:
+                self.finished.emit("❌ API credentials are not configured. Please set them in Settings first.", False)
+                return
             
             # Create client
             client = TelegramClient(
                 self.session_path or f"app_data/sessions/session_{self.phone_number}",
-                self.api_id,
+                int(self.api_id),
                 self.api_hash
             )
             
+            if self._should_stop:
+                return
+                
             self.progress.emit("Connecting to Telegram...")
             client.connect()
+            
+            if self._should_stop:
+                client.disconnect()
+                return
             
             if client.is_user_authorized():
                 # Get account info
                 me = client.get_me()
+                self._update_account_status(AccountStatus.ONLINE)
                 self.finished.emit(
-                    f"✅ Account test successful!\n"
-                    f"Name: {me.first_name} {me.last_name or ''}\n"
-                    f"Username: @{me.username or 'N/A'}\n"
-                    f"Phone: {me.phone}\n"
-                    f"ID: {me.id}",
+                    f"✅ Account test successful!\n\n"
+                    f"📱 Name: {me.first_name} {me.last_name or ''}\n"
+                    f"👤 Username: @{me.username or 'N/A'}\n"
+                    f"📞 Phone: {me.phone}\n"
+                    f"🆔 ID: {me.id}\n\n"
+                    f"Account is ready for messaging!",
                     True
                 )
             else:
-                self.finished.emit("❌ Account is not authorized. Please authorize first.", False)
+                self._update_account_status(AccountStatus.OFFLINE)
+                self.finished.emit("❌ Account is not authorized. Please use 'Authorize' first to set up the account.", False)
             
             client.disconnect()
             
+        except ApiIdInvalidError:
+            self.finished.emit("❌ Invalid API ID or API Hash. Please check your credentials in Settings.", False)
         except Exception as e:
+            self.logger.error(f"Test error: {e}")
+            self._update_account_status(AccountStatus.ERROR)
             self.finished.emit(f"❌ Test failed: {str(e)}", False)
     
     def _connect_account(self):
         """Connect to account (for already authorized accounts)."""
         try:
+            if self._should_stop:
+                return
+                
             self.progress.emit("Connecting to account...")
             
             from telethon import TelegramClient
+            from telethon.errors import ApiIdInvalidError
+            
+            # Validate API credentials
+            if not self.api_id or not self.api_hash:
+                self.finished.emit("❌ API credentials are not configured. Please set them in Settings first.", False)
+                return
             
             # Create client
             client = TelegramClient(
                 self.session_path or f"app_data/sessions/session_{self.phone_number}",
-                self.api_id,
+                int(self.api_id),
                 self.api_hash
             )
             
+            if self._should_stop:
+                return
+                
             self.progress.emit("Connecting to Telegram...")
             client.connect()
+            
+            if self._should_stop:
+                client.disconnect()
+                return
             
             if client.is_user_authorized():
                 # Update account status in database
                 self._update_account_status(AccountStatus.ONLINE)
-                self.finished.emit(f"✅ Successfully connected to {self.account_name}!", True)
+                self.finished.emit(f"✅ Successfully connected to {self.account_name}!\n\nAccount is now online and ready for messaging.", True)
             else:
                 self._update_account_status(AccountStatus.OFFLINE)
-                self.finished.emit("❌ Account is not authorized. Please authorize first.", False)
+                self.finished.emit("❌ Account is not authorized. Please use 'Authorize' first to set up the account.", False)
             
             client.disconnect()
             
+        except ApiIdInvalidError:
+            self.finished.emit("❌ Invalid API ID or API Hash. Please check your credentials in Settings.", False)
         except Exception as e:
+            self.logger.error(f"Connection error: {e}")
             self._update_account_status(AccountStatus.ERROR)
             self.finished.emit(f"❌ Connection failed: {str(e)}", False)
     
@@ -767,12 +882,11 @@ class AccountListWidget(QWidget):
                     return
                 
                 # Create progress dialog
-                progress_dialog = QMessageBox(self)
-                progress_dialog.setWindowTitle(f"{operation.title()} Account")
-                progress_dialog.setText(f"{operation.title()}ing {account_name}...")
-                progress_dialog.setStandardButtons(QMessageBox.NoButton)
-                progress_dialog.setModal(True)
-                progress_dialog.show()
+                progress_dialog = ProgressDialog(
+                    self, 
+                    f"{operation.title()} Account",
+                    f"{operation.title()}ing {account_name}..."
+                )
                 
                 # Create worker thread
                 self.worker = TelegramWorker(
@@ -791,11 +905,23 @@ class AccountListWidget(QWidget):
                     lambda msg, success: self._on_operation_finished(progress_dialog, msg, success)
                 )
                 self.worker.progress.connect(
-                    lambda msg: progress_dialog.setText(f"{operation.title()}ing {account_name}...\n{msg}")
+                    lambda msg: progress_dialog.update_status(f"{operation.title()}ing {account_name}...\n{msg}")
                 )
+                
+                # Show progress dialog
+                progress_dialog.show()
+                
+                # Connect cancel button to stop worker
+                progress_dialog.cancel_button.clicked.connect(self.worker.stop)
                 
                 # Start worker
                 self.worker.start()
+                
+                # Set up timeout timer (30 seconds)
+                timeout_timer = QTimer()
+                timeout_timer.setSingleShot(True)
+                timeout_timer.timeout.connect(lambda: self._handle_timeout(progress_dialog, operation, account_name))
+                timeout_timer.start(30000)  # 30 seconds timeout
                 
             finally:
                 session.close()
@@ -803,6 +929,16 @@ class AccountListWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Error starting {operation} operation: {e}")
             QMessageBox.critical(self, "Error", f"Failed to start {operation}: {e}")
+    
+    def _handle_timeout(self, progress_dialog, operation, account_name):
+        """Handle operation timeout."""
+        progress_dialog.close()
+        self.worker.stop()
+        QMessageBox.warning(
+            self, 
+            "Operation Timeout", 
+            f"The {operation} operation for {account_name} timed out after 30 seconds. Please try again."
+        )
     
     def _on_operation_finished(self, progress_dialog, message, success):
         """Handle operation completion."""

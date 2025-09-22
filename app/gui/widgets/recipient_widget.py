@@ -847,7 +847,7 @@ class RecipientWidget(QWidget):
         # This could show recipient details in a side panel
         pass
     
-    def on_recipient_updated(self, recipient):
+    def on_recipient_updated(self, recipient_id):
         """Handle recipient update."""
         # Refresh the list
         self.recipient_list.refresh_recipients()

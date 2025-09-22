@@ -5,7 +5,7 @@ Database models for the Telegram Multi-Account Message Sender.
 from .base import BaseModel, TimestampMixin, UUIDMixin, SoftDeleteMixin, JSONFieldMixin
 from .account import Account, AccountStatus, ProxyType
 from .campaign import Campaign, CampaignStatus, CampaignType, MessageType
-from .recipient import Recipient, RecipientList, RecipientListRecipient, RecipientSource, RecipientStatus
+from .recipient import Recipient, RecipientList, RecipientListRecipient, RecipientSource, RecipientStatus, RecipientType
 from .template import MessageTemplate, TemplateType, TemplateCategory
 from .send_log import SendLog, SendStatus
 
@@ -34,6 +34,7 @@ __all__ = [
     "RecipientListRecipient",
     "RecipientSource",
     "RecipientStatus",
+    "RecipientType",
     
     # Template models
     "MessageTemplate",

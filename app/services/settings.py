@@ -116,17 +116,25 @@ class Settings(BaseSettings):
             raise ValueError("Database URL must start with sqlite:///, postgresql://, or mysql://")
         return v
     
-    @validator("telegram_api_id")
+    @validator("telegram_api_id", pre=True)
     def validate_api_id(cls, v):
         """Validate Telegram API ID."""
-        if v is not None and (not isinstance(v, int) or v <= 0):
+        if v is None or v == "":
+            return None
+        try:
+            parsed = int(v)
+            if parsed <= 0:
+                raise ValueError("Telegram API ID must be a positive integer")
+            return parsed
+        except (ValueError, TypeError):
             raise ValueError("Telegram API ID must be a positive integer")
-        return v
     
-    @validator("telegram_api_hash")
+    @validator("telegram_api_hash", pre=True)
     def validate_api_hash(cls, v):
         """Validate Telegram API hash."""
-        if v is not None and (not isinstance(v, str) or len(v) != 32):
+        if v is None or v == "":
+            return None
+        if not isinstance(v, str) or len(v) != 32:
             raise ValueError("Telegram API hash must be a 32-character string")
         return v
     

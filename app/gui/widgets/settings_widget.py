@@ -44,10 +44,6 @@ class SettingsWidget(QWidget):
         app_group = QGroupBox("Application Settings")
         app_layout = QFormLayout(app_group)
         
-        self.app_name_edit = QLineEdit()
-        self.app_name_edit.setText(self.settings.app_name)
-        app_layout.addRow("Application Name:", self.app_name_edit)
-        
         self.debug_check = QCheckBox("Enable Debug Mode")
         self.debug_check.setChecked(self.settings.debug)
         app_layout.addRow(self.debug_check)
@@ -208,59 +204,6 @@ class SettingsWidget(QWidget):
         
         tab_widget.addTab(safety_tab, "Safety")
         
-        # About Tab
-        about_tab = QWidget()
-        about_layout = QVBoxLayout(about_tab)
-        
-        # About Information
-        about_group = QGroupBox("About Telegram Multi-Account Message Sender")
-        about_form_layout = QFormLayout(about_group)
-        
-        about_text = QTextEdit()
-        about_text.setReadOnly(True)
-        about_text.setMaximumHeight(300)
-        about_text.setHtml("""
-        <h2>🚀 Telegram Multi-Account Message Sender v1.0.0</h2>
-        
-        <p><b>Professional-grade desktop application for managing and sending messages across multiple Telegram accounts safely with advanced features like scheduling, spintax, media support, and compliance controls.</b></p>
-        
-        <h3>✨ Key Features:</h3>
-        <ul>
-        <li><b>🏦 Account Management:</b> Multi-account support with proxy configuration</li>
-        <li><b>📢 Campaign System:</b> Advanced campaign builder with A/B testing</li>
-        <li><b>👥 Recipient Management:</b> Individual management and CSV import</li>
-        <li><b>📊 Analytics & Logging:</b> Real-time logs and performance metrics</li>
-        <li><b>🔒 Safety & Compliance:</b> Rate limiting and safety controls</li>
-        <li><b>🎨 Modern UI:</b> Professional PyQt5 interface with theme support</li>
-        </ul>
-        
-        <h3>🛠️ Technical Stack:</h3>
-        <ul>
-        <li><b>Python:</b> 3.10+ with type hints</li>
-        <li><b>GUI:</b> PyQt5 framework</li>
-        <li><b>Database:</b> SQLModel ORM with SQLite</li>
-        <li><b>API:</b> Telethon for Telegram integration</li>
-        <li><b>Settings:</b> Pydantic configuration management</li>
-        </ul>
-        
-        <h3>📄 License:</h3>
-        <p>BSD 3-Clause License - See LICENSE file for details</p>
-        
-        <h3>👨‍💻 Developer:</h3>
-        <p><b>VoxHash</b> - contact@voxhash.dev</p>
-        
-        <h3>⚠️ Disclaimer:</h3>
-        <p>This application is for educational and legitimate business purposes only. Users are responsible for complying with Telegram's Terms of Service and applicable laws.</p>
-        
-        <p><i>Made with ❤️ by VoxHash</i></p>
-        <p><i>Professional Telegram automation made simple! 🚀</i></p>
-        """)
-        about_form_layout.addRow(about_text)
-        
-        about_layout.addWidget(about_group)
-        
-        tab_widget.addTab(about_tab, "About")
-        
         # Buttons
         button_layout = QHBoxLayout()
         
@@ -293,7 +236,6 @@ class SettingsWidget(QWidget):
         """Save settings to file."""
         try:
             # Update settings object
-            self.settings.app_name = self.app_name_edit.text()
             self.settings.debug = self.debug_check.isChecked()
             self.settings.log_level = self.log_level_combo.currentText()
             
@@ -317,10 +259,16 @@ class SettingsWidget(QWidget):
             self.settings.warmup_interval_minutes = self.warmup_interval_spin.value()
             
             # UI settings
-            self.settings.theme = self.theme_combo.currentText()
+            new_theme = self.theme_combo.currentText()
+            self.settings.theme = new_theme
             self.settings.window_width = self.window_width_spin.value()
             self.settings.window_height = self.window_height_spin.value()
             self.settings.window_maximized = self.window_maximized_check.isChecked()
+            
+            # Apply theme immediately
+            from ...gui.theme import ThemeManager
+            theme_manager = ThemeManager()
+            theme_manager.apply_theme(new_theme)
             
             # Safety settings
             self.settings.respect_rate_limits = self.respect_limits_check.isChecked()

@@ -8,10 +8,10 @@ from PyQt5.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
     QHeaderView, QGroupBox, QComboBox, QCheckBox, QSpinBox,
     QMessageBox, QDialog, QDialogButtonBox, QFormLayout,
-    QTextEdit, QFileDialog, QProgressBar
+    QTextEdit, QFileDialog, QProgressBar, QAbstractItemView
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import QFont, QIcon, QPalette, QColor
 
 from ...models import Account, AccountStatus, ProxyType
 from ...models.base import SoftDeleteMixin
@@ -361,6 +361,30 @@ class AccountListWidget(QWidget):
         self.accounts_table.setAlternatingRowColors(True)
         self.accounts_table.itemSelectionChanged.connect(self.on_selection_changed)
         
+        # Set custom styling for black and gray alternating rows
+        self.accounts_table.setStyleSheet("""
+            QTableWidget {
+                alternate-background-color: #2d2d2d;
+                background-color: #1a1a1a;
+                gridline-color: #404040;
+                color: white;
+            }
+            QTableWidget::item {
+                padding: 8px;
+                border: none;
+            }
+            QTableWidget::item:selected {
+                background-color: #0078d4;
+                color: white;
+            }
+            QTableWidget::item:alternate {
+                background-color: #2d2d2d;
+            }
+        """)
+        
+        # Connect cell clicked signal for actions
+        self.accounts_table.cellClicked.connect(self.on_cell_clicked)
+        
         layout.addWidget(self.accounts_table)
         
         # Status bar
@@ -381,39 +405,73 @@ class AccountListWidget(QWidget):
             self.accounts_table.setRowCount(len(accounts))
             
             for row, account in enumerate(accounts):
-                # Name
-                self.accounts_table.setItem(row, 0, QTableWidgetItem(account.name))
+                # Name - Disabled text field
+                name_item = QTableWidgetItem(account.name)
+                name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
+                self.accounts_table.setItem(row, 0, name_item)
                 
-                # Phone
-                self.accounts_table.setItem(row, 1, QTableWidgetItem(account.phone_number))
+                # Phone - Disabled text field
+                phone_item = QTableWidgetItem(account.phone_number)
+                phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable)
+                self.accounts_table.setItem(row, 1, phone_item)
                 
-                # Status
+                # Status - Enhanced button-like appearance
                 status_item = QTableWidgetItem(account.status.value.title())
+                status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable)
+                
+                # Set status-specific styling with button-like appearance
                 if account.status == AccountStatus.ONLINE:
-                    status_item.setBackground(Qt.green)
+                    status_item.setBackground(QColor(34, 197, 94))  # Green
+                    status_item.setForeground(Qt.white)
                 elif account.status == AccountStatus.ERROR:
-                    status_item.setBackground(Qt.red)
+                    status_item.setBackground(QColor(239, 68, 68))  # Red
+                    status_item.setForeground(Qt.white)
                 elif account.status == AccountStatus.OFFLINE:
-                    status_item.setBackground(Qt.gray)
+                    status_item.setBackground(QColor(107, 114, 128))  # Gray
+                    status_item.setForeground(Qt.white)
+                elif account.status == AccountStatus.CONNECTING:
+                    status_item.setBackground(QColor(245, 158, 11))  # Orange
+                    status_item.setForeground(Qt.white)
+                elif account.status == AccountStatus.SUSPENDED:
+                    status_item.setBackground(QColor(156, 163, 175))  # Light gray
+                    status_item.setForeground(Qt.white)
+                
+                # Center align status text
+                status_item.setTextAlignment(Qt.AlignCenter)
                 self.accounts_table.setItem(row, 2, status_item)
                 
-                # Messages sent
-                self.accounts_table.setItem(row, 3, QTableWidgetItem(str(account.total_messages_sent)))
+                # Messages sent - Disabled text field
+                messages_item = QTableWidgetItem(str(account.total_messages_sent))
+                messages_item.setFlags(messages_item.flags() & ~Qt.ItemIsEditable)
+                messages_item.setTextAlignment(Qt.AlignCenter)
+                self.accounts_table.setItem(row, 3, messages_item)
                 
-                # Success rate
+                # Success rate - Disabled text field
                 success_rate = account.get_success_rate()
-                self.accounts_table.setItem(row, 4, QTableWidgetItem(f"{success_rate:.1f}%"))
+                success_item = QTableWidgetItem(f"{success_rate:.1f}%")
+                success_item.setFlags(success_item.flags() & ~Qt.ItemIsEditable)
+                success_item.setTextAlignment(Qt.AlignCenter)
+                self.accounts_table.setItem(row, 4, success_item)
                 
-                # Last activity
+                # Last activity - Disabled text field
                 last_activity = account.last_activity.strftime("%Y-%m-%d %H:%M") if account.last_activity else "Never"
-                self.accounts_table.setItem(row, 5, QTableWidgetItem(last_activity))
+                activity_item = QTableWidgetItem(last_activity)
+                activity_item.setFlags(activity_item.flags() & ~Qt.ItemIsEditable)
+                activity_item.setTextAlignment(Qt.AlignCenter)
+                self.accounts_table.setItem(row, 5, activity_item)
                 
-                # Warmup status
+                # Warmup status - Disabled text field
                 warmup_status = "Complete" if account.is_warmup_complete() else f"{account.warmup_messages_sent}/{account.warmup_target_messages}"
-                self.accounts_table.setItem(row, 6, QTableWidgetItem(warmup_status))
+                warmup_item = QTableWidgetItem(warmup_status)
+                warmup_item.setFlags(warmup_item.flags() & ~Qt.ItemIsEditable)
+                warmup_item.setTextAlignment(Qt.AlignCenter)
+                self.accounts_table.setItem(row, 6, warmup_item)
                 
-                # Actions
+                # Actions - Create action buttons
                 actions_item = QTableWidgetItem("Connect | Test | Authorize")
+                actions_item.setFlags(actions_item.flags() & ~Qt.ItemIsEditable)
+                actions_item.setTextAlignment(Qt.AlignCenter)
+                actions_item.setData(Qt.UserRole, account.id)  # Store account ID for actions
                 self.accounts_table.setItem(row, 7, actions_item)
                 
                 # Store account ID in the first column for reference
@@ -429,6 +487,69 @@ class AccountListWidget(QWidget):
         """Refresh accounts data."""
         self.load_accounts()
     
+    def on_cell_clicked(self, row, column):
+        """Handle cell click events."""
+        if column == 7:  # Actions column
+            account_id = self.accounts_table.item(row, 0).data(Qt.UserRole)
+            self.show_action_menu(row, column, account_id)
+    
+    def show_action_menu(self, row, column, account_id):
+        """Show action menu for account actions."""
+        from PyQt5.QtWidgets import QMenu
+        
+        # Get account name for display
+        account_name = self.accounts_table.item(row, 0).text()
+        
+        # Create context menu
+        menu = QMenu(self)
+        
+        # Connect action
+        connect_action = menu.addAction("🔗 Connect")
+        connect_action.triggered.connect(lambda: self.connect_account(account_id, account_name))
+        
+        # Test action
+        test_action = menu.addAction("🧪 Test")
+        test_action.triggered.connect(lambda: self.test_account(account_id, account_name))
+        
+        # Authorize action
+        authorize_action = menu.addAction("🔐 Authorize")
+        authorize_action.triggered.connect(lambda: self.authorize_account(account_id, account_name))
+        
+        # Show menu at cursor position
+        menu.exec_(self.accounts_table.mapToGlobal(
+            self.accounts_table.visualItemRect(self.accounts_table.item(row, column)).bottomLeft()
+        ))
+    
+    def connect_account(self, account_id, account_name):
+        """Connect to account."""
+        try:
+            self.logger.info(f"Connecting to account: {account_name}")
+            # TODO: Implement actual connection logic
+            QMessageBox.information(self, "Connect", f"Connecting to {account_name}...")
+        except Exception as e:
+            self.logger.error(f"Error connecting to account: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to connect: {e}")
+    
+    def test_account(self, account_id, account_name):
+        """Test account connection."""
+        try:
+            self.logger.info(f"Testing account: {account_name}")
+            # TODO: Implement actual test logic
+            QMessageBox.information(self, "Test", f"Testing {account_name}...")
+        except Exception as e:
+            self.logger.error(f"Error testing account: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to test: {e}")
+    
+    def authorize_account(self, account_id, account_name):
+        """Authorize account."""
+        try:
+            self.logger.info(f"Authorizing account: {account_name}")
+            # TODO: Implement actual authorization logic
+            QMessageBox.information(self, "Authorize", f"Authorizing {account_name}...")
+        except Exception as e:
+            self.logger.error(f"Error authorizing account: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to authorize: {e}")
+
     def on_selection_changed(self):
         """Handle selection change."""
         selected_rows = self.accounts_table.selectionModel().selectedRows()

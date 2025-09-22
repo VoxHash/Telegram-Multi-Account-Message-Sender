@@ -1,49 +1,32 @@
 # 📚 Telegram Multi-Account Message Sender Documentation
 
-Welcome to the comprehensive documentation for the Telegram Multi-Account Message Sender application.
+Welcome to the documentation for the Telegram Multi-Account Message Sender application.
 
-## 📖 Table of Contents
+## 📖 Available Documentation
 
-### 🚀 Getting Started
-- [Installation Guide](installation.md)
-- [Quick Start](quick-start.md)
-- [Configuration](configuration.md)
+### 📋 Core Documentation
+- **[Main README](../README.md)**: Complete project overview and setup instructions
+- **[Changelog](../CHANGELOG.md)**: Version history and updates
+- **[Contributing Guide](../CONTRIBUTING.md)**: How to contribute to the project
+- **[Development Roadmap](../ROADMAP.md)**: Future development plans
+- **[GitHub Topics](../GITHUB_TOPICS.md)**: Repository topics and metadata
 
-### 👤 User Guide
-- [Account Management](user-guide/account-management.md)
-- [Campaign Creation](user-guide/campaign-creation.md)
-- [Recipient Management](user-guide/recipient-management.md)
-- [Logs and Analytics](user-guide/logs-analytics.md)
-- [Settings](user-guide/settings.md)
+### 🚀 Quick Start
+1. **Installation**: Follow the [Main README](../README.md#installation) for setup instructions
+2. **Configuration**: See [Configuration section](../README.md#configuration) for environment setup
+3. **Usage**: Check [Usage section](../README.md#usage) for basic operations
 
-### 🔧 Developer Guide
-- [Architecture Overview](developer-guide/architecture.md)
-- [API Reference](developer-guide/api-reference.md)
-- [Database Schema](developer-guide/database-schema.md)
-- [Contributing](developer-guide/contributing.md)
+### 🎯 Quick Navigation
 
-### 🛠️ Advanced Topics
-- [Security Best Practices](advanced/security.md)
-- [Performance Optimization](advanced/performance.md)
-- [Troubleshooting](advanced/troubleshooting.md)
-- [Deployment](advanced/deployment.md)
+#### For Users
+- **New to the app?** Start with the [Main README](../README.md)
+- **Want to contribute?** Read the [Contributing Guide](../CONTRIBUTING.md)
+- **Need help?** Check [GitHub Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
 
-### 📋 Reference
-- [Changelog](../CHANGELOG.md)
-- [FAQ](faq.md)
-- [Glossary](glossary.md)
-
-## 🎯 Quick Navigation
-
-### For Users
-- **New to the app?** Start with [Installation Guide](installation.md)
-- **Want to send messages?** Check [Campaign Creation](user-guide/campaign-creation.md)
-- **Need help?** See [Troubleshooting](advanced/troubleshooting.md)
-
-### For Developers
-- **Contributing?** Read [Contributing Guide](developer-guide/contributing.md)
-- **Understanding the code?** See [Architecture Overview](developer-guide/architecture.md)
-- **API questions?** Check [API Reference](developer-guide/api-reference.md)
+#### For Developers
+- **Understanding the code?** See the [Project Structure](../README.md#project-structure)
+- **Building the app?** Check the [Building section](../README.md#building)
+- **Contributing?** Read the [Contributing Guide](../CONTRIBUTING.md)
 
 ## 📞 Support
 

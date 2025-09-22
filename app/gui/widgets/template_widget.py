@@ -185,14 +185,21 @@ class TemplateDialog(QDialog):
             return True
         
         try:
-            # Test if the message can be parsed as spintax
-            self.spintax_processor.parse(message_text)
+            # Validate spintax syntax
+            validation_result = self.spintax_processor.validate_spintax(message_text)
+            if not validation_result["valid"]:
+                error_msg = "Invalid spintax syntax:\n\n" + "\n".join(validation_result["errors"])
+                QMessageBox.warning(
+                    self, "Spintax Validation Error",
+                    f"{error_msg}\n\nPlease check your spintax syntax. Use {{option1|option2|option3}} format."
+                )
+                return False
             return True
         except Exception as e:
             QMessageBox.warning(
                 self, "Spintax Validation Error",
-                f"Invalid spintax syntax in message:\n\n{str(e)}\n\n"
-                "Please check your spintax syntax. Use {option1|option2|option3} format."
+                f"Error validating spintax syntax:\n\n{str(e)}\n\n"
+                "Please check your spintax syntax. Use {{option1|option2|option3}} format."
             )
             return False
     
@@ -204,13 +211,12 @@ class TemplateDialog(QDialog):
             return
         
         try:
-            # Generate multiple variations
-            variations = []
-            for i in range(5):  # Generate 5 variations
-                variation = self.spintax_processor.generate(message_text)
-                variations.append(f"Variation {i+1}: {variation}")
+            # Generate multiple variations using the correct method
+            variations = self.spintax_processor.get_preview_samples(message_text, count=5)
             
-            preview_text = "Spintax Preview (5 variations):\n\n" + "\n\n".join(variations)
+            preview_text = "Spintax Preview (5 variations):\n\n"
+            for i, variation in enumerate(variations, 1):
+                preview_text += f"Variation {i}: {variation}\n\n"
             
             msg = QMessageBox(self)
             msg.setWindowTitle("Spintax Preview")
@@ -262,12 +268,19 @@ class TemplateDialog(QDialog):
                 spintax_example = self.spintax_example_edit.text().strip()
                 if spintax_example:
                     try:
-                        self.spintax_processor.parse(spintax_example)
+                        validation_result = self.spintax_processor.validate_spintax(spintax_example)
+                        if not validation_result["valid"]:
+                            error_msg = "Invalid spintax syntax in example:\n\n" + "\n".join(validation_result["errors"])
+                            QMessageBox.warning(
+                                self, "Spintax Validation Error",
+                                f"{error_msg}\n\nPlease check your spintax syntax. Use {{option1|option2|option3}} format."
+                            )
+                            return
                     except Exception as e:
                         QMessageBox.warning(
                             self, "Spintax Validation Error",
-                            f"Invalid spintax syntax in example:\n\n{str(e)}\n\n"
-                            "Please check your spintax syntax. Use {option1|option2|option3} format."
+                            f"Error validating spintax example:\n\n{str(e)}\n\n"
+                            "Please check your spintax syntax. Use {{option1|option2|option3}} format."
                         )
                         return
             

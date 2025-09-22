@@ -3,7 +3,7 @@
 > **Professional-grade desktop application for managing and sending messages across multiple Telegram accounts safely with advanced features like scheduling, spintax, media support, and compliance controls.**
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-BSD%203--Clause-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-green.svg)](https://python.org/)
 [![PyQt5](https://img.shields.io/badge/pyqt5-5.15+-blue.svg)](https://pypi.org/project/PyQt5/)
 

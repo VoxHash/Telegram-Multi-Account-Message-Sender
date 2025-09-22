@@ -10,12 +10,12 @@ authors = [
     {name = "VoxHash", email = "contact@voxhash.dev"}
 ]
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "BSD-3-Clause"}
 requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",

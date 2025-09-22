@@ -210,6 +210,7 @@ class SendLogWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logger = get_logger()
+        self.campaigns_loaded = False  # Flag to prevent duplicate campaign loading
         self.setup_ui()
         self.load_send_logs()
         
@@ -540,8 +541,9 @@ class SendLogWidget(QWidget):
                 # Execute query and load all data within session
                 logs = session.exec(query.order_by(SendLog.created_at.desc()).limit(1000)).all()
                 
-                # Update campaign combo with available campaigns
-                self.update_campaign_combo(session)
+                # Update campaign combo with available campaigns (only if not already loaded)
+                if not self.campaigns_loaded:
+                    self.update_campaign_combo(session)
                 
                 # Process logs within session context
                 self.logs_table.setRowCount(len(logs))
@@ -641,6 +643,11 @@ class SendLogWidget(QWidget):
         """Apply filters to logs."""
         self.load_send_logs()
     
+    def refresh_campaigns(self):
+        """Refresh campaign list from database."""
+        self.campaigns_loaded = False
+        self.load_send_logs()
+    
     def update_campaign_combo(self, session):
         """Update campaign combo with available campaigns."""
         try:
@@ -653,18 +660,25 @@ class SendLogWidget(QWidget):
             # Store current selection
             current_selection = self.campaign_combo.currentText()
             
-            # Clear and repopulate
+            # Clear and repopulate - ensure complete clear
             self.campaign_combo.clear()
             self.campaign_combo.addItem("All")
             
+            # Add unique campaigns only
+            campaign_names = set()
             for campaign in campaigns:
-                self.campaign_combo.addItem(campaign.name)
+                if campaign.name not in campaign_names:
+                    self.campaign_combo.addItem(campaign.name)
+                    campaign_names.add(campaign.name)
             
             # Restore selection if it still exists
             if current_selection in [self.campaign_combo.itemText(i) for i in range(self.campaign_combo.count())]:
                 self.campaign_combo.setCurrentText(current_selection)
             else:
                 self.campaign_combo.setCurrentText("All")
+            
+            # Mark as loaded
+            self.campaigns_loaded = True
                 
         except Exception as e:
             self.logger.error(f"Error updating campaign combo: {e}")

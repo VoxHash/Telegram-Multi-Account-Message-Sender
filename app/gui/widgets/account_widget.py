@@ -846,6 +846,7 @@ class AccountListWidget(QWidget):
         header.setSectionResizeMode(7, QHeaderView.ResizeToContents)
         
         self.accounts_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.accounts_table.setSelectionMode(QTableWidget.SingleSelection)
         self.accounts_table.setAlternatingRowColors(True)
         self.accounts_table.itemSelectionChanged.connect(self.on_selection_changed)
         

@@ -57,11 +57,37 @@ class RecipientDialog(QDialog):
         self.group_type_edit.setVisible(is_group)
         self.member_count_edit.setVisible(is_group)
         
-        # Update labels
+        # Update labels and placeholders
         if is_group:
             self.username_edit.setPlaceholderText("@group_username")
+            # Update group-specific labels
+            if recipient_type == "group":
+                self.group_title_edit.setPlaceholderText("My Group Name")
+                self.group_username_edit.setPlaceholderText("@mygroup")
+                self.group_type_edit.setPlaceholderText("supergroup")
+            else:  # channel
+                self.group_title_edit.setPlaceholderText("My Channel Name")
+                self.group_username_edit.setPlaceholderText("@mychannel")
+                self.group_type_edit.setPlaceholderText("channel")
         else:
             self.username_edit.setPlaceholderText("@username")
+            self.user_id_edit.setPlaceholderText("123456789")
+            self.phone_edit.setPlaceholderText("+1234567890")
+            self.first_name_edit.setPlaceholderText("John")
+            self.last_name_edit.setPlaceholderText("Doe")
+        
+        # Clear fields when switching types
+        if is_user:
+            self.group_id_edit.clear()
+            self.group_title_edit.clear()
+            self.group_username_edit.clear()
+            self.group_type_edit.clear()
+            self.member_count_edit.clear()
+        else:
+            self.user_id_edit.clear()
+            self.phone_edit.clear()
+            self.first_name_edit.clear()
+            self.last_name_edit.clear()
     
     def setup_ui(self):
         """Set up the dialog UI."""
@@ -88,6 +114,7 @@ class RecipientDialog(QDialog):
         self.username_edit.setPlaceholderText("@username")
         basic_layout.addRow("Username:", self.username_edit)
         
+        # User fields
         self.user_id_edit = QLineEdit()
         self.user_id_edit.setPlaceholderText("123456789")
         basic_layout.addRow("User ID:", self.user_id_edit)
@@ -847,7 +874,12 @@ class RecipientListWidget(QWidget):
             return
         
         row = selected_rows[0].row()
-        recipient_id = self.recipients_table.item(row, 0).data(Qt.UserRole)
+        # Get recipient ID from the display name item (column 1)
+        display_name_item = self.recipients_table.item(row, 1)
+        if not display_name_item:
+            QMessageBox.warning(self, "Selection Error", "No recipient selected")
+            return
+        recipient_id = display_name_item.data(Qt.UserRole)
         
         # Load recipient from database
         session = get_session()
@@ -876,8 +908,13 @@ class RecipientListWidget(QWidget):
             return
         
         row = selected_rows[0].row()
-        recipient_name = self.recipients_table.item(row, 0).text()
-        recipient_id = self.recipients_table.item(row, 0).data(Qt.UserRole)
+        # Get recipient name from display name item (column 1)
+        display_name_item = self.recipients_table.item(row, 1)
+        if not display_name_item:
+            QMessageBox.warning(self, "Selection Error", "No recipient selected")
+            return
+        recipient_name = display_name_item.text()
+        recipient_id = display_name_item.data(Qt.UserRole)
         
         reply = QMessageBox.question(
             self, 

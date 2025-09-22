@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
     QLabel, QLineEdit, QPushButton, QComboBox, QTextEdit,
     QGroupBox, QListWidget, QListWidgetItem, QMessageBox,
-    QSplitter, QFrame
+    QSplitter, QFrame, QFileDialog, QTabWidget
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, pyqtSlot
 from PyQt5.QtGui import QFont, QIcon
@@ -71,13 +71,15 @@ class TestMessageWorker(QThread):
                         self.finished.emit({
                             'success': True,
                             'message': 'Message sent successfully',
-                            'details': f"Sent to {self.recipient_identifier} at {datetime.now().strftime('%H:%M:%S')}"
+                            'details': f"Sent to {self.recipient_identifier} at {datetime.now().strftime('%H:%M:%S')}",
+                            'media_path': self.media_path
                         })
                     else:
                         self.finished.emit({
                             'success': False,
                             'message': 'Failed to send message',
-                            'details': result.get('error', 'Unknown error')
+                            'details': result.get('error', 'Unknown error'),
+                            'media_path': self.media_path
                         })
                     
             except Exception as e:
@@ -85,7 +87,8 @@ class TestMessageWorker(QThread):
                 self.finished.emit({
                     'success': False,
                     'message': 'Error sending message',
-                    'details': str(e)
+                    'details': str(e),
+                    'media_path': self.media_path
                 })
             finally:
                 # Clean up
@@ -148,10 +151,57 @@ class TestingWidget(QWidget):
         self.message_edit.setMaximumHeight(100)
         form_group_layout.addRow("Message:", self.message_edit)
         
-        # Media path (optional)
-        self.media_edit = QLineEdit()
-        self.media_edit.setPlaceholderText("Media file path (optional)...")
-        form_group_layout.addRow("Media:", self.media_edit)
+        # Media section with tabs for file and URL
+        media_widget = QWidget()
+        media_layout = QVBoxLayout(media_widget)
+        media_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Media tabs
+        self.media_tabs = QTabWidget()
+        self.media_tabs.setMaximumHeight(80)
+        
+        # File tab
+        file_tab = QWidget()
+        file_layout = QHBoxLayout(file_tab)
+        file_layout.setContentsMargins(5, 5, 5, 5)
+        
+        self.media_file_edit = QLineEdit()
+        self.media_file_edit.setPlaceholderText("No file selected...")
+        self.media_file_edit.setReadOnly(True)
+        file_layout.addWidget(self.media_file_edit)
+        
+        self.choose_file_button = QPushButton("Choose File")
+        self.choose_file_button.clicked.connect(self.choose_media_file)
+        self.choose_file_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                padding: 8px 12px;
+                font-size: 12px;
+                border-radius: 3px;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+        """)
+        file_layout.addWidget(self.choose_file_button)
+        
+        self.media_tabs.addTab(file_tab, "📁 File")
+        
+        # URL tab
+        url_tab = QWidget()
+        url_layout = QHBoxLayout(url_tab)
+        url_layout.setContentsMargins(5, 5, 5, 5)
+        
+        self.media_url_edit = QLineEdit()
+        self.media_url_edit.setPlaceholderText("Paste image/video/audio URL...")
+        url_layout.addWidget(self.media_url_edit)
+        
+        self.media_tabs.addTab(url_tab, "🌐 URL")
+        
+        media_layout.addWidget(self.media_tabs)
+        form_group_layout.addRow("Media:", media_widget)
         
         form_layout.addWidget(form_group)
         
@@ -235,6 +285,50 @@ class TestingWidget(QWidget):
         
         # Set splitter proportions
         splitter.setSizes([400, 300])
+    
+    def choose_media_file(self):
+        """Open file dialog to choose media file."""
+        # Telegram supported media file extensions
+        supported_extensions = [
+            "Images (*.jpg *.jpeg *.png *.gif *.bmp *.webp *.tiff *.ico)",
+            "Videos (*.mp4 *.avi *.mov *.wmv *.flv *.webm *.mkv *.3gp *.m4v)",
+            "Audio (*.mp3 *.wav *.ogg *.m4a *.aac *.flac *.wma)",
+            "Documents (*.pdf *.doc *.docx *.txt *.rtf *.odt)",
+            "All Files (*)"
+        ]
+        
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Choose Media File",
+            "",
+            ";;".join(supported_extensions)
+        )
+        
+        if file_path:
+            self.media_file_edit.setText(file_path)
+            # Switch to file tab if not already there
+            self.media_tabs.setCurrentIndex(0)
+            self.logger.info(f"Selected media file: {file_path}")
+    
+    def validate_media_url(self, url: str) -> bool:
+        """Validate if URL is a supported media URL."""
+        if not url:
+            return True  # Empty URL is valid (no media)
+        
+        # Basic URL validation
+        if not (url.startswith('http://') or url.startswith('https://')):
+            return False
+        
+        # Check for common media file extensions in URL
+        media_extensions = [
+            '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.ico',
+            '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.3gp', '.m4v',
+            '.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.wma',
+            '.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt'
+        ]
+        
+        url_lower = url.lower()
+        return any(ext in url_lower for ext in media_extensions)
     
     def load_data(self):
         """Load accounts, recipients, and templates."""
@@ -322,8 +416,26 @@ class TestingWidget(QWidget):
             self.send_button.setEnabled(False)
             self.send_button.setText("Sending...")
             
-            # Get media path
-            media_path = self.media_edit.text().strip() or None
+            # Get media path from selected tab
+            media_path = None
+            if self.media_tabs.currentIndex() == 0:  # File tab
+                media_path = self.media_file_edit.text().strip() or None
+            else:  # URL tab
+                media_url = self.media_url_edit.text().strip()
+                if media_url:
+                    if not self.validate_media_url(media_url):
+                        QMessageBox.warning(
+                            self,
+                            "Invalid Media URL",
+                            "Please enter a valid URL for a supported media file.\n\n"
+                            "Supported formats:\n"
+                            "• Images: JPG, PNG, GIF, WebP, etc.\n"
+                            "• Videos: MP4, AVI, MOV, WebM, etc.\n"
+                            "• Audio: MP3, WAV, OGG, M4A, etc.\n"
+                            "• Documents: PDF, DOC, TXT, etc."
+                        )
+                        return
+                    media_path = media_url
             
             # Create and start worker
             self.worker = TestMessageWorker(account_id, recipient_identifier, message_text, media_path)
@@ -357,7 +469,8 @@ class TestingWidget(QWidget):
                 'recipient': self.recipient_combo.currentText(),
                 'message': self.message_edit.toPlainText()[:50] + "..." if len(self.message_edit.toPlainText()) > 50 else self.message_edit.toPlainText(),
                 'success': result['success'],
-                'details': result['details']
+                'details': result['details'],
+                'media_path': result.get('media_path', '')
             }
             
             self.recent_tests.insert(0, test_entry)  # Add to beginning
@@ -385,11 +498,24 @@ class TestingWidget(QWidget):
             timestamp = test['timestamp'].strftime("%H:%M:%S")
             
             item_text = f"{status_icon} [{timestamp}] {test['account']} → {test['recipient']}"
+            
+            # Add media info if present
+            if test.get('media_path'):
+                if test['media_path'].startswith(('http://', 'https://')):
+                    item_text += " [URL]"
+                else:
+                    item_text += " [File]"
+            
             if not test['success']:
                 item_text += f" - {test['details']}"
             
             item = QListWidgetItem(item_text)
-            item.setToolTip(f"Message: {test['message']}\nDetails: {test['details']}")
+            
+            # Enhanced tooltip with media info
+            tooltip = f"Message: {test['message']}\nDetails: {test['details']}"
+            if test.get('media_path'):
+                tooltip += f"\nMedia: {test['media_path']}"
+            item.setToolTip(tooltip)
             
             # Color code based on success
             if test['success']:

@@ -14,9 +14,9 @@ from .base import BaseModel, SoftDeleteMixin, JSONFieldMixin
 
 class RecipientType(str, Enum):
     """Recipient type enumeration."""
-    USER = "user"
-    GROUP = "group"
-    CHANNEL = "channel"
+    USER = "USER"
+    GROUP = "GROUP"
+    CHANNEL = "CHANNEL"
 
 class RecipientSource(str, Enum):
     """Recipient source enumeration."""

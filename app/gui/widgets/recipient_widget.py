@@ -69,6 +69,9 @@ class RecipientDialog(QDialog):
         self.setModal(True)
         self.resize(500, 400)
         
+        # Enable help button
+        self.setWindowFlags(self.windowFlags() | Qt.WindowContextHelpButtonHint)
+        
         layout = QVBoxLayout(self)
         
         # Basic Information
@@ -281,19 +284,83 @@ class RecipientDialog(QDialog):
             try:
                 if self.recipient.id is None:
                     session.add(self.recipient)
+                    session.flush()  # Flush to get the ID
+                    recipient_id = self.recipient.id
                 else:
                     session.merge(self.recipient)
+                    recipient_id = self.recipient.id
                 session.commit()
+                
+                self.logger.info(f"Recipient saved: {self.recipient.get_display_name()}")
+                self.recipient_saved.emit(recipient_id)
+                self.accept()
+            except Exception as e:
+                session.rollback()
+                raise e
             finally:
                 session.close()
-            
-            self.logger.info(f"Recipient saved: {self.recipient.get_display_name()}")
-            self.recipient_saved.emit(self.recipient.id)
-            self.accept()
             
         except Exception as e:
             self.logger.error(f"Error saving recipient: {e}")
             QMessageBox.critical(self, "Error", f"Failed to save recipient: {e}")
+    
+    def event(self, event):
+        """Handle events including help button clicks."""
+        if event.type() == event.EnterWhatsThisMode:
+            self.show_help()
+            return True
+        return super().event(event)
+    
+    def show_help(self):
+        """Show help dialog."""
+        help_text = """
+        <h3>Add/Edit Recipient Help</h3>
+        
+        <h4>Recipient Types:</h4>
+        <ul>
+        <li><b>User:</b> Individual Telegram users (personal accounts)</li>
+        <li><b>Group:</b> Telegram groups (up to 200,000 members)</li>
+        <li><b>Channel:</b> Telegram channels (unlimited subscribers)</li>
+        </ul>
+        
+        <h4>Required Fields by Type:</h4>
+        <p><b>For Users:</b> At least one identifier required:</p>
+        <ul>
+        <li>Username (e.g., @username)</li>
+        <li>User ID (numeric ID)</li>
+        <li>Phone Number (e.g., +1234567890)</li>
+        </ul>
+        
+        <p><b>For Groups/Channels:</b> At least one identifier required:</p>
+        <ul>
+        <li>Group ID (numeric ID)</li>
+        <li>Group Title (display name)</li>
+        <li>Group Username (e.g., @groupname)</li>
+        </ul>
+        
+        <h4>Optional Fields:</h4>
+        <ul>
+        <li><b>Email:</b> Contact email address</li>
+        <li><b>Bio:</b> Description or bio text</li>
+        <li><b>Tags:</b> Comma-separated tags for organization</li>
+        <li><b>Notes:</b> Internal notes about this recipient</li>
+        </ul>
+        
+        <h4>Tips:</h4>
+        <ul>
+        <li>Use tags to organize recipients (e.g., "vip, customer, newsletter")</li>
+        <li>Phone numbers should include country code (e.g., +1234567890)</li>
+        <li>Usernames should not include the @ symbol</li>
+        <li>Group types can be: "group", "supergroup", "channel"</li>
+        </ul>
+        """
+        
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Recipient Help")
+        msg.setTextFormat(Qt.RichText)
+        msg.setText(help_text)
+        msg.setIcon(QMessageBox.Information)
+        msg.exec_()
 
 
 class CSVImportDialog(QDialog):

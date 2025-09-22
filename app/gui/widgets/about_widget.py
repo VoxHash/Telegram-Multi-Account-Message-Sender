@@ -49,24 +49,25 @@ class AboutWidget(QWidget):
         # About text
         about_text = QTextEdit()
         about_text.setReadOnly(True)
-        about_text.setMaximumHeight(400)
+        about_text.setMinimumHeight(500)
+        about_text.setMaximumHeight(800)
         about_text.setHtml("""
         <div style="text-align: center; font-family: Arial, sans-serif;">
-            <p style="font-size: 14px; line-height: 1.6; margin: 20px 0;">
+            <p style="font-size: 16px; line-height: 1.8; margin: 25px 0;">
                 <strong>Professional-grade desktop application for managing and sending messages across multiple Telegram accounts safely with advanced features like scheduling, spintax, media support, and compliance controls.</strong>
             </p>
             
-            <div style="margin: 30px 0; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <p style="font-size: 14px; margin: 15px 0;"><strong>📄 License:</strong><br>
+            <div style="margin: 40px 0; text-align: left; max-width: 700px; margin-left: auto; margin-right: auto;">
+                <p style="font-size: 16px; margin: 20px 0; line-height: 1.6;"><strong>📄 License:</strong><br>
                 BSD 3-Clause License - See LICENSE file for details</p>
                 
-                <p style="font-size: 14px; margin: 15px 0;"><strong>👨‍💻 Developer:</strong><br>
+                <p style="font-size: 16px; margin: 20px 0; line-height: 1.6;"><strong>👨‍💻 Developer:</strong><br>
                 VoxHash - contact@voxhash.dev</p>
                 
-                <p style="font-size: 14px; margin: 15px 0;"><strong>⚠️ Disclaimer:</strong><br>
+                <p style="font-size: 16px; margin: 20px 0; line-height: 1.6;"><strong>⚠️ Disclaimer:</strong><br>
                 This application is for educational and legitimate business purposes only. Users are responsible for complying with Telegram's Terms of Service and applicable laws.</p>
                 
-                <p style="font-size: 14px; margin: 30px 0; text-align: center; font-style: italic;">
+                <p style="font-size: 16px; margin: 40px 0; text-align: center; font-style: italic; line-height: 1.6;">
                     Made with ❤️ by VoxHash
                 </p>
             </div>

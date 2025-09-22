@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon, QColor
 
-from ...models import Recipient, RecipientList, RecipientSource, RecipientStatus
+from ...models import Recipient, RecipientList, RecipientSource, RecipientStatus, RecipientType
 from ...services import get_logger, get_session
 import csv
 import pandas as pd
@@ -32,6 +32,36 @@ class RecipientDialog(QDialog):
         
         if recipient:
             self.load_recipient_data()
+        
+        # Initialize form based on type
+        self.on_type_changed()
+    
+    def on_type_changed(self):
+        """Handle recipient type change."""
+        recipient_type = self.type_combo.currentText().lower()
+        
+        # Show/hide fields based on type
+        is_user = recipient_type == "user"
+        is_group = recipient_type in ["group", "channel"]
+        
+        # User fields
+        self.user_id_edit.setVisible(is_user)
+        self.phone_edit.setVisible(is_user)
+        self.first_name_edit.setVisible(is_user)
+        self.last_name_edit.setVisible(is_user)
+        
+        # Group fields
+        self.group_id_edit.setVisible(is_group)
+        self.group_title_edit.setVisible(is_group)
+        self.group_username_edit.setVisible(is_group)
+        self.group_type_edit.setVisible(is_group)
+        self.member_count_edit.setVisible(is_group)
+        
+        # Update labels
+        if is_group:
+            self.username_edit.setPlaceholderText("@group_username")
+        else:
+            self.username_edit.setPlaceholderText("@username")
     
     def setup_ui(self):
         """Set up the dialog UI."""
@@ -44,6 +74,12 @@ class RecipientDialog(QDialog):
         # Basic Information
         basic_group = QGroupBox("Basic Information")
         basic_layout = QFormLayout(basic_group)
+        
+        # Recipient Type
+        self.type_combo = QComboBox()
+        self.type_combo.addItems(["User", "Group", "Channel"])
+        self.type_combo.currentTextChanged.connect(self.on_type_changed)
+        basic_layout.addRow("Type:", self.type_combo)
         
         self.username_edit = QLineEdit()
         self.username_edit.setPlaceholderText("@username")
@@ -64,6 +100,27 @@ class RecipientDialog(QDialog):
         self.last_name_edit = QLineEdit()
         self.last_name_edit.setPlaceholderText("Doe")
         basic_layout.addRow("Last Name:", self.last_name_edit)
+        
+        # Group/Channel fields
+        self.group_id_edit = QLineEdit()
+        self.group_id_edit.setPlaceholderText("-1001234567890")
+        basic_layout.addRow("Group ID:", self.group_id_edit)
+        
+        self.group_title_edit = QLineEdit()
+        self.group_title_edit.setPlaceholderText("My Group Name")
+        basic_layout.addRow("Group Title:", self.group_title_edit)
+        
+        self.group_username_edit = QLineEdit()
+        self.group_username_edit.setPlaceholderText("@mygroup")
+        basic_layout.addRow("Group Username:", self.group_username_edit)
+        
+        self.group_type_edit = QLineEdit()
+        self.group_type_edit.setPlaceholderText("supergroup")
+        basic_layout.addRow("Group Type:", self.group_type_edit)
+        
+        self.member_count_edit = QLineEdit()
+        self.member_count_edit.setPlaceholderText("150")
+        basic_layout.addRow("Member Count:", self.member_count_edit)
         
         layout.addWidget(basic_group)
         
@@ -104,51 +161,112 @@ class RecipientDialog(QDialog):
         if not self.recipient:
             return
         
+        # Set recipient type
+        type_mapping = {
+            RecipientType.USER: "User",
+            RecipientType.GROUP: "Group", 
+            RecipientType.CHANNEL: "Channel"
+        }
+        self.type_combo.setCurrentText(type_mapping.get(self.recipient.recipient_type, "User"))
+        
+        # Load common fields
         self.username_edit.setText(self.recipient.username or "")
-        self.user_id_edit.setText(str(self.recipient.user_id) if self.recipient.user_id else "")
-        self.phone_edit.setText(self.recipient.phone_number or "")
-        self.first_name_edit.setText(self.recipient.first_name or "")
-        self.last_name_edit.setText(self.recipient.last_name or "")
         self.email_edit.setText(self.recipient.email or "")
         self.bio_edit.setText(self.recipient.bio or "")
         self.tags_edit.setText(", ".join(self.recipient.get_tags_list()))
         self.notes_edit.setText(self.recipient.notes or "")
+        
+        # Load user-specific fields
+        if self.recipient.recipient_type == RecipientType.USER:
+            self.user_id_edit.setText(str(self.recipient.user_id) if self.recipient.user_id else "")
+            self.phone_edit.setText(self.recipient.phone_number or "")
+            self.first_name_edit.setText(self.recipient.first_name or "")
+            self.last_name_edit.setText(self.recipient.last_name or "")
+        else:
+            # Load group/channel fields
+            self.group_id_edit.setText(str(self.recipient.group_id) if self.recipient.group_id else "")
+            self.group_title_edit.setText(self.recipient.group_title or "")
+            self.group_username_edit.setText(self.recipient.group_username or "")
+            self.group_type_edit.setText(self.recipient.group_type or "")
+            self.member_count_edit.setText(str(self.recipient.member_count) if self.recipient.member_count else "")
     
     def save_recipient(self):
         """Save recipient data."""
         try:
-            # Validate required fields
-            if not any([
-                self.username_edit.text().strip(),
-                self.user_id_edit.text().strip(),
-                self.phone_edit.text().strip()
-            ]):
-                QMessageBox.warning(self, "Validation Error", "At least one identifier (username, user ID, or phone) is required")
-                return
+            # Get recipient type
+            recipient_type_text = self.type_combo.currentText().lower()
+            recipient_type = RecipientType.USER
+            if recipient_type_text == "group":
+                recipient_type = RecipientType.GROUP
+            elif recipient_type_text == "channel":
+                recipient_type = RecipientType.CHANNEL
+            
+            # Validate required fields based on type
+            if recipient_type == RecipientType.USER:
+                if not any([
+                    self.username_edit.text().strip(),
+                    self.user_id_edit.text().strip(),
+                    self.phone_edit.text().strip()
+                ]):
+                    QMessageBox.warning(self, "Validation Error", "At least one identifier (username, user ID, or phone) is required for users")
+                    return
+            else:
+                if not any([
+                    self.group_id_edit.text().strip(),
+                    self.group_title_edit.text().strip(),
+                    self.group_username_edit.text().strip()
+                ]):
+                    QMessageBox.warning(self, "Validation Error", "At least one identifier (group ID, title, or username) is required for groups/channels")
+                    return
             
             # Create or update recipient
             if self.recipient:
                 # Update existing recipient
+                self.recipient.recipient_type = recipient_type
                 self.recipient.username = self.username_edit.text().strip() or None
-                self.recipient.user_id = int(self.user_id_edit.text().strip()) if self.user_id_edit.text().strip() else None
-                self.recipient.phone_number = self.phone_edit.text().strip() or None
-                self.recipient.first_name = self.first_name_edit.text().strip() or None
-                self.recipient.last_name = self.last_name_edit.text().strip() or None
+                self.recipient.email = self.email_edit.text().strip() or None
+                self.recipient.bio = self.bio_edit.toPlainText().strip() or None
+                self.recipient.notes = self.notes_edit.toPlainText().strip() or None
+                
+                if recipient_type == RecipientType.USER:
+                    self.recipient.user_id = int(self.user_id_edit.text().strip()) if self.user_id_edit.text().strip() else None
+                    self.recipient.phone_number = self.phone_edit.text().strip() or None
+                    self.recipient.first_name = self.first_name_edit.text().strip() or None
+                    self.recipient.last_name = self.last_name_edit.text().strip() or None
+                else:
+                    self.recipient.group_id = int(self.group_id_edit.text().strip()) if self.group_id_edit.text().strip() else None
+                    self.recipient.group_title = self.group_title_edit.text().strip() or None
+                    self.recipient.group_username = self.group_username_edit.text().strip() or None
+                    self.recipient.group_type = self.group_type_edit.text().strip() or None
+                    self.recipient.member_count = int(self.member_count_edit.text().strip()) if self.member_count_edit.text().strip() else None
             else:
                 # Create new recipient
-                self.recipient = Recipient(
-                    username=self.username_edit.text().strip() or None,
-                    user_id=int(self.user_id_edit.text().strip()) if self.user_id_edit.text().strip() else None,
-                    phone_number=self.phone_edit.text().strip() or None,
-                    first_name=self.first_name_edit.text().strip() or None,
-                    last_name=self.last_name_edit.text().strip() or None,
-                    source=RecipientSource.MANUAL
-                )
-            
-            # Update additional fields
-            self.recipient.email = self.email_edit.text().strip() or None
-            self.recipient.bio = self.bio_edit.toPlainText().strip() or None
-            self.recipient.notes = self.notes_edit.toPlainText().strip() or None
+                recipient_data = {
+                    "recipient_type": recipient_type,
+                    "username": self.username_edit.text().strip() or None,
+                    "email": self.email_edit.text().strip() or None,
+                    "bio": self.bio_edit.toPlainText().strip() or None,
+                    "notes": self.notes_edit.toPlainText().strip() or None,
+                    "source": RecipientSource.MANUAL
+                }
+                
+                if recipient_type == RecipientType.USER:
+                    recipient_data.update({
+                        "user_id": int(self.user_id_edit.text().strip()) if self.user_id_edit.text().strip() else None,
+                        "phone_number": self.phone_edit.text().strip() or None,
+                        "first_name": self.first_name_edit.text().strip() or None,
+                        "last_name": self.last_name_edit.text().strip() or None,
+                    })
+                else:
+                    recipient_data.update({
+                        "group_id": int(self.group_id_edit.text().strip()) if self.group_id_edit.text().strip() else None,
+                        "group_title": self.group_title_edit.text().strip() or None,
+                        "group_username": self.group_username_edit.text().strip() or None,
+                        "group_type": self.group_type_edit.text().strip() or None,
+                        "member_count": int(self.member_count_edit.text().strip()) if self.member_count_edit.text().strip() else None,
+                    })
+                
+                self.recipient = Recipient(**recipient_data)
             
             # Update tags
             tags_text = self.tags_edit.text().strip()
@@ -390,8 +508,8 @@ class CSVImportDialog(QDialog):
 class RecipientListWidget(QWidget):
     """Widget for displaying and managing recipients."""
     
-    recipient_selected = pyqtSignal(Recipient)
-    recipient_updated = pyqtSignal(Recipient)
+    recipient_selected = pyqtSignal(int)
+    recipient_updated = pyqtSignal(int)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -443,20 +561,21 @@ class RecipientListWidget(QWidget):
         
         # Recipients table
         self.recipients_table = QTableWidget()
-        self.recipients_table.setColumnCount(7)
+        self.recipients_table.setColumnCount(8)
         self.recipients_table.setHorizontalHeaderLabels([
-            "Display Name", "Username", "User ID", "Phone", "Source", "Status", "Messages"
+            "Type", "Display Name", "Username/Group", "ID", "Phone", "Source", "Status", "Messages"
         ])
         
         # Configure table
         header = self.recipients_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Type
+        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Display Name
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Username/Group
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # ID
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Phone
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Source
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Status
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Messages
         
         self.recipients_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.recipients_table.setSelectionMode(QTableWidget.SingleSelection)
@@ -513,37 +632,58 @@ class RecipientListWidget(QWidget):
             self.recipients_table.setRowCount(len(recipients))
             
             for row, recipient in enumerate(recipients):
+                # Type - Disabled text field
+                type_text = recipient.recipient_type.value.title()
+                if recipient.recipient_type.value == "group":
+                    type_text = "👥 Group"
+                elif recipient.recipient_type.value == "channel":
+                    type_text = "📢 Channel"
+                else:
+                    type_text = "👤 User"
+                
+                type_item = QTableWidgetItem(type_text)
+                type_item.setFlags(type_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                type_item.setTextAlignment(Qt.AlignCenter)
+                self.recipients_table.setItem(row, 0, type_item)
+                
                 # Display name - Disabled text field
                 display_name_item = QTableWidgetItem(recipient.get_display_name())
                 display_name_item.setFlags(display_name_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 # Store recipient ID in the display name item for selection handling
                 display_name_item.setData(Qt.UserRole, recipient.id)
-                self.recipients_table.setItem(row, 0, display_name_item)
+                self.recipients_table.setItem(row, 1, display_name_item)
                 
-                # Username - Disabled text field
-                username = f"@{recipient.username}" if recipient.username else ""
+                # Username/Group - Disabled text field
+                if recipient.recipient_type.value in ["group", "channel"]:
+                    username = f"@{recipient.group_username}" if recipient.group_username else ""
+                else:
+                    username = f"@{recipient.username}" if recipient.username else ""
                 username_item = QTableWidgetItem(username)
                 username_item.setFlags(username_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                self.recipients_table.setItem(row, 1, username_item)
+                self.recipients_table.setItem(row, 2, username_item)
                 
-                # User ID - Disabled text field
-                user_id = str(recipient.user_id) if recipient.user_id else ""
-                user_id_item = QTableWidgetItem(user_id)
-                user_id_item.setFlags(user_id_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                user_id_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 2, user_id_item)
+                # ID - Disabled text field
+                if recipient.recipient_type.value in ["group", "channel"]:
+                    id_text = str(recipient.group_id) if recipient.group_id else ""
+                else:
+                    id_text = str(recipient.user_id) if recipient.user_id else ""
+                id_item = QTableWidgetItem(id_text)
+                id_item.setFlags(id_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                id_item.setTextAlignment(Qt.AlignCenter)
+                self.recipients_table.setItem(row, 3, id_item)
                 
-                # Phone - Disabled text field
-                phone_item = QTableWidgetItem(recipient.phone_number or "")
+                # Phone - Disabled text field (only for users)
+                phone_text = recipient.phone_number if recipient.recipient_type.value == "user" else ""
+                phone_item = QTableWidgetItem(phone_text or "")
                 phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 phone_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 3, phone_item)
+                self.recipients_table.setItem(row, 4, phone_item)
                 
                 # Source - Disabled text field
                 source_item = QTableWidgetItem(recipient.source.value.title())
                 source_item.setFlags(source_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 source_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 4, source_item)
+                self.recipients_table.setItem(row, 5, source_item)
                 
                 # Status - Enhanced button-like appearance
                 status_item = QTableWidgetItem(recipient.status.value.title())
@@ -562,14 +702,14 @@ class RecipientListWidget(QWidget):
                 
                 # Center align status text
                 status_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 5, status_item)
+                self.recipients_table.setItem(row, 6, status_item)
                 
                 # Messages - Disabled text field
                 messages = f"{recipient.total_messages_sent}/{recipient.total_messages_sent + recipient.total_messages_failed}"
                 messages_item = QTableWidgetItem(messages)
                 messages_item.setFlags(messages_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 messages_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 6, messages_item)
+                self.recipients_table.setItem(row, 7, messages_item)
             
             self.status_label.setText(f"Loaded {len(recipients)} recipients")
             

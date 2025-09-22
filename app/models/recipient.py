@@ -12,6 +12,12 @@ from sqlalchemy import JSON
 from .base import BaseModel, SoftDeleteMixin, JSONFieldMixin
 
 
+class RecipientType(str, Enum):
+    """Recipient type enumeration."""
+    USER = "user"
+    GROUP = "group"
+    CHANNEL = "channel"
+
 class RecipientSource(str, Enum):
     """Recipient source enumeration."""
     MANUAL = "manual"
@@ -35,12 +41,20 @@ class Recipient(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     __tablename__ = "recipients"
     
     # Basic info
+    recipient_type: RecipientType = Field(default=RecipientType.USER)
     username: Optional[str] = Field(default=None, index=True)
     user_id: Optional[int] = Field(default=None, index=True)
     phone_number: Optional[str] = Field(default=None, index=True)
     first_name: Optional[str] = Field(default=None)
     last_name: Optional[str] = Field(default=None)
     display_name: Optional[str] = Field(default=None)
+    
+    # Group/Channel specific fields
+    group_id: Optional[int] = Field(default=None, index=True)
+    group_title: Optional[str] = Field(default=None)
+    group_username: Optional[str] = Field(default=None, index=True)
+    group_type: Optional[str] = Field(default=None)  # "group", "supergroup", "channel"
+    member_count: Optional[int] = Field(default=None)
     
     # Contact info
     email: Optional[str] = Field(default=None)
@@ -69,30 +83,50 @@ class Recipient(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     
     def get_display_name(self) -> str:
         """Get display name for the recipient."""
-        if self.display_name:
-            return self.display_name
-        
-        if self.first_name and self.last_name:
-            return f"{self.first_name} {self.last_name}"
-        elif self.first_name:
-            return self.first_name
-        elif self.username:
-            return f"@{self.username}"
-        elif self.user_id:
-            return f"User {self.user_id}"
+        if self.recipient_type == RecipientType.GROUP or self.recipient_type == RecipientType.CHANNEL:
+            if self.group_title:
+                return self.group_title
+            elif self.group_username:
+                return f"@{self.group_username}"
+            elif self.group_id:
+                return f"Group {self.group_id}"
+            else:
+                return "Unknown Group"
         else:
-            return "Unknown"
+            # User type
+            if self.display_name:
+                return self.display_name
+            
+            if self.first_name and self.last_name:
+                return f"{self.first_name} {self.last_name}"
+            elif self.first_name:
+                return self.first_name
+            elif self.username:
+                return f"@{self.username}"
+            elif self.user_id:
+                return f"User {self.user_id}"
+            else:
+                return "Unknown"
     
     def get_identifier(self) -> str:
         """Get unique identifier for the recipient."""
-        if self.username:
-            return f"@{self.username}"
-        elif self.user_id:
-            return str(self.user_id)
-        elif self.phone_number:
-            return self.phone_number
+        if self.recipient_type == RecipientType.GROUP or self.recipient_type == RecipientType.CHANNEL:
+            if self.group_username:
+                return f"@{self.group_username}"
+            elif self.group_id:
+                return str(self.group_id)
+            else:
+                return f"group_{self.id}"
         else:
-            return f"recipient_{self.id}"
+            # User type
+            if self.username:
+                return f"@{self.username}"
+            elif self.user_id:
+                return str(self.user_id)
+            elif self.phone_number:
+                return self.phone_number
+            else:
+                return f"recipient_{self.id}"
     
     def is_contactable(self) -> bool:
         """Check if recipient can be contacted."""

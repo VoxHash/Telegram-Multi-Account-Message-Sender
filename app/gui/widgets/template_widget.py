@@ -74,6 +74,12 @@ class TemplateDialog(QDialog):
         variables_help.setStyleSheet("color: #888888; font-style: italic;")
         message_layout.addWidget(variables_help)
         
+        # Variables vs Spintax explanation
+        explanation = QLabel("💡 Variables ({name}) are replaced with actual values. For message variations, use Spintax ({option1|option2|option3}) below.")
+        explanation.setStyleSheet("color: #4CAF50; font-weight: bold; padding: 8px; background-color: #1a1a1a; border: 1px solid #4CAF50; border-radius: 4px;")
+        explanation.setWordWrap(True)
+        message_layout.addWidget(explanation)
+        
         layout.addWidget(message_group)
         
         # Spintax Settings
@@ -141,11 +147,24 @@ class TemplateDialog(QDialog):
         <li><b>Variables:</b> Use {name}, {email}, {phone}, {company}, {date}, {time} for personalization</li>
         </ul>
         
+        <h4>⚠️ IMPORTANT: Variables vs Spintax</h4>
+        <p><b>VARIABLES</b> (for personalization - what you probably want):</p>
+        <ul>
+        <li>{name}, {email}, {company} - Replaced with actual values</li>
+        <li>Example: "Hello {name}!" becomes "Hello John!"</li>
+        </ul>
+        
+        <p><b>SPINTAX PATTERNS</b> (for variations - random text selection):</p>
+        <ul>
+        <li>{option1|option2|option3} - Creates random variations</li>
+        <li>Example: "Hello {friend|buddy|pal}!" becomes "Hello friend!" or "Hello buddy!"</li>
+        </ul>
+        
         <h4>Spintax Settings:</h4>
         <ul>
         <li><b>Enable Spintax:</b> Check to enable message variations</li>
         <li><b>Spintax Example:</b> Use {option1|option2|option3} syntax for variations</li>
-        <li><b>Example:</b> Hello {name|friend|buddy}, welcome to {our company|our service}!</li>
+        <li><b>Example:</b> Hello {friend|buddy|pal}, welcome to {our company|our service}!</li>
         </ul>
         
         <h4>Tags:</h4>
@@ -192,16 +211,37 @@ class TemplateDialog(QDialog):
             validation_result = self.spintax_processor.validate_spintax(message_text)
             
             if validation_result["patterns_count"] == 0:
-                # No spintax patterns found - this is not an error, just inform the user
-                QMessageBox.information(
-                    self, "Spintax Information",
-                    "No spintax patterns found in the message.\n\n"
-                    "To use spintax, add patterns like:\n"
-                    "• {option1|option2|option3}\n"
-                    "• Hello {name|friend|buddy}\n"
-                    "• Get {20%|25%|30%} off\n\n"
-                    "The message will be sent as-is without variations."
-                )
+                # Check if message contains variables but no spintax patterns
+                message_text = self.message_edit.toPlainText()
+                has_variables = any(var in message_text for var in ['{name}', '{email}', '{phone}', '{company}', '{date}', '{time}'])
+                
+                if has_variables:
+                    # Message has variables but no spintax patterns
+                    QMessageBox.information(
+                        self, "Spintax vs Variables",
+                        "Your message contains VARIABLES but no SPINTAX patterns.\n\n"
+                        "VARIABLES (what you have):\n"
+                        "• {name}, {email}, {company} - These are replaced with actual values\n"
+                        "• Example: 'Hello {name}!' becomes 'Hello John!'\n\n"
+                        "SPINTAX PATTERNS (for variations):\n"
+                        "• {option1|option2|option3} - Creates random variations\n"
+                        "• Example: 'Hello {friend|buddy|pal}!' becomes 'Hello friend!' or 'Hello buddy!'\n\n"
+                        "To create message variations, change your variables to spintax:\n"
+                        "• Instead of: 'Hello {name}!'\n"
+                        "• Use: 'Hello {friend|buddy|pal}!'\n\n"
+                        "Your current message will be sent as-is with variables replaced."
+                    )
+                else:
+                    # No variables or spintax patterns
+                    QMessageBox.information(
+                        self, "Spintax Information",
+                        "No spintax patterns found in the message.\n\n"
+                        "To use spintax, add patterns like:\n"
+                        "• {option1|option2|option3}\n"
+                        "• Hello {name|friend|buddy}\n"
+                        "• Get {20%|25%|30%} off\n\n"
+                        "The message will be sent as-is without variations."
+                    )
                 return True
             
             if not validation_result["valid"]:
@@ -232,16 +272,36 @@ class TemplateDialog(QDialog):
             validation_result = self.spintax_processor.validate_spintax(message_text)
             
             if validation_result["patterns_count"] == 0:
-                # No spintax patterns found
-                QMessageBox.information(
-                    self, "Spintax Preview",
-                    "No spintax patterns found in the message.\n\n"
-                    "To use spintax, add patterns like:\n"
-                    "• {option1|option2|option3}\n"
-                    "• Hello {name|friend|buddy}\n"
-                    "• Get {20%|25%|30%} off\n\n"
-                    "Current message:\n" + message_text
-                )
+                # Check if message contains variables but no spintax patterns
+                has_variables = any(var in message_text for var in ['{name}', '{email}', '{phone}', '{company}', '{date}', '{time}'])
+                
+                if has_variables:
+                    # Message has variables but no spintax patterns
+                    QMessageBox.information(
+                        self, "Spintax Preview - Variables vs Spintax",
+                        "Your message contains VARIABLES but no SPINTAX patterns.\n\n"
+                        "VARIABLES (what you have):\n"
+                        "• {name}, {email}, {company} - These are replaced with actual values\n"
+                        "• Example: 'Hello {name}!' becomes 'Hello John!'\n\n"
+                        "SPINTAX PATTERNS (for variations):\n"
+                        "• {option1|option2|option3} - Creates random variations\n"
+                        "• Example: 'Hello {friend|buddy|pal}!' becomes 'Hello friend!' or 'Hello buddy!'\n\n"
+                        "To create message variations, change your variables to spintax:\n"
+                        "• Instead of: 'Hello {name}!'\n"
+                        "• Use: 'Hello {friend|buddy|pal}!'\n\n"
+                        "Current message:\n" + message_text
+                    )
+                else:
+                    # No variables or spintax patterns
+                    QMessageBox.information(
+                        self, "Spintax Preview",
+                        "No spintax patterns found in the message.\n\n"
+                        "To use spintax, add patterns like:\n"
+                        "• {option1|option2|option3}\n"
+                        "• Hello {name|friend|buddy}\n"
+                        "• Get {20%|25%|30%} off\n\n"
+                        "Current message:\n" + message_text
+                    )
                 return
             
             # Generate multiple variations using the correct method

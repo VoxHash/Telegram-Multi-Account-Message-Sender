@@ -202,10 +202,6 @@ class TemplateListWidget(QWidget):
         self.setup_ui()
         self.load_templates()
         
-        # Setup refresh timer
-        self.refresh_timer = QTimer()
-        self.refresh_timer.timeout.connect(self.refresh_templates)
-        self.refresh_timer.start(30000)  # Refresh every 30 seconds
     
     def setup_ui(self):
         """Set up the UI."""
@@ -224,6 +220,14 @@ class TemplateListWidget(QWidget):
         self.add_button.clicked.connect(self.add_template)
         header_layout.addWidget(self.add_button)
         
+        self.import_button = QPushButton("Import CSV")
+        self.import_button.clicked.connect(self.import_csv)
+        header_layout.addWidget(self.import_button)
+        
+        self.export_button = QPushButton("Export CSV")
+        self.export_button.clicked.connect(self.export_csv)
+        header_layout.addWidget(self.export_button)
+        
         self.edit_button = QPushButton("Edit Template")
         self.edit_button.clicked.connect(self.edit_template)
         self.edit_button.setEnabled(False)
@@ -234,11 +238,33 @@ class TemplateListWidget(QWidget):
         self.delete_button.setEnabled(False)
         header_layout.addWidget(self.delete_button)
         
-        self.refresh_button = QPushButton("Refresh")
-        self.refresh_button.clicked.connect(self.refresh_templates)
-        header_layout.addWidget(self.refresh_button)
-        
         layout.addLayout(header_layout)
+        
+        # Search field
+        search_layout = QHBoxLayout()
+        search_label = QLabel("Search:")
+        search_label.setStyleSheet("color: white; font-weight: bold;")
+        search_layout.addWidget(search_label)
+        
+        self.search_edit = QLineEdit()
+        self.search_edit.setPlaceholderText("Search templates by name, description, tags, or content...")
+        self.search_edit.textChanged.connect(self.filter_templates)
+        self.search_edit.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                border: 2px solid #404040;
+                border-radius: 4px;
+                background-color: #2d2d2d;
+                color: white;
+            }
+            QLineEdit:focus {
+                border-color: #0078d4;
+            }
+        """)
+        search_layout.addWidget(self.search_edit)
+        search_layout.addStretch()
+        
+        layout.addLayout(search_layout)
         
         # Templates table
         self.templates_table = QTableWidget()
@@ -364,10 +390,6 @@ class TemplateListWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Error loading templates: {e}")
             self.status_label.setText(f"Error loading templates: {e}")
-    
-    def refresh_templates(self):
-        """Refresh templates data."""
-        self.load_templates()
     
     def on_cell_clicked(self, row, column):
         """Handle cell click events."""
@@ -559,6 +581,160 @@ class TemplateListWidget(QWidget):
             except Exception as e:
                 self.logger.error(f"Error deleting template: {e}")
                 QMessageBox.critical(self, "Error", f"Failed to delete template: {e}")
+    
+    def import_csv(self):
+        """Import templates from CSV file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Import Templates from CSV", "", "CSV Files (*.csv)"
+        )
+        
+        if not file_path:
+            return
+        
+        try:
+            import pandas as pd
+            
+            # Read CSV file
+            df = pd.read_csv(file_path)
+            
+            # Validate required columns
+            required_columns = ['name', 'description', 'body']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                QMessageBox.warning(
+                    self, "Invalid CSV", 
+                    f"Missing required columns: {', '.join(missing_columns)}\n"
+                    f"Required columns: {', '.join(required_columns)}"
+                )
+                return
+            
+            # Import templates
+            session = get_session()
+            imported_count = 0
+            
+            try:
+                for _, row in df.iterrows():
+                    # Check if template already exists
+                    existing = session.query(MessageTemplate).filter(
+                        MessageTemplate.name == row['name']
+                    ).first()
+                    
+                    if existing:
+                        self.logger.warning(f"Template '{row['name']}' already exists, skipping")
+                        continue
+                    
+                    # Create new template
+                    template = MessageTemplate(
+                        name=row['name'],
+                        description=row.get('description', ''),
+                        body=row['body'],
+                        use_spintax=row.get('use_spintax', False),
+                        spintax_text=row.get('spintax_text', ''),
+                        category=row.get('category', 'general'),
+                        is_active=row.get('is_active', True)
+                    )
+                    
+                    # Handle tags
+                    if 'tags' in row and pd.notna(row['tags']):
+                        tags = [tag.strip() for tag in str(row['tags']).split(',') if tag.strip()]
+                        template.set_tags_list(tags)
+                    
+                    session.add(template)
+                    imported_count += 1
+                
+                session.commit()
+                self.logger.info(f"Imported {imported_count} templates from CSV")
+                QMessageBox.information(
+                    self, "Import Successful", 
+                    f"Successfully imported {imported_count} templates from CSV file."
+                )
+                self.load_templates()
+                
+            finally:
+                session.close()
+                
+        except Exception as e:
+            self.logger.error(f"Error importing CSV: {e}")
+            QMessageBox.critical(self, "Import Error", f"Failed to import CSV: {e}")
+    
+    def export_csv(self):
+        """Export templates to CSV file."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Export Templates to CSV", "templates.csv", "CSV Files (*.csv)"
+        )
+        
+        if not file_path:
+            return
+        
+        try:
+            import pandas as pd
+            
+            # Get all templates
+            session = get_session()
+            try:
+                templates = session.query(MessageTemplate).filter(
+                    MessageTemplate.deleted_at.is_(None)
+                ).all()
+                
+                if not templates:
+                    QMessageBox.information(self, "No Data", "No templates to export.")
+                    return
+                
+                # Prepare data for export
+                data = []
+                for template in templates:
+                    data.append({
+                        'name': template.name,
+                        'description': template.description or '',
+                        'body': template.body,
+                        'use_spintax': template.use_spintax,
+                        'spintax_text': template.spintax_text or '',
+                        'category': template.category,
+                        'is_active': template.is_active,
+                        'tags': ', '.join(template.get_tags_list()) if template.get_tags_list() else '',
+                        'created_at': template.created_at.isoformat() if template.created_at else '',
+                        'updated_at': template.updated_at.isoformat() if template.updated_at else ''
+                    })
+                
+                # Create DataFrame and export
+                df = pd.DataFrame(data)
+                df.to_csv(file_path, index=False)
+                
+                self.logger.info(f"Exported {len(templates)} templates to CSV")
+                QMessageBox.information(
+                    self, "Export Successful", 
+                    f"Successfully exported {len(templates)} templates to CSV file."
+                )
+                
+            finally:
+                session.close()
+                
+        except Exception as e:
+            self.logger.error(f"Error exporting CSV: {e}")
+            QMessageBox.critical(self, "Export Error", f"Failed to export CSV: {e}")
+    
+    def filter_templates(self):
+        """Filter templates based on search text."""
+        search_text = self.search_edit.text().lower().strip()
+        
+        if not search_text:
+            # Show all templates
+            for row in range(self.templates_table.rowCount()):
+                self.templates_table.setRowHidden(row, False)
+            return
+        
+        # Filter templates
+        for row in range(self.templates_table.rowCount()):
+            should_show = False
+            
+            # Check all columns for search text
+            for col in range(self.templates_table.columnCount()):
+                item = self.templates_table.item(row, col)
+                if item and search_text in item.text().lower():
+                    should_show = True
+                    break
+            
+            self.templates_table.setRowHidden(row, not should_show)
 
 
 class TemplateWidget(QWidget):
@@ -588,4 +764,4 @@ class TemplateWidget(QWidget):
     def on_template_updated(self, template_id):
         """Handle template update."""
         # Refresh the list
-        self.template_list.refresh_templates()
+        self.template_list.load_templates()

@@ -37,6 +37,9 @@ class MainWindow(QMainWindow):
         self.update_timer.timeout.connect(self.update_status)
         self.update_timer.start(5000)  # Update every 5 seconds
         
+        # Initial status update
+        self.update_status()
+        
         self.logger.info("Main window initialized")
     
     def setup_ui(self):
@@ -99,11 +102,15 @@ class MainWindow(QMainWindow):
     def create_accounts_tab(self):
         """Create accounts management tab."""
         self.accounts_widget = AccountWidget()
+        # Connect account updates to refresh status
+        self.accounts_widget.account_list.account_updated.connect(self.update_status)
         self.tab_widget.addTab(self.accounts_widget, "Accounts")
     
     def create_campaigns_tab(self):
         """Create campaigns management tab."""
         self.campaigns_widget = CampaignWidget()
+        # Connect campaign updates to refresh status
+        self.campaigns_widget.campaign_updated.connect(self.update_status)
         self.tab_widget.addTab(self.campaigns_widget, "Campaigns")
     
     def create_templates_tab(self):
@@ -121,6 +128,8 @@ class MainWindow(QMainWindow):
     def create_recipients_tab(self):
         """Create recipients management tab."""
         self.recipients_widget = RecipientWidget()
+        # Connect recipient updates to refresh status
+        self.recipients_widget.recipient_updated.connect(self.update_status)
         self.tab_widget.addTab(self.recipients_widget, "Recipients")
     
     def create_logs_tab(self):
@@ -131,6 +140,8 @@ class MainWindow(QMainWindow):
     def create_settings_tab(self):
         """Create settings tab."""
         self.settings_widget = SettingsWidget()
+        # Connect settings update signal to update status bar
+        self.settings_widget.settings_updated.connect(self.on_settings_updated)
         self.tab_widget.addTab(self.settings_widget, "Settings")
     
     def create_about_tab(self):
@@ -180,10 +191,71 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "Create Campaign", "Campaign management coming soon!")
     
     
+    def on_settings_updated(self):
+        """Handle settings update."""
+        # Update theme label when settings change
+        self.theme_label.setText(f"Theme: {self.theme_manager.get_current_theme()}")
+        self.logger.info("Settings updated, status bar refreshed")
+    
     def update_status(self):
-        """Update status bar."""
-        # This would update with real status information
-        pass
+        """Update status bar with current application status."""
+        try:
+            # Get current status information
+            status_info = self.get_application_status()
+            self.status_label.setText(status_info)
+        except Exception as e:
+            self.logger.error(f"Error updating status: {e}")
+            self.status_label.setText("Error updating status")
+    
+    def get_application_status(self):
+        """Get current application status information."""
+        try:
+            from ..services import get_session
+            from ..models import Account, Campaign, Recipient
+            
+            session = get_session()
+            try:
+                # Count accounts
+                from sqlmodel import select, func
+                account_count = session.exec(select(func.count(Account.id)).where(Account.is_deleted == False)).first() or 0
+                
+                # Count campaigns
+                campaign_count = session.exec(select(func.count(Campaign.id)).where(Campaign.is_deleted == False)).first() or 0
+                
+                # Count recipients
+                recipient_count = session.exec(select(func.count(Recipient.id)).where(Recipient.is_deleted == False)).first() or 0
+                
+                # Get online accounts
+                online_accounts = session.exec(
+                    select(func.count(Account.id))
+                    .where(Account.is_deleted == False)
+                    .where(Account.status == "online")
+                ).first() or 0
+                
+                # Build status message
+                status_parts = []
+                if account_count > 0:
+                    status_parts.append(f"{account_count} account{'s' if account_count != 1 else ''}")
+                    if online_accounts > 0:
+                        status_parts.append(f"({online_accounts} online)")
+                
+                if campaign_count > 0:
+                    status_parts.append(f"{campaign_count} campaign{'s' if campaign_count != 1 else ''}")
+                
+                if recipient_count > 0:
+                    status_parts.append(f"{recipient_count} recipient{'s' if recipient_count != 1 else ''}")
+                
+                if status_parts:
+                    return " | ".join(status_parts)
+                else:
+                    return "Ready - No data loaded"
+                    
+            finally:
+                session.close()
+                
+        except Exception as e:
+            self.logger.error(f"Error getting application status: {e}")
+            return "Ready"
     
     def closeEvent(self, event):
         """Handle window close event."""

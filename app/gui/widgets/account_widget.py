@@ -896,6 +896,8 @@ class AccountListWidget(QWidget):
                 # Name - Disabled text field
                 name_item = QTableWidgetItem(account.name)
                 name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
+                # Store account ID in the name item for selection handling
+                name_item.setData(Qt.UserRole, account.id)
                 self.accounts_table.setItem(row, 0, name_item)
                 
                 # Phone - Disabled text field
@@ -961,9 +963,6 @@ class AccountListWidget(QWidget):
                 actions_item.setTextAlignment(Qt.AlignCenter)
                 actions_item.setData(Qt.UserRole, account.id)  # Store account ID for actions
                 self.accounts_table.setItem(row, 7, actions_item)
-                
-                # Store account ID in the first column for reference
-                self.accounts_table.item(row, 0).setData(Qt.UserRole, account.id)
             
             self.status_label.setText(f"Loaded {len(accounts)} accounts")
             
@@ -1256,9 +1255,17 @@ class AccountListWidget(QWidget):
         
         if has_selection:
             row = selected_rows[0].row()
-            account_id = self.accounts_table.item(row, 0).data(Qt.UserRole)
-            # Emit signal with account ID for further processing
-            self.account_selected.emit(account_id)
+            # Try to get account ID from the first column (Name column)
+            name_item = self.accounts_table.item(row, 0)
+            if name_item:
+                account_id = name_item.data(Qt.UserRole)
+                if account_id is not None:
+                    # Emit signal with account ID for further processing
+                    self.account_selected.emit(account_id)
+                else:
+                    self.logger.warning(f"No account ID found for row {row}")
+            else:
+                self.logger.warning(f"No name item found for row {row}")
     
     def add_account(self):
         """Add new account."""

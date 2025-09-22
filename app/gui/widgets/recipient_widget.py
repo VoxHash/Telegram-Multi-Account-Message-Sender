@@ -610,6 +610,10 @@ class RecipientListWidget(QWidget):
         self.import_button.clicked.connect(self.import_csv)
         header_layout.addWidget(self.import_button)
         
+        self.export_button = QPushButton("Export CSV")
+        self.export_button.clicked.connect(self.export_csv)
+        header_layout.addWidget(self.export_button)
+        
         self.edit_button = QPushButton("Edit Recipient")
         self.edit_button.clicked.connect(self.edit_recipient)
         self.edit_button.setEnabled(False)
@@ -625,6 +629,19 @@ class RecipientListWidget(QWidget):
         header_layout.addWidget(self.refresh_button)
         
         layout.addLayout(header_layout)
+        
+        # Search field
+        search_layout = QHBoxLayout()
+        search_label = QLabel("Search:")
+        search_label.setStyleSheet("color: white; font-weight: bold;")
+        search_layout.addWidget(search_label)
+        
+        self.search_edit = QLineEdit()
+        self.search_edit.setPlaceholderText("Search recipients by name, username, email, phone, tags, or notes...")
+        self.search_edit.textChanged.connect(self.filter_recipients)
+        search_layout.addWidget(self.search_edit)
+        
+        layout.addLayout(search_layout)
         
         # Recipients table
         self.recipients_table = QTableWidget()
@@ -888,6 +905,125 @@ class RecipientListWidget(QWidget):
             except Exception as e:
                 self.logger.error(f"Error deleting recipient: {e}")
                 QMessageBox.critical(self, "Error", f"Failed to delete recipient: {e}")
+    
+    def export_csv(self):
+        """Export recipients to CSV file."""
+        try:
+            # Open file dialog to select save location
+            file_path, _ = QFileDialog.getSaveFileName(
+                self, "Export Recipients", "recipients.csv", "CSV Files (*.csv)"
+            )
+            
+            if not file_path:
+                return
+            
+            # Get all recipients from database
+            session = get_session()
+            try:
+                from ...models import Recipient
+                from sqlmodel import select
+                recipients = session.exec(select(Recipient).where(Recipient.is_deleted == False)).all()
+            finally:
+                session.close()
+            
+            # Prepare data for export
+            export_data = []
+            for recipient in recipients:
+                data = {
+                    'id': recipient.id,
+                    'recipient_type': recipient.recipient_type,
+                    'display_name': recipient.get_display_name(),
+                    'username': recipient.username or '',
+                    'user_id': recipient.user_id or '',
+                    'phone_number': recipient.phone_number or '',
+                    'first_name': recipient.first_name or '',
+                    'last_name': recipient.last_name or '',
+                    'email': recipient.email or '',
+                    'bio': recipient.bio or '',
+                    'group_id': recipient.group_id or '',
+                    'group_title': recipient.group_title or '',
+                    'group_username': recipient.group_username or '',
+                    'group_type': recipient.group_type or '',
+                    'member_count': recipient.member_count or '',
+                    'source': recipient.source,
+                    'status': recipient.status,
+                    'tags': ', '.join(recipient.get_tags_list()),
+                    'notes': recipient.notes or '',
+                    'created_at': recipient.created_at.isoformat() if recipient.created_at else '',
+                    'updated_at': recipient.updated_at.isoformat() if recipient.updated_at else ''
+                }
+                export_data.append(data)
+            
+            # Create DataFrame and export to CSV
+            df = pd.DataFrame(export_data)
+            df.to_csv(file_path, index=False)
+            
+            QMessageBox.information(
+                self, "Export Successful", 
+                f"Successfully exported {len(export_data)} recipients to:\n{file_path}"
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Error exporting recipients: {e}")
+            QMessageBox.critical(self, "Export Error", f"Failed to export recipients: {e}")
+    
+    def filter_recipients(self):
+        """Filter recipients based on search text."""
+        search_text = self.search_edit.text().lower()
+        
+        if not search_text:
+            # Show all rows if no search text
+            for row in range(self.recipients_table.rowCount()):
+                self.recipients_table.setRowHidden(row, False)
+            return
+        
+        # Filter rows based on search text
+        for row in range(self.recipients_table.rowCount()):
+            should_show = False
+            
+            # Check all columns except the last one (Actions column)
+            for col in range(self.recipients_table.columnCount() - 1):
+                item = self.recipients_table.item(row, col)
+                if item and search_text in item.text().lower():
+                    should_show = True
+                    break
+            
+            # Also check tags and notes (stored in UserRole data)
+            if not should_show:
+                # Check if search text matches tags or notes
+                display_name_item = self.recipients_table.item(row, 0)
+                if display_name_item:
+                    recipient_id = display_name_item.data(Qt.UserRole)
+                    if recipient_id:
+                        # Get recipient data to check tags and notes
+                        session = get_session()
+                        try:
+                            from ...models import Recipient
+                            from sqlmodel import select
+                            recipient = session.exec(
+                                select(Recipient).where(Recipient.id == recipient_id)
+                            ).first()
+                            
+                            if recipient:
+                                # Check tags
+                                tags_text = ', '.join(recipient.get_tags_list()).lower()
+                                if search_text in tags_text:
+                                    should_show = True
+                                
+                                # Check notes
+                                if not should_show and recipient.notes:
+                                    if search_text in recipient.notes.lower():
+                                        should_show = True
+                                
+                                # Check email
+                                if not should_show and recipient.email:
+                                    if search_text in recipient.email.lower():
+                                        should_show = True
+                                        
+                        finally:
+                            session.close()
+            
+            self.recipients_table.setRowHidden(row, not should_show)
 
 
 class RecipientWidget(QWidget):

@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QTextEdit, QFileDialog, QProgressBar, QTabWidget
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import QFont, QIcon, QColor
 
 from ...models import Recipient, RecipientList, RecipientSource, RecipientStatus
 from ...services import get_logger, get_session
@@ -459,8 +459,39 @@ class RecipientListWidget(QWidget):
         header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
         
         self.recipients_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.recipients_table.setSelectionMode(QTableWidget.SingleSelection)
         self.recipients_table.setAlternatingRowColors(True)
         self.recipients_table.itemSelectionChanged.connect(self.on_selection_changed)
+        
+        # Set custom styling for black and gray alternating rows
+        self.recipients_table.setStyleSheet("""
+            QTableWidget {
+                alternate-background-color: #2d2d2d;
+                background-color: #1a1a1a;
+                gridline-color: #404040;
+                color: white;
+                selection-background-color: #0078d4;
+                selection-color: white;
+            }
+            QTableWidget::item {
+                padding: 8px;
+                border: none;
+            }
+            QTableWidget::item:selected {
+                background-color: #0078d4 !important;
+                color: white !important;
+            }
+            QTableWidget::item:alternate {
+                background-color: #2d2d2d;
+            }
+            QTableWidget::item:alternate:selected {
+                background-color: #0078d4 !important;
+                color: white !important;
+            }
+        """)
+        
+        # Connect cell clicked signal for actions
+        self.recipients_table.cellClicked.connect(self.on_cell_clicked)
         
         layout.addWidget(self.recipients_table)
         
@@ -482,39 +513,63 @@ class RecipientListWidget(QWidget):
             self.recipients_table.setRowCount(len(recipients))
             
             for row, recipient in enumerate(recipients):
-                # Display name
-                self.recipients_table.setItem(row, 0, QTableWidgetItem(recipient.get_display_name()))
+                # Display name - Disabled text field
+                display_name_item = QTableWidgetItem(recipient.get_display_name())
+                display_name_item.setFlags(display_name_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                # Store recipient ID in the display name item for selection handling
+                display_name_item.setData(Qt.UserRole, recipient.id)
+                self.recipients_table.setItem(row, 0, display_name_item)
                 
-                # Username
+                # Username - Disabled text field
                 username = f"@{recipient.username}" if recipient.username else ""
-                self.recipients_table.setItem(row, 1, QTableWidgetItem(username))
+                username_item = QTableWidgetItem(username)
+                username_item.setFlags(username_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                self.recipients_table.setItem(row, 1, username_item)
                 
-                # User ID
+                # User ID - Disabled text field
                 user_id = str(recipient.user_id) if recipient.user_id else ""
-                self.recipients_table.setItem(row, 2, QTableWidgetItem(user_id))
+                user_id_item = QTableWidgetItem(user_id)
+                user_id_item.setFlags(user_id_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                user_id_item.setTextAlignment(Qt.AlignCenter)
+                self.recipients_table.setItem(row, 2, user_id_item)
                 
-                # Phone
-                self.recipients_table.setItem(row, 3, QTableWidgetItem(recipient.phone_number or ""))
+                # Phone - Disabled text field
+                phone_item = QTableWidgetItem(recipient.phone_number or "")
+                phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                phone_item.setTextAlignment(Qt.AlignCenter)
+                self.recipients_table.setItem(row, 3, phone_item)
                 
-                # Source
-                self.recipients_table.setItem(row, 4, QTableWidgetItem(recipient.source.value.title()))
+                # Source - Disabled text field
+                source_item = QTableWidgetItem(recipient.source.value.title())
+                source_item.setFlags(source_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                source_item.setTextAlignment(Qt.AlignCenter)
+                self.recipients_table.setItem(row, 4, source_item)
                 
-                # Status
+                # Status - Enhanced button-like appearance
                 status_item = QTableWidgetItem(recipient.status.value.title())
+                status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                
+                # Set status-specific styling with button-like appearance
                 if recipient.status == RecipientStatus.ACTIVE:
-                    status_item.setBackground(Qt.green)
+                    status_item.setBackground(QColor(34, 197, 94))  # Green
+                    status_item.setForeground(Qt.white)
                 elif recipient.status == RecipientStatus.BLOCKED:
-                    status_item.setBackground(Qt.red)
+                    status_item.setBackground(QColor(239, 68, 68))  # Red
+                    status_item.setForeground(Qt.white)
                 elif recipient.status == RecipientStatus.INACTIVE:
-                    status_item.setBackground(Qt.gray)
+                    status_item.setBackground(QColor(107, 114, 128))  # Gray
+                    status_item.setForeground(Qt.white)
+                
+                # Center align status text
+                status_item.setTextAlignment(Qt.AlignCenter)
                 self.recipients_table.setItem(row, 5, status_item)
                 
-                # Messages
+                # Messages - Disabled text field
                 messages = f"{recipient.total_messages_sent}/{recipient.total_messages_sent + recipient.total_messages_failed}"
-                self.recipients_table.setItem(row, 6, QTableWidgetItem(messages))
-                
-                # Store recipient ID in the first column for reference
-                self.recipients_table.item(row, 0).setData(Qt.UserRole, recipient.id)
+                messages_item = QTableWidgetItem(messages)
+                messages_item.setFlags(messages_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                messages_item.setTextAlignment(Qt.AlignCenter)
+                self.recipients_table.setItem(row, 6, messages_item)
             
             self.status_label.setText(f"Loaded {len(recipients)} recipients")
             
@@ -526,6 +581,13 @@ class RecipientListWidget(QWidget):
         """Refresh recipients data."""
         self.load_recipients()
     
+    def on_cell_clicked(self, row, column):
+        """Handle cell click events."""
+        # For all columns, ensure the row is selected
+        self.recipients_table.selectRow(row)
+        # Also trigger selection changed manually
+        self.on_selection_changed()
+    
     def on_selection_changed(self):
         """Handle selection change."""
         selected_rows = self.recipients_table.selectionModel().selectedRows()
@@ -536,9 +598,17 @@ class RecipientListWidget(QWidget):
         
         if has_selection:
             row = selected_rows[0].row()
-            recipient_id = self.recipients_table.item(row, 0).data(Qt.UserRole)
-            # Emit signal with recipient ID for further processing
-            self.recipient_selected.emit(recipient_id)
+            # Try to get recipient ID from the first column (Display Name column)
+            display_name_item = self.recipients_table.item(row, 0)
+            if display_name_item:
+                recipient_id = display_name_item.data(Qt.UserRole)
+                if recipient_id is not None:
+                    # Emit signal with recipient ID for further processing
+                    self.recipient_selected.emit(recipient_id)
+                else:
+                    self.logger.warning(f"No recipient ID found for row {row}")
+            else:
+                self.logger.warning(f"No display name item found for row {row}")
     
     def add_recipient(self):
         """Add new recipient."""

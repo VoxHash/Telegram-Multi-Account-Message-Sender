@@ -183,7 +183,20 @@ class LogViewer(QWidget):
     def clear_logs(self):
         """Clear the log display."""
         self.log_text.clear()
-        self.status_label.setText("Logs cleared")
+        
+        # Reset the log file position to current end to avoid re-adding cleared content
+        try:
+            if self.log_file_path.exists():
+                with open(self.log_file_path, 'r', encoding='utf-8') as f:
+                    f.seek(0, 2)  # Seek to end of file
+                    self.last_position = f.tell()
+        except Exception as e:
+            self.logger.error(f"Error resetting log position: {e}")
+        
+        # Reset filter to "All" to show all new logs
+        self.level_combo.setCurrentText("All")
+        
+        self.status_label.setText("Logs cleared - monitoring from current position")
     
     def refresh_logs(self):
         """Refresh logs from file."""

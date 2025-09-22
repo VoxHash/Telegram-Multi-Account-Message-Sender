@@ -22,7 +22,7 @@ import pandas as pd
 class RecipientDialog(QDialog):
     """Dialog for adding/editing recipients."""
     
-    recipient_saved = pyqtSignal(Recipient)
+    recipient_saved = pyqtSignal(int)
     
     def __init__(self, parent=None, recipient: Optional[Recipient] = None):
         super().__init__(parent)
@@ -288,7 +288,7 @@ class RecipientDialog(QDialog):
                 session.close()
             
             self.logger.info(f"Recipient saved: {self.recipient.get_display_name()}")
-            self.recipient_saved.emit(self.recipient)
+            self.recipient_saved.emit(self.recipient.id)
             self.accept()
             
         except Exception as e:

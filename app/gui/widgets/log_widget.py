@@ -645,6 +645,7 @@ class SendLogWidget(QWidget):
         """Update campaign combo with available campaigns."""
         try:
             from sqlmodel import select
+            from ...models import Campaign
             
             # Get all campaigns
             campaigns = session.exec(select(Campaign).order_by(Campaign.name)).all()

@@ -60,13 +60,81 @@ class ProgressDialog(QDialog):
         self.progress_bar.setValue(value)
 
 
+class VerificationCodeDialog(QDialog):
+    """Dialog for entering Telegram verification code."""
+    
+    def __init__(self, parent=None, phone_number=""):
+        super().__init__(parent)
+        self.phone_number = phone_number
+        self.setup_ui()
+    
+    def setup_ui(self):
+        """Set up the dialog UI."""
+        self.setWindowTitle("Enter Verification Code")
+        self.setModal(True)
+        self.setFixedSize(400, 200)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        
+        layout = QVBoxLayout(self)
+        
+        # Instructions
+        instructions = QLabel(f"Please enter the verification code sent to {self.phone_number}")
+        instructions.setWordWrap(True)
+        instructions.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
+        layout.addWidget(instructions)
+        
+        # Code input
+        code_layout = QHBoxLayout()
+        code_layout.addWidget(QLabel("Code:"))
+        self.code_edit = QLineEdit()
+        self.code_edit.setPlaceholderText("Enter 5-digit code")
+        self.code_edit.setMaxLength(5)
+        self.code_edit.textChanged.connect(self.on_code_changed)
+        code_layout.addWidget(self.code_edit)
+        layout.addLayout(code_layout)
+        
+        # Password hint (if needed)
+        self.password_hint = QLabel("If you have 2FA enabled, you'll be prompted for your password next.")
+        self.password_hint.setStyleSheet("color: #888888; font-style: italic; margin-top: 10px;")
+        self.password_hint.setWordWrap(True)
+        layout.addWidget(self.password_hint)
+        
+        # Buttons
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.ok_button = buttons.button(QDialogButtonBox.Ok)
+        self.ok_button.setEnabled(False)
+        layout.addWidget(buttons)
+    
+    def on_code_changed(self, text):
+        """Handle code input changes."""
+        self.ok_button.setEnabled(len(text) == 5 and text.isdigit())
+    
+    def get_code(self):
+        """Get the entered verification code."""
+        return self.code_edit.text().strip()
+    
+    def get_password(self):
+        """Get password if needed (for 2FA)."""
+        from PyQt5.QtWidgets import QInputDialog
+        password, ok = QInputDialog.getText(
+            self, 
+            "Two-Factor Authentication", 
+            "Please enter your 2FA password:",
+            QLineEdit.Password
+        )
+        return password if ok else None
+
+
 class TelegramWorker(QThread):
     """Worker thread for Telegram operations."""
     
     finished = pyqtSignal(str, bool)  # message, success
     progress = pyqtSignal(str)  # progress message
+    code_required = pyqtSignal(str)  # phone_number - signal that code is needed
     
-    def __init__(self, operation, account_id, account_name, api_id, api_hash, phone_number, session_path=None, proxy_config=None):
+    def __init__(self, operation, account_id, account_name, api_id, api_hash, phone_number, session_path=None, proxy_config=None, verification_code=None, password=None):
         super().__init__()
         self.operation = operation
         self.account_id = account_id
@@ -76,6 +144,8 @@ class TelegramWorker(QThread):
         self.phone_number = phone_number
         self.session_path = session_path
         self.proxy_config = proxy_config
+        self.verification_code = verification_code
+        self.password = password
         self.logger = get_logger()
         self._should_stop = False
     
@@ -158,18 +228,46 @@ class TelegramWorker(QThread):
                 return
             
             if not await client.is_user_authorized():
-                self.progress.emit("Sending verification code...")
-                await client.send_code_request(self.phone_number)
-                
-                # Update account status to CONNECTING
-                self._update_account_status(AccountStatus.CONNECTING)
-                
-                self.finished.emit(
-                    f"✅ Verification code sent to {self.phone_number}!\n\n"
-                    f"Please check your phone for the Telegram verification code.\n"
-                    f"Once you receive it, use the 'Connect' action to complete authorization.",
-                    True
-                )
+                if not self.verification_code:
+                    # First step: send verification code
+                    self.progress.emit("Sending verification code...")
+                    await client.send_code_request(self.phone_number)
+                    
+                    # Update account status to CONNECTING
+                    self._update_account_status(AccountStatus.CONNECTING)
+                    
+                    # Emit signal that code is required
+                    self.code_required.emit(self.phone_number)
+                    return
+                else:
+                    # Second step: verify code
+                    self.progress.emit("Verifying code...")
+                    try:
+                        await client.sign_in(self.phone_number, self.verification_code)
+                        
+                        # Check if 2FA is required
+                        if not await client.is_user_authorized():
+                            if not self.password:
+                                # Need 2FA password
+                                self.finished.emit("2FA_PASSWORD_REQUIRED", False)
+                                return
+                            else:
+                                # Sign in with 2FA password
+                                self.progress.emit("Verifying 2FA password...")
+                                await client.sign_in(password=self.password)
+                        
+                        # Authorization successful
+                        self._update_account_status(AccountStatus.ONLINE)
+                        self.finished.emit(
+                            f"✅ Account {self.account_name} successfully authorized!\n\n"
+                            f"Account is now online and ready for messaging.",
+                            True
+                        )
+                        
+                    except Exception as e:
+                        self.logger.error(f"Code verification error: {e}")
+                        self._update_account_status(AccountStatus.ERROR)
+                        self.finished.emit(f"❌ Code verification failed: {str(e)}", False)
             else:
                 self._update_account_status(AccountStatus.ONLINE)
                 self.finished.emit(f"✅ Account {self.account_name} is already authorized!", True)
@@ -964,11 +1062,17 @@ class AccountListWidget(QWidget):
                 
                 # Connect signals
                 self.worker.finished.connect(
-                    lambda msg, success: self._on_operation_finished(progress_dialog, msg, success)
+                    lambda msg, success: self._on_operation_finished(progress_dialog, msg, success, account_id, account_name)
                 )
                 self.worker.progress.connect(
                     lambda msg: progress_dialog.update_status(f"{operation.title()}ing {account_name}...\n{msg}")
                 )
+                
+                # Connect code required signal for authorization
+                if operation == "authorize":
+                    self.worker.code_required.connect(
+                        lambda phone: self._handle_code_required(progress_dialog, account_id, account_name, phone)
+                    )
                 
                 # Show progress dialog
                 progress_dialog.show()
@@ -1002,7 +1106,106 @@ class AccountListWidget(QWidget):
             f"The {operation} operation for {account_name} timed out after 30 seconds. Please try again."
         )
     
-    def _on_operation_finished(self, progress_dialog, message, success):
+    def _handle_code_required(self, progress_dialog, account_id, account_name, phone_number):
+        """Handle when verification code is required."""
+        progress_dialog.close()
+        
+        # Show verification code dialog
+        code_dialog = VerificationCodeDialog(self, phone_number)
+        if code_dialog.exec_() == QDialog.Accepted:
+            code = code_dialog.get_code()
+            if code:
+                # Start second phase of authorization with code
+                self._start_telegram_operation_with_code("authorize", account_id, account_name, code)
+        else:
+            # User cancelled, update status
+            self._update_account_status(account_id, AccountStatus.OFFLINE)
+    
+    def _start_telegram_operation_with_code(self, operation, account_id, account_name, verification_code, password=None):
+        """Start a Telegram operation with verification code."""
+        try:
+            # Get account details from database
+            session = get_session()
+            try:
+                from ...models import Account
+                from sqlmodel import select
+                account = session.exec(select(Account).where(Account.id == account_id)).first()
+                if not account:
+                    QMessageBox.warning(self, "Error", "Account not found!")
+                    return
+                
+                # Get API credentials from settings
+                from ...services import get_settings
+                settings = get_settings()
+                
+                # Create progress dialog
+                progress_dialog = ProgressDialog(
+                    self, 
+                    f"{operation.title()} Account",
+                    f"Verifying code for {account_name}..."
+                )
+                
+                # Create worker thread with code
+                self.worker = TelegramWorker(
+                    operation=operation,
+                    account_id=account_id,
+                    account_name=account_name,
+                    api_id=settings.telegram_api_id,
+                    api_hash=settings.telegram_api_hash,
+                    phone_number=account.phone_number,
+                    session_path=account.session_path,
+                    proxy_config=None,
+                    verification_code=verification_code,
+                    password=password
+                )
+                
+                # Connect signals
+                self.worker.finished.connect(
+                    lambda msg, success: self._on_operation_finished(progress_dialog, msg, success, account_id, account_name)
+                )
+                self.worker.progress.connect(
+                    lambda msg: progress_dialog.update_status(f"Verifying code for {account_name}...\n{msg}")
+                )
+                
+                # Show progress dialog
+                progress_dialog.show()
+                
+                # Connect cancel button to stop worker
+                progress_dialog.cancel_button.clicked.connect(self.worker.stop)
+                
+                # Start worker
+                self.worker.start()
+                
+                # Set up timeout timer (30 seconds)
+                timeout_timer = QTimer()
+                timeout_timer.setSingleShot(True)
+                timeout_timer.timeout.connect(lambda: self._handle_timeout(progress_dialog, operation, account_name))
+                timeout_timer.start(30000)  # 30 seconds timeout
+                
+            finally:
+                session.close()
+                
+        except Exception as e:
+            self.logger.error(f"Error starting {operation} operation with code: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to start {operation}: {e}")
+    
+    def _update_account_status(self, account_id, status):
+        """Update account status in database."""
+        try:
+            session = get_session()
+            try:
+                from ...models import Account
+                from sqlmodel import select
+                account = session.exec(select(Account).where(Account.id == account_id)).first()
+                if account:
+                    account.status = status
+                    session.commit()
+            finally:
+                session.close()
+        except Exception as e:
+            self.logger.error(f"Error updating account status: {e}")
+    
+    def _on_operation_finished(self, progress_dialog, message, success, account_id=None, account_name=None):
         """Handle operation completion."""
         progress_dialog.close()
         
@@ -1010,6 +1213,21 @@ class AccountListWidget(QWidget):
             QMessageBox.information(self, "Success", message)
             # Refresh accounts to update status
             self.refresh_accounts()
+        elif message == "2FA_PASSWORD_REQUIRED":
+            # Handle 2FA password requirement
+            if account_id and account_name:
+                from PyQt5.QtWidgets import QInputDialog
+                password, ok = QInputDialog.getText(
+                    self, 
+                    "Two-Factor Authentication", 
+                    f"Please enter your 2FA password for {account_name}:",
+                    QLineEdit.Password
+                )
+                if ok and password:
+                    # Restart authorization with password
+                    self._start_telegram_operation_with_code("authorize", account_id, account_name, None, password)
+                else:
+                    self._update_account_status(account_id, AccountStatus.OFFLINE)
         else:
             QMessageBox.critical(self, "Error", message)
 

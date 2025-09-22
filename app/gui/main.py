@@ -102,15 +102,11 @@ class MainWindow(QMainWindow):
     def create_accounts_tab(self):
         """Create accounts management tab."""
         self.accounts_widget = AccountWidget()
-        # Connect account updates to refresh status
-        self.accounts_widget.account_list.account_updated.connect(self.update_status)
         self.tab_widget.addTab(self.accounts_widget, "Accounts")
     
     def create_campaigns_tab(self):
         """Create campaigns management tab."""
         self.campaigns_widget = CampaignWidget()
-        # Connect campaign updates to refresh status
-        self.campaigns_widget.campaign_list.campaign_updated.connect(self.update_status)
         self.tab_widget.addTab(self.campaigns_widget, "Campaigns")
     
     def create_templates_tab(self):
@@ -128,8 +124,6 @@ class MainWindow(QMainWindow):
     def create_recipients_tab(self):
         """Create recipients management tab."""
         self.recipients_widget = RecipientWidget()
-        # Connect recipient updates to refresh status
-        self.recipients_widget.recipient_updated.connect(self.update_status)
         self.tab_widget.addTab(self.recipients_widget, "Recipients")
     
     def create_logs_tab(self):

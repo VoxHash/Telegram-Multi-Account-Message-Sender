@@ -176,6 +176,9 @@ class TemplateDialog(QDialog):
         
         # If enabling spintax, validate the current message for spintax syntax
         if enabled:
+            # Set a helpful example if the field is empty
+            if not self.spintax_example_edit.text().strip():
+                self.spintax_example_edit.setText("Hello {name|friend|buddy}, welcome to {our company|our service}!")
             self.validate_spintax_syntax()
     
     def validate_spintax_syntax(self):
@@ -187,6 +190,20 @@ class TemplateDialog(QDialog):
         try:
             # Validate spintax syntax
             validation_result = self.spintax_processor.validate_spintax(message_text)
+            
+            if validation_result["patterns_count"] == 0:
+                # No spintax patterns found - this is not an error, just inform the user
+                QMessageBox.information(
+                    self, "Spintax Information",
+                    "No spintax patterns found in the message.\n\n"
+                    "To use spintax, add patterns like:\n"
+                    "• {option1|option2|option3}\n"
+                    "• Hello {name|friend|buddy}\n"
+                    "• Get {20%|25%|30%} off\n\n"
+                    "The message will be sent as-is without variations."
+                )
+                return True
+            
             if not validation_result["valid"]:
                 error_msg = "Invalid spintax syntax:\n\n" + "\n".join(validation_result["errors"])
                 QMessageBox.warning(
@@ -211,10 +228,39 @@ class TemplateDialog(QDialog):
             return
         
         try:
+            # Check if text contains spintax patterns
+            validation_result = self.spintax_processor.validate_spintax(message_text)
+            
+            if validation_result["patterns_count"] == 0:
+                # No spintax patterns found
+                QMessageBox.information(
+                    self, "Spintax Preview",
+                    "No spintax patterns found in the message.\n\n"
+                    "To use spintax, add patterns like:\n"
+                    "• {option1|option2|option3}\n"
+                    "• Hello {name|friend|buddy}\n"
+                    "• Get {20%|25%|30%} off\n\n"
+                    "Current message:\n" + message_text
+                )
+                return
+            
             # Generate multiple variations using the correct method
             variations = self.spintax_processor.get_preview_samples(message_text, count=5)
             
-            preview_text = "Spintax Preview (5 variations):\n\n"
+            # Check if all variations are the same (no actual spintax)
+            unique_variations = list(set(variations))
+            if len(unique_variations) == 1:
+                QMessageBox.information(
+                    self, "Spintax Preview",
+                    "No variations generated. This might be because:\n\n"
+                    "• Spintax patterns are malformed\n"
+                    "• All options in patterns are identical\n"
+                    "• Nested spintax is not supported\n\n"
+                    "Original message:\n" + message_text
+                )
+                return
+            
+            preview_text = f"Spintax Preview ({len(unique_variations)} unique variations):\n\n"
             for i, variation in enumerate(variations, 1):
                 preview_text += f"Variation {i}: {variation}\n\n"
             

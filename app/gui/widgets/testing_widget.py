@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, pyqtSlot
 from PyQt5.QtGui import QFont, QIcon
 
-from ...services import get_logger, get_database_session
+from ...services import get_logger, get_session
 from ...models import Account, Recipient, MessageTemplate
 from ...core.telethon_client import TelegramClientManager
 from ...core.spintax import SpintaxProcessor
@@ -43,7 +43,7 @@ class TestMessageWorker(QThread):
                 self.progress.emit("Connecting to Telegram...")
                 
                 # Get account from database
-                with get_database_session() as session:
+                with get_session() as session:
                     account = session.get(Account, self.account_id)
                     if not account:
                         self.finished.emit({
@@ -239,7 +239,7 @@ class TestingWidget(QWidget):
     def load_data(self):
         """Load accounts, recipients, and templates."""
         try:
-            with get_database_session() as session:
+            with get_session() as session:
                 # Load accounts
                 accounts = session.query(Account).filter(Account.deleted_at.is_(None)).all()
                 self.account_combo.clear()
@@ -285,7 +285,7 @@ class TestingWidget(QWidget):
             if not template_id:
                 return
             
-            with get_database_session() as session:
+            with get_session() as session:
                 template = session.get(MessageTemplate, template_id)
                 if template:
                     # Use spintax text if available, otherwise use body

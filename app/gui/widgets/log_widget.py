@@ -333,57 +333,63 @@ class SendLogWidget(QWidget):
                 if campaign_filter != "All":
                     query = query.join(Campaign).where(Campaign.name == campaign_filter)
                 
+                # Execute query and load all data within session
                 logs = session.exec(query.order_by(SendLog.created_at.desc()).limit(1000)).all()
                 
                 # Update campaign combo with available campaigns
                 self.update_campaign_combo(session)
                 
+                # Process logs within session context
+                self.logs_table.setRowCount(len(logs))
+                
+                for row, log in enumerate(logs):
+                    # Timestamp
+                    timestamp = log.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                    self.logs_table.setItem(row, 0, QTableWidgetItem(timestamp))
+                    
+                    # Campaign - access within session
+                    campaign_name = "Unknown"
+                    if log.campaign:
+                        campaign_name = log.campaign.name
+                    self.logs_table.setItem(row, 1, QTableWidgetItem(campaign_name))
+                    
+                    # Account - access within session
+                    account_name = "Unknown"
+                    if log.account:
+                        account_name = log.account.name
+                    self.logs_table.setItem(row, 2, QTableWidgetItem(account_name))
+                    
+                    # Recipient - access within session
+                    recipient_info = f"ID: {log.recipient_id}"
+                    if log.recipient:
+                        recipient_info = log.recipient.get_display_name()
+                    self.logs_table.setItem(row, 3, QTableWidgetItem(recipient_info))
+                    
+                    # Status
+                    status_item = QTableWidgetItem(log.status.value.title())
+                    if log.status == SendStatus.SENT:
+                        status_item.setBackground(Qt.green)
+                    elif log.status == SendStatus.FAILED:
+                        status_item.setBackground(Qt.red)
+                    elif log.status == SendStatus.RATE_LIMITED:
+                        status_item.setBackground(Qt.yellow)
+                    elif log.status == SendStatus.SKIPPED:
+                        status_item.setBackground(Qt.blue)
+                    self.logs_table.setItem(row, 4, status_item)
+                    
+                    # Error message
+                    error_msg = log.get_error_summary() if log.error_message else ""
+                    self.logs_table.setItem(row, 5, QTableWidgetItem(error_msg))
+                    
+                    # Duration
+                    duration = str(log.duration_ms) if log.duration_ms else "N/A"
+                    self.logs_table.setItem(row, 6, QTableWidgetItem(duration))
+                    
+                    # Retry count
+                    self.logs_table.setItem(row, 7, QTableWidgetItem(str(log.retry_count)))
+                
             finally:
                 session.close()
-            
-            self.logs_table.setRowCount(len(logs))
-            
-            for row, log in enumerate(logs):
-                # Timestamp
-                timestamp = log.created_at.strftime("%Y-%m-%d %H:%M:%S")
-                self.logs_table.setItem(row, 0, QTableWidgetItem(timestamp))
-                
-                # Campaign
-                campaign_name = log.campaign.name if log.campaign else "Unknown"
-                self.logs_table.setItem(row, 1, QTableWidgetItem(campaign_name))
-                
-                # Account
-                account_name = log.account.name if log.account else "Unknown"
-                self.logs_table.setItem(row, 2, QTableWidgetItem(account_name))
-                
-                # Recipient
-                recipient_info = f"ID: {log.recipient_id}"
-                if log.recipient:
-                    recipient_info = log.recipient.get_display_name()
-                self.logs_table.setItem(row, 3, QTableWidgetItem(recipient_info))
-                
-                # Status
-                status_item = QTableWidgetItem(log.status.value.title())
-                if log.status == SendStatus.SENT:
-                    status_item.setBackground(Qt.green)
-                elif log.status == SendStatus.FAILED:
-                    status_item.setBackground(Qt.red)
-                elif log.status == SendStatus.RATE_LIMITED:
-                    status_item.setBackground(Qt.yellow)
-                elif log.status == SendStatus.SKIPPED:
-                    status_item.setBackground(Qt.blue)
-                self.logs_table.setItem(row, 4, status_item)
-                
-                # Error message
-                error_msg = log.get_error_summary() if log.error_message else ""
-                self.logs_table.setItem(row, 5, QTableWidgetItem(error_msg))
-                
-                # Duration
-                duration = str(log.duration_ms) if log.duration_ms else "N/A"
-                self.logs_table.setItem(row, 6, QTableWidgetItem(duration))
-                
-                # Retry count
-                self.logs_table.setItem(row, 7, QTableWidgetItem(str(log.retry_count)))
             
             self.status_label.setText(f"Loaded {len(logs)} send logs")
             

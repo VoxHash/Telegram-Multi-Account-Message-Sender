@@ -39,6 +39,9 @@ class AccountDialog(QDialog):
         self.setModal(True)
         self.resize(500, 600)
         
+        # Add help button to title bar
+        self.setWindowFlags(self.windowFlags() | Qt.WindowContextHelpButtonHint)
+        
         layout = QVBoxLayout(self)
         
         # Basic Information
@@ -53,14 +56,10 @@ class AccountDialog(QDialog):
         self.phone_edit.setPlaceholderText("+1234567890")
         basic_layout.addRow("Phone Number:", self.phone_edit)
         
-        self.api_id_edit = QLineEdit()
-        self.api_id_edit.setPlaceholderText("Your Telegram API ID")
-        basic_layout.addRow("API ID:", self.api_id_edit)
-        
-        self.api_hash_edit = QLineEdit()
-        self.api_hash_edit.setEchoMode(QLineEdit.Password)
-        self.api_hash_edit.setPlaceholderText("Your Telegram API Hash")
-        basic_layout.addRow("API Hash:", self.api_hash_edit)
+        # Note about API credentials
+        api_note = QLabel("Note: API ID and API Hash are configured globally in Settings.")
+        api_note.setStyleSheet("color: #888888; font-style: italic;")
+        basic_layout.addRow("", api_note)
         
         layout.addWidget(basic_group)
         
@@ -159,6 +158,62 @@ class AccountDialog(QDialog):
         # Initialize proxy settings as disabled
         self.toggle_proxy_settings(False)
     
+    def show_help(self):
+        """Show help information for adding accounts."""
+        help_text = """
+<h3>Adding a Telegram Account</h3>
+
+<p><b>Basic Information:</b></p>
+<ul>
+<li><b>Name:</b> A friendly name to identify this account (e.g., "My Business Account")</li>
+<li><b>Phone Number:</b> The phone number associated with your Telegram account (e.g., +1234567890)</li>
+</ul>
+
+<p><b>API Credentials:</b></p>
+<p>API ID and API Hash are configured globally in Settings. Make sure to set them up before adding accounts.</p>
+
+<p><b>Proxy Settings (Optional):</b></p>
+<ul>
+<li>Enable if you need to use a proxy server for this account</li>
+<li>Choose the appropriate proxy type (HTTP, HTTPS, SOCKS4, SOCKS5)</li>
+<li>Enter proxy server details if required</li>
+</ul>
+
+<p><b>Rate Limiting:</b></p>
+<ul>
+<li>Set how many messages this account can send per minute, hour, and day</li>
+<li>These limits help prevent your account from being banned</li>
+</ul>
+
+<p><b>Warmup Settings:</b></p>
+<ul>
+<li>Enable warmup to gradually increase message sending activity</li>
+<li>Start with a small number of messages and increase over time</li>
+<li>This helps establish your account as legitimate</li>
+</ul>
+
+<p><b>Notes:</b></p>
+<p>Add any additional information about this account for your reference.</p>
+
+<p><b>Getting Started:</b></p>
+<ol>
+<li>First, configure your Telegram API credentials in Settings</li>
+<li>Add your account details in this dialog</li>
+<li>Click "Save" to add the account</li>
+<li>Use the "Connect" action in the accounts table to authorize the account</li>
+</ol>
+        """
+        
+        QMessageBox.information(self, "Help - Adding Account", help_text)
+    
+    def event(self, event):
+        """Override event handling for help button."""
+        from PyQt5.QtCore import QEvent
+        if event.type() == QEvent.EnterWhatsThisMode:
+            self.show_help()
+            return True
+        return super().event(event)
+    
     def toggle_proxy_settings(self, enabled: bool):
         """Toggle proxy settings visibility."""
         self.proxy_type_combo.setEnabled(enabled)
@@ -174,8 +229,6 @@ class AccountDialog(QDialog):
         
         self.name_edit.setText(self.account.name)
         self.phone_edit.setText(self.account.phone_number)
-        self.api_id_edit.setText(str(self.account.api_id))
-        self.api_hash_edit.setText(self.account.api_hash)
         
         # Proxy settings
         if self.account.proxy_type:
@@ -211,12 +264,16 @@ class AccountDialog(QDialog):
                 QMessageBox.warning(self, "Validation Error", "Phone number is required")
                 return
             
-            if not self.api_id_edit.text().strip():
-                QMessageBox.warning(self, "Validation Error", "API ID is required")
-                return
+            # Get global API credentials from settings
+            from ...services import get_settings
+            settings = get_settings()
             
-            if not self.api_hash_edit.text().strip():
-                QMessageBox.warning(self, "Validation Error", "API Hash is required")
+            if not settings.telegram_api_id or not settings.telegram_api_hash:
+                QMessageBox.warning(
+                    self, 
+                    "API Credentials Required", 
+                    "Please configure your Telegram API ID and API Hash in Settings before adding accounts."
+                )
                 return
             
             # Create or update account
@@ -224,15 +281,15 @@ class AccountDialog(QDialog):
                 # Update existing account
                 self.account.name = self.name_edit.text().strip()
                 self.account.phone_number = self.phone_edit.text().strip()
-                self.account.api_id = int(self.api_id_edit.text().strip())
-                self.account.api_hash = self.api_hash_edit.text().strip()
+                self.account.api_id = settings.telegram_api_id
+                self.account.api_hash = settings.telegram_api_hash
             else:
                 # Create new account
                 self.account = Account(
                     name=self.name_edit.text().strip(),
                     phone_number=self.phone_edit.text().strip(),
-                    api_id=int(self.api_id_edit.text().strip()),
-                    api_hash=self.api_hash_edit.text().strip(),
+                    api_id=settings.telegram_api_id,
+                    api_hash=settings.telegram_api_hash,
                     session_path=f"app_data/sessions/session_{self.phone_edit.text().strip()}"
                 )
             

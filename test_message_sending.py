@@ -28,7 +28,7 @@ async def test_message_sending():
     try:
         # Find voxhash account
         voxhash_account = session.exec(
-            select(Account).where(Account.phone_number == "+1234567890")
+            select(Account).where(Account.phone_number == "+16892803541")
         ).first()
         
         if not voxhash_account:
@@ -51,27 +51,38 @@ async def test_message_sending():
         # Create Telegram client manager
         client_manager = TelegramClientManager()
         
+        # Add account to manager
+        print("🔄 Adding account to client manager...")
+        if not await client_manager.add_account(voxhash_account):
+            print("❌ Failed to add account to client manager")
+            return
+        
+        print("✅ Account added to client manager")
+        
         # Get client for voxhash account
-        client = await client_manager.get_client(voxhash_account.id)
+        client = client_manager.get_client(voxhash_account.id)
         
         if not client:
             print("❌ Failed to get Telegram client for voxhash account")
             return
         
-        print("✅ Telegram client created")
+        print("✅ Telegram client retrieved")
         
         # Send test message
         message_text = "Hello @jomadev! This is a test message from the Telegram Multi-Account Message Sender app. 🚀"
         
         try:
-            await client.send_message("jomadev", message_text)
-            print("✅ Message sent successfully!")
-            print(f"📤 Message: {message_text}")
+            result = await client_manager.send_message(voxhash_account.id, "jomadev", message_text)
+            if result.get("success"):
+                print("✅ Message sent successfully!")
+                print(f"📤 Message: {message_text}")
+            else:
+                print(f"❌ Failed to send message: {result.get('error', 'Unknown error')}")
         except Exception as e:
             print(f"❌ Failed to send message: {e}")
         
         # Close client
-        await client_manager.close_client(voxhash_account.id)
+        await client_manager.remove_account(voxhash_account.id)
         print("✅ Client closed")
         
     except Exception as e:

@@ -213,10 +213,11 @@ class SendLogWidget(QWidget):
         self.setup_ui()
         self.load_send_logs()
         
-        # Setup refresh timer
+        # Setup refresh timer (optional - user can manually refresh)
         self.refresh_timer = QTimer()
         self.refresh_timer.timeout.connect(self.refresh_send_logs)
-        self.refresh_timer.start(5000)  # Refresh every 5 seconds
+        # Don't start auto-refresh by default - let user control it
+        # self.refresh_timer.start(30000)  # Refresh every 30 seconds if enabled
     
     def setup_ui(self):
         """Set up the UI."""
@@ -306,8 +307,14 @@ class SendLogWidget(QWidget):
             
             session = get_session()
             try:
-                # Build query with filters
-                query = select(SendLog)
+                # Build query with filters and eager loading
+                from sqlmodel import selectinload
+                
+                query = select(SendLog).options(
+                    selectinload(SendLog.campaign),
+                    selectinload(SendLog.account),
+                    selectinload(SendLog.recipient)
+                )
                 
                 # Status filter
                 status_filter = self.status_combo.currentText()

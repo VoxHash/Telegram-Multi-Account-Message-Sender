@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         # Setup timer for periodic updates
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_status)
-        self.update_timer.start(5000)  # Update every 5 seconds
+        self.update_timer.start(30000)  # Update every 30 seconds
         
         # Initial status update
         self.update_status()
@@ -183,12 +183,14 @@ class MainWindow(QMainWindow):
                 # Count recipients
                 recipient_count = session.exec(select(func.count(Recipient.id)).where(Recipient.is_deleted == False)).first() or 0
                 
-                # Get online accounts
-                online_accounts = session.exec(
-                    select(func.count(Account.id))
-                    .where(Account.is_deleted == False)
-                    .where(Account.status == "online")
-                ).first() or 0
+                # Get online accounts (only if we have accounts)
+                online_accounts = 0
+                if account_count > 0:
+                    online_accounts = session.exec(
+                        select(func.count(Account.id))
+                        .where(Account.is_deleted == False)
+                        .where(Account.status == "ONLINE")
+                    ).first() or 0
                 
                 # Build status message
                 status_parts = []

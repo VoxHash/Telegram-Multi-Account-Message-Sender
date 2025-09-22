@@ -68,8 +68,8 @@ class SpintaxProcessor:
         # Split by pipe, handling nested braces
         variants = self._split_by_pipe(content)
         
-        # Clean up variants
-        return [v.strip() for v in variants if v.strip()]
+        # Clean up variants but keep empty ones
+        return [v.strip() for v in variants]
     
     def _split_by_pipe(self, text: str) -> List[str]:
         """Split text by pipe, respecting nested braces."""

@@ -505,7 +505,7 @@ class SendLogWidget(QWidget):
             session = get_session()
             try:
                 # Build query with filters and eager loading
-                from sqlmodel import selectinload
+                from sqlalchemy.orm import selectinload
                 
                 query = select(SendLog).options(
                     selectinload(SendLog.campaign),

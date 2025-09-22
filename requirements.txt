@@ -1,0 +1,13 @@
+# Core dependencies for quick installation
+telethon>=1.35.0
+PyQt5>=5.15.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+sqlmodel>=0.0.14
+pandas>=2.0.0
+openpyxl>=3.1.0
+rich>=13.0.0
+cryptography>=41.0.0
+python-dotenv>=1.0.0
+aiofiles>=23.0.0
+asyncio-throttle>=1.0.0

@@ -63,6 +63,7 @@ class MainWindow(QMainWindow):
         self.create_campaigns_tab()
         self.create_templates_tab()
         self.create_recipients_tab()
+        self.create_testing_tab()
         self.create_logs_tab()
         self.create_settings_tab()
         self.create_about_tab()
@@ -90,6 +91,12 @@ class MainWindow(QMainWindow):
         """Create recipients management tab."""
         self.recipients_widget = RecipientWidget()
         self.tab_widget.addTab(self.recipients_widget, "Recipients")
+    
+    def create_testing_tab(self):
+        """Create testing tab."""
+        from .widgets.testing_widget import TestingWidget
+        self.testing_widget = TestingWidget()
+        self.tab_widget.addTab(self.testing_widget, "Testing")
     
     def create_logs_tab(self):
         """Create logs viewer tab."""

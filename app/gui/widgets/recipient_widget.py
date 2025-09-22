@@ -48,15 +48,19 @@ class RecipientDialog(QDialog):
         self.user_fields_widget.setVisible(is_user)
         self.group_fields_widget.setVisible(is_group)
         
-        # Update placeholders
+        # Update placeholders and labels
         if is_group:
-            # Update group-specific placeholders
+            # Update group-specific placeholders and labels
             if recipient_type == "group":
                 self.group_title_edit.setPlaceholderText("My Group Name")
                 self.group_username_edit.setPlaceholderText("@mygroup")
+                self.group_id_label.setText("Group ID:")
+                self.group_title_label.setText("Group Title:")
             else:  # channel
                 self.group_title_edit.setPlaceholderText("My Channel Name")
                 self.group_username_edit.setPlaceholderText("@mychannel")
+                self.group_id_label.setText("Channel ID:")
+                self.group_title_label.setText("Channel Title:")
         else:
             self.username_edit.setPlaceholderText("@username")
             self.user_id_edit.setPlaceholderText("123456789")
@@ -135,13 +139,16 @@ class RecipientDialog(QDialog):
         self.group_username_edit.setPlaceholderText("@mygroup")
         group_layout.addRow("Username:", self.group_username_edit)
         
+        # Dynamic labels for group/channel fields
         self.group_id_edit = QLineEdit()
         self.group_id_edit.setPlaceholderText("-1001234567890")
-        group_layout.addRow("Group ID:", self.group_id_edit)
+        self.group_id_label = QLabel("Group ID:")
+        group_layout.addRow(self.group_id_label, self.group_id_edit)
         
         self.group_title_edit = QLineEdit()
         self.group_title_edit.setPlaceholderText("My Group Name")
-        group_layout.addRow("Group Title:", self.group_title_edit)
+        self.group_title_label = QLabel("Group Title:")
+        group_layout.addRow(self.group_title_label, self.group_title_edit)
         
         basic_layout.addRow("", self.group_fields_widget)
         

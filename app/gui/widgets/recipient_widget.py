@@ -50,7 +50,6 @@ class RecipientDialog(QDialog):
         
         # Update placeholders
         if is_group:
-            self.username_edit.setPlaceholderText("@group_username")
             # Update group-specific placeholders
             if recipient_type == "group":
                 self.group_title_edit.setPlaceholderText("My Group Name")
@@ -71,6 +70,7 @@ class RecipientDialog(QDialog):
             self.group_title_edit.clear()
             self.group_username_edit.clear()
         else:
+            self.username_edit.clear()
             self.user_id_edit.clear()
             self.phone_edit.clear()
             self.first_name_edit.clear()
@@ -97,15 +97,15 @@ class RecipientDialog(QDialog):
         self.type_combo.currentTextChanged.connect(self.on_type_changed)
         basic_layout.addRow("Type:", self.type_combo)
         
-        # Username (always visible)
-        self.username_edit = QLineEdit()
-        self.username_edit.setPlaceholderText("@username")
-        basic_layout.addRow("Username:", self.username_edit)
-        
         # User fields section
         self.user_fields_widget = QWidget()
         user_layout = QFormLayout(self.user_fields_widget)
         user_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Username for users
+        self.username_edit = QLineEdit()
+        self.username_edit.setPlaceholderText("@username")
+        user_layout.addRow("Username:", self.username_edit)
         
         self.user_id_edit = QLineEdit()
         self.user_id_edit.setPlaceholderText("123456789")
@@ -130,6 +130,11 @@ class RecipientDialog(QDialog):
         group_layout = QFormLayout(self.group_fields_widget)
         group_layout.setContentsMargins(0, 0, 0, 0)
         
+        # Username for groups/channels
+        self.group_username_edit = QLineEdit()
+        self.group_username_edit.setPlaceholderText("@mygroup")
+        group_layout.addRow("Username:", self.group_username_edit)
+        
         self.group_id_edit = QLineEdit()
         self.group_id_edit.setPlaceholderText("-1001234567890")
         group_layout.addRow("Group ID:", self.group_id_edit)
@@ -137,10 +142,6 @@ class RecipientDialog(QDialog):
         self.group_title_edit = QLineEdit()
         self.group_title_edit.setPlaceholderText("My Group Name")
         group_layout.addRow("Group Title:", self.group_title_edit)
-        
-        self.group_username_edit = QLineEdit()
-        self.group_username_edit.setPlaceholderText("@mygroup")
-        group_layout.addRow("Group Username:", self.group_username_edit)
         
         basic_layout.addRow("", self.group_fields_widget)
         
@@ -192,23 +193,23 @@ class RecipientDialog(QDialog):
         self.type_combo.setCurrentText(type_mapping.get(self.recipient.recipient_type, "User"))
         
         # Load common fields
-        self.username_edit.setText(self.recipient.username or "")
         self.email_edit.setText(self.recipient.email or "")
         self.bio_edit.setText(self.recipient.bio or "")
         self.tags_edit.setText(", ".join(self.recipient.get_tags_list()))
         self.notes_edit.setText(self.recipient.notes or "")
         
-        # Load user-specific fields
+        # Load type-specific fields
         if self.recipient.recipient_type == RecipientType.USER:
+            self.username_edit.setText(self.recipient.username or "")
             self.user_id_edit.setText(str(self.recipient.user_id) if self.recipient.user_id else "")
             self.phone_edit.setText(self.recipient.phone_number or "")
             self.first_name_edit.setText(self.recipient.first_name or "")
             self.last_name_edit.setText(self.recipient.last_name or "")
         else:
             # Load group/channel fields
+            self.group_username_edit.setText(self.recipient.group_username or "")
             self.group_id_edit.setText(str(self.recipient.group_id) if self.recipient.group_id else "")
             self.group_title_edit.setText(self.recipient.group_title or "")
-            self.group_username_edit.setText(self.recipient.group_username or "")
     
     def save_recipient(self):
         """Save recipient data."""
@@ -243,25 +244,24 @@ class RecipientDialog(QDialog):
             if self.recipient:
                 # Update existing recipient
                 self.recipient.recipient_type = recipient_type
-                self.recipient.username = self.username_edit.text().strip() or None
                 self.recipient.email = self.email_edit.text().strip() or None
                 self.recipient.bio = self.bio_edit.toPlainText().strip() or None
                 self.recipient.notes = self.notes_edit.toPlainText().strip() or None
                 
                 if recipient_type == RecipientType.USER:
+                    self.recipient.username = self.username_edit.text().strip() or None
                     self.recipient.user_id = int(self.user_id_edit.text().strip()) if self.user_id_edit.text().strip() else None
                     self.recipient.phone_number = self.phone_edit.text().strip() or None
                     self.recipient.first_name = self.first_name_edit.text().strip() or None
                     self.recipient.last_name = self.last_name_edit.text().strip() or None
                 else:
+                    self.recipient.group_username = self.group_username_edit.text().strip() or None
                     self.recipient.group_id = int(self.group_id_edit.text().strip()) if self.group_id_edit.text().strip() else None
                     self.recipient.group_title = self.group_title_edit.text().strip() or None
-                    self.recipient.group_username = self.group_username_edit.text().strip() or None
             else:
                 # Create new recipient
                 recipient_data = {
                     "recipient_type": recipient_type,
-                    "username": self.username_edit.text().strip() or None,
                     "email": self.email_edit.text().strip() or None,
                     "bio": self.bio_edit.toPlainText().strip() or None,
                     "notes": self.notes_edit.toPlainText().strip() or None,
@@ -270,6 +270,7 @@ class RecipientDialog(QDialog):
                 
                 if recipient_type == RecipientType.USER:
                     recipient_data.update({
+                        "username": self.username_edit.text().strip() or None,
                         "user_id": int(self.user_id_edit.text().strip()) if self.user_id_edit.text().strip() else None,
                         "phone_number": self.phone_edit.text().strip() or None,
                         "first_name": self.first_name_edit.text().strip() or None,
@@ -277,9 +278,9 @@ class RecipientDialog(QDialog):
                     })
                 else:
                     recipient_data.update({
+                        "group_username": self.group_username_edit.text().strip() or None,
                         "group_id": int(self.group_id_edit.text().strip()) if self.group_id_edit.text().strip() else None,
                         "group_title": self.group_title_edit.text().strip() or None,
-                        "group_username": self.group_username_edit.text().strip() or None,
                     })
                 
                 self.recipient = Recipient(**recipient_data)
@@ -730,10 +731,9 @@ class RecipientListWidget(QWidget):
             
             for row, recipient in enumerate(recipients):
                 # Type - Disabled text field
-                type_text = recipient.recipient_type.value.title()
-                if recipient.recipient_type.value == "group":
+                if recipient.recipient_type.value == "GROUP":
                     type_text = "👥 Group"
-                elif recipient.recipient_type.value == "channel":
+                elif recipient.recipient_type.value == "CHANNEL":
                     type_text = "📢 Channel"
                 else:
                     type_text = "👤 User"
@@ -751,7 +751,7 @@ class RecipientListWidget(QWidget):
                 self.recipients_table.setItem(row, 1, display_name_item)
                 
                 # Username/Group - Disabled text field
-                if recipient.recipient_type.value in ["group", "channel"]:
+                if recipient.recipient_type.value in ["GROUP", "CHANNEL"]:
                     username = f"@{recipient.group_username}" if recipient.group_username else ""
                 else:
                     username = f"@{recipient.username}" if recipient.username else ""
@@ -760,7 +760,7 @@ class RecipientListWidget(QWidget):
                 self.recipients_table.setItem(row, 2, username_item)
                 
                 # ID - Disabled text field
-                if recipient.recipient_type.value in ["group", "channel"]:
+                if recipient.recipient_type.value in ["GROUP", "CHANNEL"]:
                     id_text = str(recipient.group_id) if recipient.group_id else ""
                 else:
                     id_text = str(recipient.user_id) if recipient.user_id else ""
@@ -770,7 +770,7 @@ class RecipientListWidget(QWidget):
                 self.recipients_table.setItem(row, 3, id_item)
                 
                 # Phone - Disabled text field (only for users)
-                phone_text = recipient.phone_number if recipient.recipient_type.value == "user" else ""
+                phone_text = recipient.phone_number if recipient.recipient_type.value == "USER" else ""
                 phone_item = QTableWidgetItem(phone_text or "")
                 phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
                 phone_item.setTextAlignment(Qt.AlignCenter)

@@ -211,11 +211,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📚 Documentation
 
-- **[Installation Guide](docs/installation.md)**: Detailed setup instructions
-- **[User Guide](docs/user-guide/)**: Complete user documentation
-- **[Developer Guide](docs/developer-guide/)**: Technical documentation
-- **[API Reference](docs/developer-guide/api-reference.md)**: API documentation
-- **[FAQ](docs/faq.md)**: Frequently asked questions
+- **[Installation Guide](docs/README.md)**: Detailed setup instructions
+- **[Contributing Guide](CONTRIBUTING.md)**: How to contribute to the project
+- **[Development Roadmap](ROADMAP.md)**: Future development plans
+- **[Changelog](CHANGELOG.md)**: Version history and updates
 
 ## 🤝 Contributing
 

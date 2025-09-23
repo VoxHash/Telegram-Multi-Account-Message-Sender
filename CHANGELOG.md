@@ -5,6 +5,25 @@ All notable changes to the Telegram Multi-Account Message Sender project will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2025-01-23
+
+### Added
+- **Screenshots**: Added visual examples to README.md showcasing key features
+- **Documentation Restructuring**: Complete documentation cleanup and organization
+- **CONTRIBUTING.md**: Comprehensive contribution guidelines and development workflow
+- **GITHUB_TOPICS.md**: Complete list of recommended GitHub topics for discoverability
+- **Documentation Index**: Created docs/README.md for easy navigation
+
+### Changed
+- **README.md**: Updated with screenshots and streamlined content
+- **ROADMAP.md**: Added current project status and marked Phase 1 as completed
+- **CHANGELOG.md**: Cleaned up excessive historical entries, kept only relevant versions
+
+### Fixed
+- **Documentation Duplication**: Removed 8 duplicate summary files
+- **Information Consolidation**: Merged related information into logical sections
+- **Navigation**: Improved documentation structure and user experience
+
 ## [1.2.2] - 2025-01-23
 
 ### Added

@@ -44,17 +44,21 @@ A professional-grade desktop application for managing and sending messages acros
 
 ## 🖼️ Screenshots
 
-### Main Interface
-![Main Interface](docs/screenshots/main-interface.png)
-
-### Campaign Management
-![Campaign Management](docs/screenshots/campaign-management.png)
-
-### Account Management
-![Account Management](docs/screenshots/account-management.png)
+### Main Interface - Campaigns Tab
+![Campaign Management](screenshots/campaigns.png)
+*Comprehensive campaign management with scheduling, status tracking, and bulk operations*
 
 ### Template System
-![Template System](docs/screenshots/template-system.png)
+![Template System](screenshots/templates.png)
+*Advanced template management with spintax support and A/B testing capabilities*
+
+### Settings & Configuration
+![Settings](screenshots/settings.png)
+*Complete settings management with multi-language support, themes, and safety controls*
+
+### Message Testing
+![Testing Interface](screenshots/testing.png)
+*Message testing functionality with real-time preview and validation*
 
 ## 🚀 Quick Start
 
@@ -105,11 +109,12 @@ Download the appropriate installer from the [Releases](https://github.com/VoxHas
 ## 📖 Documentation
 
 - **[User Guide](docs/USER_GUIDE.md)**: Comprehensive user guide
-- **[Warmup Guide](WARMUP_GUIDE.md)**: Complete guide to account warmup feature
 - **[API Documentation](docs/API.md)**: Complete API reference
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)**: Common issues and solutions
 - **[Development Guide](docs/DEVELOPMENT.md)**: Developer documentation
 - **[FAQ](docs/FAQ.md)**: Frequently asked questions
+- **[Contributing](CONTRIBUTING.md)**: How to contribute to the project
+- **[Roadmap](ROADMAP.md)**: Future development plans
 
 ## 🌍 Supported Languages
 
@@ -283,26 +288,7 @@ This application is for educational and legitimate business purposes only. Users
 
 ## 🗺️ Roadmap
 
-### Version 1.1.0 (Planned)
-- [ ] Web interface
-- [ ] REST API
-- [ ] Plugin system
-- [ ] Advanced analytics
-- [ ] Team collaboration features
-
-### Version 1.2.0 (Planned)
-- [ ] Mobile app
-- [ ] Cloud synchronization
-- [ ] Advanced scheduling
-- [ ] A/B testing improvements
-- [ ] Performance optimizations
-
-### Version 2.0.0 (Planned)
-- [ ] Multi-platform support
-- [ ] Advanced security features
-- [ ] Enterprise features
-- [ ] Custom integrations
-- [ ] Advanced reporting
+See [ROADMAP.md](ROADMAP.md) for detailed future development plans and current project status.
 
 ## 📊 Statistics
 

@@ -356,3 +356,30 @@ upload_*.py
 init_github_repo.py
 build_installers.py
 create_windows_installer.py
+
+# Build and distribution files
+build/
+dist/
+*.egg-info/
+*.spec
+installer.iss
+create_dmg.sh
+setup_macos.py
+
+# Development summary files
+*_SUMMARY.md
+*_READY_SUMMARY.md
+*_UPDATE_SUMMARY.md
+FINAL_RELEASE_SUMMARY.md
+RELEASE_SUMMARY_v*.md
+GITHUB_TOPICS.md
+PYPI_READY_SUMMARY.md
+LANGUAGE_UPDATE_SUMMARY.md
+
+# Temporary and development files
+content/
+scripts/
+warmup_demo_simple.py
+test_warmup_async.py
+test_warmup_demo.py
+test_warmup.py

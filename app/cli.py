@@ -1,46 +1,47 @@
+#!/usr/bin/env python3
 """
-Command-line interface for the Telegram Multi-Account Message Sender.
+Command-line interface for Telegram Multi-Account Message Sender.
 """
 
-import asyncio
 import sys
+import asyncio
 from pathlib import Path
-from typing import Optional
 
-from .services import initialize_database, get_settings, get_logger
-from .core import TelegramClientManager, MessageEngine
+# Add app directory to Python path
+app_dir = Path(__file__).parent
+sys.path.insert(0, str(app_dir))
+
+from app.services import initialize_database, get_settings, get_logger
+from app.gui.main import MainWindow
+
+# Import all models to ensure they are registered with SQLModel
+from app.models import Account, Campaign, Recipient, SendLog
+from PyQt5.QtWidgets import QApplication
 
 
-async def main():
-    """Main CLI entry point."""
-    # Initialize services
+def main():
+    """Main entry point for the CLI."""
+    # Initialize database
     initialize_database()
+    
+    # Get settings and logger
     settings = get_settings()
     logger = get_logger()
     
-    logger.info("Telegram Multi-Account Message Sender CLI")
+    logger.info("Starting Telegram Multi-Account Message Sender...")
     
-    # Check if Telegram API is configured
-    if not settings.is_telegram_configured():
-        logger.error("Telegram API not configured. Please set TELEGRAM_API_ID and TELEGRAM_API_HASH")
-        sys.exit(1)
+    # Create QApplication
+    app = QApplication(sys.argv)
+    app.setApplicationName("Telegram Multi-Account Message Sender")
+    app.setApplicationVersion("1.2.1")
     
-    # Initialize components
-    client_manager = TelegramClientManager()
-    message_engine = MessageEngine(client_manager)
+    # Create and show main window
+    main_window = MainWindow()
+    main_window.show()
     
-    try:
-        # CLI logic would go here
-        logger.info("CLI mode not yet implemented. Use GUI mode for now.")
-        
-    except KeyboardInterrupt:
-        logger.info("Shutting down...")
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        sys.exit(1)
-    finally:
-        await client_manager.disconnect_all()
+    # Run application
+    sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

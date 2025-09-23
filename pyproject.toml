@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools>=61.0.0", "wheel>=0.37.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "telegram-multi-account-sender"
 version = "1.2.1"
@@ -90,7 +86,16 @@ Download = "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/rel
 "Source Code" = "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender"
 
 [project.scripts]
-telegram-sender = "main:main"
+telegram-sender = "app.cli:main"
+telegram-multi-account-sender = "app.cli:main"
+
+[project.gui-scripts]
+telegram-sender-gui = "app.cli:main"
+telegram-multi-account-sender-gui = "app.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -185,6 +190,19 @@ omit = [
     "*/__pycache__/*",
     "*/venv/*",
     "*/env/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/.pytest_cache/*",
+    "*/.coverage*",
+    "*/htmlcov/*",
+    "*/.mypy_cache/*",
+    "*/.tox/*",
+    "*/.cache/*",
+    "*/.vscode/*",
+    "*/.idea/*",
+    "*/.swp",
+    "*/.swo",
+    "*/~",
 ]
 
 [tool.coverage.report]

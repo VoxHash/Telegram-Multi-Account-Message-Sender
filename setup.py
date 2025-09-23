@@ -16,7 +16,7 @@ with open("requirements.txt", "r", encoding="utf-8") as f:
     requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 # Read version
-version = "1.1.0"
+version = "1.2.1"
 
 setup(
     name="telegram-multi-account-sender",
@@ -77,7 +77,12 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "telegram-sender=main:main",
+            "telegram-sender=app.cli:main",
+            "telegram-multi-account-sender=app.cli:main",
+        ],
+        "gui_scripts": [
+            "telegram-sender-gui=app.cli:main",
+            "telegram-multi-account-sender-gui=app.cli:main",
         ],
     },
     include_package_data=True,

@@ -15,6 +15,7 @@ from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QDateTime, QThread
 from PyQt5.QtGui import QFont, QIcon, QTextCursor, QColor
 
 from ...services import get_logger, get_settings
+from ...services.translation import _, get_translation_manager
 from ...models import SendLog, SendStatus
 import os
 from datetime import datetime, timedelta
@@ -27,6 +28,12 @@ class LogViewer(QWidget):
         super().__init__(parent)
         self.logger = get_logger()
         self.settings = get_settings()
+        self.translation_manager = get_translation_manager()
+        self.filtered_logs = []  # Initialize filtered logs list
+        
+        # Connect language change signal
+        self.translation_manager.language_changed.connect(self.on_language_changed)
+        
         self.setup_ui()
         self.setup_log_monitoring()
     
@@ -37,31 +44,31 @@ class LogViewer(QWidget):
         # Header
         header_layout = QHBoxLayout()
         
-        title_label = QLabel("Log Viewer")
+        title_label = QLabel(_("logs.title"))
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         header_layout.addWidget(title_label)
         
         header_layout.addStretch()
         
         # Log level filter
-        header_layout.addWidget(QLabel("Level:"))
+        header_layout.addWidget(QLabel(f"{_('logs.level')}:"))
         self.level_combo = QComboBox()
-        self.level_combo.addItems(["All", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+        self.level_combo.addItems([_("logs.all"), _("logs.debug"), _("logs.info"), _("logs.warning"), _("logs.error"), _("logs.critical")])
         self.level_combo.currentTextChanged.connect(self.filter_logs)
         header_layout.addWidget(self.level_combo)
         
         # Auto-scroll toggle
-        self.auto_scroll_check = QCheckBox("Auto-scroll")
+        self.auto_scroll_check = QCheckBox(_("logs.auto_scroll"))
         self.auto_scroll_check.setChecked(True)
         header_layout.addWidget(self.auto_scroll_check)
         
         # Clear button
-        self.clear_button = QPushButton("Clear")
+        self.clear_button = QPushButton(_("logs.clear_logs"))
         self.clear_button.clicked.connect(self.clear_logs)
         header_layout.addWidget(self.clear_button)
         
         # Refresh button
-        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button = QPushButton(_("logs.refresh"))
         self.refresh_button.clicked.connect(self.refresh_logs)
         header_layout.addWidget(self.refresh_button)
         
@@ -74,7 +81,7 @@ class LogViewer(QWidget):
         layout.addWidget(self.log_text)
         
         # Status bar
-        self.status_label = QLabel("Ready")
+        self.status_label = QLabel(_("app.ready"))
         layout.addWidget(self.status_label)
     
     def setup_log_monitoring(self):
@@ -119,7 +126,7 @@ class LogViewer(QWidget):
                 if new_content:
                     # Filter by level if not "All"
                     level_filter = self.level_combo.currentText()
-                    if level_filter != "All":
+                    if level_filter != _("logs.all"):
                         filtered_lines = []
                         for line in new_content.split('\n'):
                             if level_filter in line:
@@ -141,23 +148,34 @@ class LogViewer(QWidget):
         except Exception as e:
             self.logger.error(f"Error checking log file: {e}")
     
-    def filter_logs(self, level: str):
+    def filter_logs(self):
         """Filter logs by level."""
         try:
             if not self.log_file_path.exists():
                 return
             
+            level = self.level_combo.currentText()
+            
             with open(self.log_file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            if level == "All":
+            if level == _("logs.all"):
                 # Show all logs
                 self.log_text.setPlainText(content)
             else:
-                # Filter by level
+                # Filter by level - map UI level names to log level names
+                level_mapping = {
+                    _("logs.debug"): "DEBUG",
+                    _("logs.info"): "INFO", 
+                    _("logs.warning"): "WARNING",
+                    _("logs.error"): "ERROR",
+                    _("logs.critical"): "CRITICAL"
+                }
+                
+                log_level = level_mapping.get(level, level)
                 filtered_lines = []
                 for line in content.split('\n'):
-                    if level in line:
+                    if log_level in line:
                         filtered_lines.append(line)
                 self.log_text.setPlainText('\n'.join(filtered_lines))
             
@@ -181,27 +199,43 @@ class LogViewer(QWidget):
         self.log_text.setTextCursor(cursor)
     
     def clear_logs(self):
-        """Clear the log display."""
+        """Clear the log display and file."""
         self.log_text.clear()
         
-        # Reset the log file position to current end to avoid re-adding cleared content
+        # Clear the actual log file
         try:
             if self.log_file_path.exists():
-                with open(self.log_file_path, 'r', encoding='utf-8') as f:
-                    f.seek(0, 2)  # Seek to end of file
-                    self.last_position = f.tell()
+                with open(self.log_file_path, 'w', encoding='utf-8') as f:
+                    f.write("")  # Clear the file
+                self.last_position = 0  # Reset position to beginning
         except Exception as e:
-            self.logger.error(f"Error resetting log position: {e}")
+            self.logger.error(f"Error clearing log file: {e}")
         
         # Reset filter to "All" to show all new logs
-        self.level_combo.setCurrentText("All")
+        self.level_combo.setCurrentText(_("logs.all"))
         
-        self.status_label.setText("Logs cleared - monitoring from current position")
+        # Clear the filtered logs list to reset filtering
+        self.filtered_logs = []
+        
+        self.status_label.setText("Logs cleared - file and display cleared")
     
     def refresh_logs(self):
         """Refresh logs from file."""
         self.load_existing_logs()
         self.status_label.setText("Logs refreshed")
+    
+    def on_language_changed(self, language: str):
+        """Handle language change."""
+        self.logger.info(f"Language changed to: {language}")
+        # Update UI elements with new translations
+        self.title_label.setText(_("logs.title"))
+        self.level_combo.clear()
+        self.level_combo.addItems([_("logs.all"), _("logs.debug"), _("logs.info"), _("logs.warning"), _("logs.error"), _("logs.critical")])
+        self.auto_scroll_check.setText(_("logs.auto_scroll"))
+        self.clear_button.setText(_("logs.clear_logs"))
+        self.refresh_button.setText(_("logs.refresh"))
+        self.status_label.setText(_("app.ready"))
+        self.setup_log_monitoring()
 
 
 class SendLogWidget(QWidget):
@@ -210,7 +244,13 @@ class SendLogWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logger = get_logger()
+        self.translation_manager = get_translation_manager()
         self.campaigns_loaded = False  # Flag to prevent duplicate campaign loading
+        self.updating_campaigns = False  # Flag to prevent signal loops
+        
+        # Connect language change signal
+        self.translation_manager.language_changed.connect(self.on_language_changed)
+        
         self.setup_ui()
         self.load_send_logs()
         
@@ -241,10 +281,10 @@ class SendLogWidget(QWidget):
         
         # Title and description
         title_layout = QHBoxLayout()
-        title_label = QLabel("📊 Send Logs")
-        title_label.setFont(QFont("Arial", 14, QFont.Bold))
-        title_label.setStyleSheet("color: #ffffff; margin-bottom: 2px;")
-        title_layout.addWidget(title_label)
+        self.title_label = QLabel(f"📊 {_('logs.send_logs')}")
+        self.title_label.setFont(QFont("Arial", 14, QFont.Bold))
+        self.title_label.setStyleSheet("color: #ffffff; margin-bottom: 2px;")
+        title_layout.addWidget(self.title_label)
         
         title_layout.addStretch()
         
@@ -256,10 +296,10 @@ class SendLogWidget(QWidget):
         header_layout.addLayout(title_layout)
         
         # Description
-        desc_label = QLabel("Monitor and analyze message delivery status, errors, and performance metrics.")
-        desc_label.setStyleSheet("color: #cccccc; font-size: 12px;")
-        desc_label.setWordWrap(True)
-        header_layout.addWidget(desc_label)
+        self.desc_label = QLabel(_("logs.send_logs_description"))
+        self.desc_label.setStyleSheet("color: #cccccc; font-size: 12px;")
+        self.desc_label.setWordWrap(True)
+        header_layout.addWidget(self.desc_label)
         
         layout.addWidget(header_widget)
         
@@ -277,12 +317,12 @@ class SendLogWidget(QWidget):
         filters_layout.setSpacing(10)
         
         # Status filter
-        status_label = QLabel("Status:")
+        status_label = QLabel(f"{_('logs.status')}:")
         status_label.setStyleSheet("color: #ffffff; font-weight: bold;")
         filters_layout.addWidget(status_label)
         
         self.status_combo = QComboBox()
-        self.status_combo.addItems(["All", "Sent", "Failed", "Rate Limited", "Skipped", "Pending"])
+        self.status_combo.addItems([_("logs.all"), _("logs.sent"), _("logs.failed"), _("logs.rate_limited"), _("logs.skipped"), _("logs.pending")])
         self.status_combo.setStyleSheet("""
             QComboBox {
                 background-color: #2d2d2d;
@@ -311,18 +351,18 @@ class SendLogWidget(QWidget):
         filters_layout.addWidget(self.status_combo)
         
         # Campaign filter
-        campaign_label = QLabel("Campaign:")
+        campaign_label = QLabel(f"{_('logs.campaign')}:")
         campaign_label.setStyleSheet("color: #ffffff; font-weight: bold;")
         filters_layout.addWidget(campaign_label)
         
         self.campaign_combo = QComboBox()
-        self.campaign_combo.addItems(["All"])
+        self.campaign_combo.addItems([_("logs.all")])
         self.campaign_combo.setStyleSheet(self.status_combo.styleSheet())
         self.campaign_combo.currentTextChanged.connect(self.filter_logs)
         filters_layout.addWidget(self.campaign_combo)
         
         # Date range
-        date_label = QLabel("Date Range:")
+        date_label = QLabel(f"{_('logs.date_range')}:")
         date_label.setStyleSheet("color: #ffffff; font-weight: bold;")
         filters_layout.addWidget(date_label)
         
@@ -356,7 +396,7 @@ class SendLogWidget(QWidget):
         button_layout = QHBoxLayout()
         button_layout.setSpacing(10)
         
-        self.refresh_button = QPushButton("🔄 Refresh")
+        self.refresh_button = QPushButton(f"🔄 {_('logs.refresh_logs')}")
         self.refresh_button.setStyleSheet("""
             QPushButton {
                 background-color: #2196F3;
@@ -378,7 +418,7 @@ class SendLogWidget(QWidget):
         self.refresh_button.clicked.connect(self.refresh_send_logs)
         button_layout.addWidget(self.refresh_button)
         
-        self.export_button = QPushButton("📊 Export CSV")
+        self.export_button = QPushButton(f"📊 {_('logs.export_logs')}")
         self.export_button.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
@@ -403,12 +443,53 @@ class SendLogWidget(QWidget):
         filters_layout.addLayout(button_layout)
         layout.addWidget(filters_widget)
         
+        # Search section
+        search_widget = QWidget()
+        search_widget.setStyleSheet("""
+            QWidget {
+                background-color: #1a1a1a;
+                border-radius: 6px;
+                padding: 6px;
+            }
+        """)
+        search_layout = QHBoxLayout(search_widget)
+        search_layout.setContentsMargins(12, 6, 12, 6)
+        search_layout.setSpacing(10)
+        
+        search_label = QLabel(f"{_('common.search')}:")
+        search_label.setStyleSheet("color: #ffffff; font-weight: bold;")
+        search_layout.addWidget(search_label)
+        
+        self.search_edit = QLineEdit()
+        self.search_edit.setPlaceholderText(_("logs.search_placeholder"))
+        self.search_edit.textChanged.connect(self.filter_logs)
+        self.search_edit.setStyleSheet("""
+            QLineEdit {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #404040;
+                border-radius: 4px;
+                padding: 8px 12px;
+                min-width: 200px;
+            }
+            QLineEdit:hover {
+                border-color: #2196F3;
+            }
+            QLineEdit:focus {
+                border-color: #0078d4;
+            }
+        """)
+        search_layout.addWidget(self.search_edit)
+        search_layout.addStretch()
+        
+        layout.addWidget(search_widget)
+        
         # Send logs table
         self.logs_table = QTableWidget()
         self.logs_table.setColumnCount(8)
         self.logs_table.setHorizontalHeaderLabels([
-            "Timestamp", "Campaign", "Account", "Recipient", "Status", 
-            "Error Message", "Duration (ms)", "Retry Count"
+            _("logs.timestamp"), _("logs.campaign"), _("logs.account"), _("logs.recipient"), _("logs.status"), 
+            _("logs.error_message"), _("logs.duration"), _("logs.retry_count")
         ])
         
         # Enhanced table styling
@@ -483,14 +564,14 @@ class SendLogWidget(QWidget):
         status_layout = QHBoxLayout(status_widget)
         status_layout.setContentsMargins(8, 3, 8, 3)
         
-        self.status_label = QLabel("📋 Ready - No logs loaded")
+        self.status_label = QLabel(f"📋 {_('logs.ready_no_logs')}")
         self.status_label.setStyleSheet("color: #cccccc; font-size: 11px;")
         status_layout.addWidget(self.status_label)
         
         status_layout.addStretch()
         
         # Log count
-        self.log_count_label = QLabel("0 logs")
+        self.log_count_label = QLabel(f"0 {_('logs.logs')}")
         self.log_count_label.setStyleSheet("color: #2196F3; font-weight: bold; font-size: 11px;")
         status_layout.addWidget(self.log_count_label)
         
@@ -499,7 +580,7 @@ class SendLogWidget(QWidget):
     def load_send_logs(self):
         """Load send logs from database."""
         try:
-            from ...services import get_session
+            from ...services.db import get_session
             from ...models import SendLog, Campaign, Account
             from sqlmodel import select, and_
             
@@ -516,14 +597,14 @@ class SendLogWidget(QWidget):
                 
                 # Status filter
                 status_filter = self.status_combo.currentText()
-                if status_filter != "All":
+                if status_filter != _("logs.all"):
                     # Map UI status names to enum values
                     status_mapping = {
-                        "Sent": "sent",
-                        "Failed": "failed", 
-                        "Rate Limited": "rate_limited",
-                        "Skipped": "skipped",
-                        "Pending": "pending"
+                        _("logs.sent"): "sent",
+                        _("logs.failed"): "failed", 
+                        _("logs.rate_limited"): "rate_limited",
+                        _("logs.skipped"): "skipped",
+                        _("logs.pending"): "pending"
                     }
                     if status_filter in status_mapping:
                         query = query.where(SendLog.status == status_mapping[status_filter])
@@ -535,7 +616,7 @@ class SendLogWidget(QWidget):
                 
                 # Campaign filter
                 campaign_filter = self.campaign_combo.currentText()
-                if campaign_filter != "All":
+                if campaign_filter != _("logs.all"):
                     query = query.join(Campaign).where(Campaign.name == campaign_filter)
                 
                 # Execute query and load all data within session
@@ -543,7 +624,10 @@ class SendLogWidget(QWidget):
                 
                 # Update campaign combo with available campaigns (only if not already loaded)
                 if not self.campaigns_loaded:
+                    self.logger.debug("Updating campaign combo - not loaded yet")
                     self.update_campaign_combo(session)
+                else:
+                    self.logger.debug("Campaign combo already loaded, skipping update")
                 
                 # Process logs within session context
                 self.logs_table.setRowCount(len(logs))
@@ -551,30 +635,39 @@ class SendLogWidget(QWidget):
                 for row, log in enumerate(logs):
                     # Timestamp
                     timestamp = log.created_at.strftime("%Y-%m-%d %H:%M:%S")
-                    self.logs_table.setItem(row, 0, QTableWidgetItem(timestamp))
+                    timestamp_item = QTableWidgetItem(timestamp)
+                    timestamp_item.setFlags(timestamp_item.flags() & ~Qt.ItemIsEditable)
+                    self.logs_table.setItem(row, 0, timestamp_item)
                     
                     # Campaign - access within session
                     campaign_name = "Unknown"
                     if log.campaign:
                         campaign_name = log.campaign.name
-                    self.logs_table.setItem(row, 1, QTableWidgetItem(campaign_name))
+                    campaign_item = QTableWidgetItem(campaign_name)
+                    campaign_item.setFlags(campaign_item.flags() & ~Qt.ItemIsEditable)
+                    self.logs_table.setItem(row, 1, campaign_item)
                     
                     # Account - access within session
                     account_name = "Unknown"
                     if log.account:
                         account_name = log.account.name
-                    self.logs_table.setItem(row, 2, QTableWidgetItem(account_name))
+                    account_item = QTableWidgetItem(account_name)
+                    account_item.setFlags(account_item.flags() & ~Qt.ItemIsEditable)
+                    self.logs_table.setItem(row, 2, account_item)
                     
                     # Recipient - access within session
                     recipient_info = f"ID: {log.recipient_id}"
                     if log.recipient:
                         recipient_info = log.recipient.get_display_name()
-                    self.logs_table.setItem(row, 3, QTableWidgetItem(recipient_info))
+                    recipient_item = QTableWidgetItem(recipient_info)
+                    recipient_item.setFlags(recipient_item.flags() & ~Qt.ItemIsEditable)
+                    self.logs_table.setItem(row, 3, recipient_item)
                     
                     # Status with enhanced styling
                     status_text = log.status.value.title()
                     status_item = QTableWidgetItem(status_text)
                     status_item.setTextAlignment(Qt.AlignCenter)
+                    status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable)
                     
                     # Enhanced status styling
                     if log.status == SendStatus.SENT:
@@ -603,22 +696,28 @@ class SendLogWidget(QWidget):
                     
                     # Error message
                     error_msg = log.get_error_summary() if log.error_message else ""
-                    self.logs_table.setItem(row, 5, QTableWidgetItem(error_msg))
+                    error_item = QTableWidgetItem(error_msg)
+                    error_item.setFlags(error_item.flags() & ~Qt.ItemIsEditable)
+                    self.logs_table.setItem(row, 5, error_item)
                     
                     # Duration
                     duration = str(log.duration_ms) if log.duration_ms else "N/A"
-                    self.logs_table.setItem(row, 6, QTableWidgetItem(duration))
+                    duration_item = QTableWidgetItem(duration)
+                    duration_item.setFlags(duration_item.flags() & ~Qt.ItemIsEditable)
+                    self.logs_table.setItem(row, 6, duration_item)
                     
                     # Retry count
-                    self.logs_table.setItem(row, 7, QTableWidgetItem(str(log.retry_count)))
+                    retry_item = QTableWidgetItem(str(log.retry_count))
+                    retry_item.setFlags(retry_item.flags() & ~Qt.ItemIsEditable)
+                    self.logs_table.setItem(row, 7, retry_item)
                 
             finally:
                 session.close()
             
             # Update status and count
             log_count = len(logs)
-            self.status_label.setText(f"📋 Loaded {log_count} send logs successfully")
-            self.log_count_label.setText(f"{log_count} logs")
+            self.status_label.setText(f"📋 {_('logs.loaded_successfully').format(count=log_count)}")
+            self.log_count_label.setText(f"{log_count} {_('logs.logs')}")
             
             # Update status indicator
             if log_count > 0:
@@ -628,10 +727,13 @@ class SendLogWidget(QWidget):
                 self.status_indicator.setText("🟡 No Data")
                 self.status_indicator.setStyleSheet("color: #FF9800; font-weight: bold;")
             
+            # Apply search filter if there's search text
+            self.filter_logs_by_search()
+            
         except Exception as e:
             self.logger.error(f"Error loading send logs: {e}")
-            self.status_label.setText(f"❌ Error loading send logs: {str(e)[:50]}...")
-            self.log_count_label.setText("0 logs")
+            self.status_label.setText(f"❌ {_('logs.error_loading').format(error=str(e)[:50])}")
+            self.log_count_label.setText(f"0 {_('logs.logs')}")
             self.status_indicator.setText("🔴 Error")
             self.status_indicator.setStyleSheet("color: #F44336; font-weight: bold;")
     
@@ -641,7 +743,31 @@ class SendLogWidget(QWidget):
     
     def filter_logs(self):
         """Apply filters to logs."""
-        self.load_send_logs()
+        if not self.updating_campaigns:
+            self.load_send_logs()
+    
+    def filter_logs_by_search(self):
+        """Filter logs based on search text."""
+        search_text = self.search_edit.text().lower().strip()
+        
+        if not search_text:
+            # Show all logs
+            for row in range(self.logs_table.rowCount()):
+                self.logs_table.setRowHidden(row, False)
+            return
+        
+        # Filter logs (exclude Actions column - column 7)
+        for row in range(self.logs_table.rowCount()):
+            should_show = False
+            
+            # Check all columns except Actions column for search text
+            for col in range(self.logs_table.columnCount() - 1):  # Exclude last column (Actions)
+                item = self.logs_table.item(row, col)
+                if item and search_text in item.text().lower():
+                    should_show = True
+                    break
+            
+            self.logs_table.setRowHidden(row, not should_show)
     
     def refresh_campaigns(self):
         """Refresh campaign list from database."""
@@ -654,34 +780,50 @@ class SendLogWidget(QWidget):
             from sqlmodel import select
             from ...models import Campaign
             
+            # Set flag to prevent signal loops
+            self.updating_campaigns = True
+            
             # Get all campaigns
             campaigns = session.exec(select(Campaign).order_by(Campaign.name)).all()
             
             # Store current selection
             current_selection = self.campaign_combo.currentText()
             
-            # Clear and repopulate
-            self.campaign_combo.clear()
-            self.campaign_combo.addItem("All")
+            # Get current items to avoid unnecessary updates
+            current_items = [self.campaign_combo.itemText(i) for i in range(self.campaign_combo.count())]
+            expected_items = [_("logs.all")] + [campaign.name for campaign in campaigns if campaign.name]
             
-            # Add unique campaigns only
-            campaign_names = set()
-            for campaign in campaigns:
-                if campaign.name not in campaign_names:
-                    self.campaign_combo.addItem(campaign.name)
-                    campaign_names.add(campaign.name)
-            
-            # Restore selection if it still exists
-            if current_selection in [self.campaign_combo.itemText(i) for i in range(self.campaign_combo.count())]:
-                self.campaign_combo.setCurrentText(current_selection)
+            # Only update if the items have changed
+            if set(current_items) != set(expected_items):
+                # Clear and repopulate
+                self.campaign_combo.clear()
+                self.campaign_combo.addItem(_("logs.all"))
+                
+                # Add unique campaigns only
+                seen_campaigns = set()
+                for campaign in campaigns:
+                    if campaign.name and campaign.name not in seen_campaigns:
+                        self.campaign_combo.addItem(campaign.name)
+                        seen_campaigns.add(campaign.name)
+                
+                # Restore selection if it still exists
+                if current_selection in [self.campaign_combo.itemText(i) for i in range(self.campaign_combo.count())]:
+                    self.campaign_combo.setCurrentText(current_selection)
+                else:
+                    self.campaign_combo.setCurrentText(_("logs.all"))
+                
+                self.logger.debug(f"Campaign combo updated with {len(seen_campaigns)} unique campaigns")
             else:
-                self.campaign_combo.setCurrentText("All")
+                self.logger.debug("Campaign combo items unchanged, skipping update")
             
             # Mark as loaded
             self.campaigns_loaded = True
                 
         except Exception as e:
             self.logger.error(f"Error updating campaign combo: {e}")
+        finally:
+            # Clear flag to allow normal filtering
+            self.updating_campaigns = False
 
     def export_logs(self):
         """Export logs to CSV."""
@@ -718,18 +860,40 @@ class SendLogWidget(QWidget):
                 self.logger.info(f"Send logs exported to: {file_path}")
                 
                 # Update status
-                self.status_label.setText(f"📊 Exported {exported_count} logs successfully")
+                self.status_label.setText(f"📊 {_('logs.exported_successfully').format(count=exported_count)}")
                 
                 QMessageBox.information(
                     self, 
-                    "Export Complete", 
-                    f"Successfully exported {exported_count} logs to:\n{file_path}"
+                    _("logs.export_successful"), 
+                    _("logs.exported_successfully").format(count=exported_count)
                 )
         
         except Exception as e:
             self.logger.error(f"Error exporting logs: {e}")
             self.status_label.setText(f"❌ Export failed: {str(e)[:30]}...")
-            QMessageBox.critical(self, "Export Error", f"Failed to export logs:\n{str(e)}")
+            QMessageBox.critical(self, _("logs.export_failed"), _("logs.export_failed").format(error=str(e)))
+    
+    def on_language_changed(self, language: str):
+        """Handle language change."""
+        self.logger.info(f"Language changed to: {language}")
+        # Update UI elements with new translations
+        self.title_label.setText(f"📊 {_('logs.send_logs')}")
+        self.desc_label.setText(_("logs.send_logs_description"))
+        self.refresh_button.setText(f"🔄 {_('logs.refresh_logs')}")
+        self.export_button.setText(f"📊 {_('logs.export_logs')}")
+        
+        # Update table headers
+        self.logs_table.setHorizontalHeaderLabels([
+            _("logs.timestamp"), _("logs.campaign"), _("logs.account"), _("logs.recipient"), _("logs.status"), 
+            _("logs.error_message"), _("logs.duration"), _("logs.retry_count")
+        ])
+        
+        # Update status bar
+        self.status_label.setText(f"📋 {_('logs.ready_no_logs')}")
+        self.log_count_label.setText(f"0 {_('logs.logs')}")
+        
+        # Reload data to refresh status messages
+        self.load_send_logs()
 
 
 class LogWidget(QWidget):
@@ -737,6 +901,12 @@ class LogWidget(QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.logger = get_logger()
+        self.translation_manager = get_translation_manager()
+        
+        # Connect language change signal
+        self.translation_manager.language_changed.connect(self.on_language_changed)
+        
         self.setup_ui()
     
     def setup_ui(self):
@@ -749,8 +919,17 @@ class LogWidget(QWidget):
         
         # Application logs tab
         self.app_log_viewer = LogViewer()
-        tab_widget.addTab(self.app_log_viewer, "Application Logs")
+        tab_widget.addTab(self.app_log_viewer, _("logs.application_logs"))
         
         # Send logs tab
         self.send_log_widget = SendLogWidget()
-        tab_widget.addTab(self.send_log_widget, "Send Logs")
+        tab_widget.addTab(self.send_log_widget, _("logs.send_logs"))
+    
+    def on_language_changed(self, language: str):
+        """Handle language change."""
+        self.logger.info(f"Language changed to: {language}")
+        # Update tab names
+        tab_widget = self.findChild(QTabWidget)
+        if tab_widget:
+            tab_widget.setTabText(0, _("logs.application_logs"))
+            tab_widget.setTabText(1, _("logs.send_logs"))

@@ -20,6 +20,7 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -49,7 +50,6 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
 
 # Translations
 *.mo
@@ -72,7 +72,6 @@ instance/
 docs/_build/
 
 # PyBuilder
-.pybuilder/
 target/
 
 # Jupyter Notebook
@@ -83,9 +82,7 @@ profile_default/
 ipython_config.py
 
 # pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+.python-version
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
@@ -94,22 +91,7 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/#use-with-ide
-.pdm.toml
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
 __pypackages__/
 
 # Celery stuff
@@ -146,41 +128,31 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be added to the global gitignore or merged into this project gitignore.  For a PyCharm
-#  project, it is recommended to include the following files:
-#  .idea/
-#  *.iml
-#  *.ipr
-#  *.iws
-.idea/
-
-# VS Code
-.vscode/
-
 # Application specific
 app_data/
 *.db
-*.db-shm
-*.db-wal
-*.log
+*.sqlite
+*.sqlite3
 
-# Session files
-sessions/
+# Telegram session files
 *.session
+*.session-journal
+
+# Log files
+logs/
+*.log
 
 # Temporary files
 temp/
 tmp/
 *.tmp
-*.temp
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -192,121 +164,195 @@ ehthumbs.db
 Thumbs.db
 
 # Windows
-*.lnk
-
-# Nuitka build artifacts
-build/
 *.exe
+*.msi
 *.dmg
+*.pkg
 *.deb
 *.rpm
-*.pkg.tar.zst
 *.tar.gz
 
 # Test files
-test_files/
-sample_media/
 test_*.py
 *_test.py
-test_*.session
-test_*.log
+tests/
+
+# Development files
+.env.example
+.env.local
+.env.development
+.env.test
+.env.production
 
 # Backup files
 *.bak
 *.backup
 *.old
 
-# IDE files
-*.swp
-*.swo
-*~
-
-# Logs
-logs/
-*.log
-
-# Database
-*.sqlite
-*.db
-
 # Configuration files with sensitive data
 config.ini
+config.json
 secrets.json
-.secrets
 
 # API keys and credentials
 api_keys.txt
-credentials.json
-.secrets
+credentials.txt
+secrets.txt
 
+# Personal data
+personal_data/
+user_data/
+contacts.csv
+recipients.csv
+accounts.csv
+
+# Generated documentation
+docs/build/
+docs/site/
+
+# Coverage reports
+coverage/
+.coverage
+htmlcov/
+
+# Profiling data
+*.prof
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# MacOS
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Application specific ignores
 # Telegram session files
 *.session
 *.session-journal
 
-# Proxy configuration
-proxy_config.json
+# Database files
+*.db
+*.sqlite
+*.sqlite3
 
-# Campaign data
-campaign_data/
-recipient_lists/
+# Log files
+*.log
+logs/
 
-# Media files (if any)
-media/
-uploads/
-downloads/
+# Configuration files
+config.ini
+config.json
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Test data
+test_data/
+sample_data/
 
 # Build artifacts
-dist/
 build/
+dist/
 *.egg-info/
-
-# Coverage reports
-htmlcov/
-.coverage
-
-# Pytest
-.pytest_cache/
-
-# Jupyter
-.ipynb_checkpoints/
 
 # Virtual environments
 venv/
 env/
 ENV/
 
-# Environment variables
-.env.local
-.env.production
-.env.staging
-
-# IDE
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# Application data
-app_data/
-sessions/
-logs/
-temp/
-
-# Sensitive data and personal information
-*personal*
-*private*
-*sensitive*
-*credentials*
-*secrets*
+# Personal/sensitive files
+personal/
+sensitive/
+credentials/
+secrets/
 
 # Development and testing files
-dev_*.py
-debug_*.py
-sample_*.py
-create_sample_*.py
-fix_*.py
+test_*.py
+*_test.py
+test_*.session
+warmup_demo*.py
+test_warmup*.py
+test_language*.py
+test_session*.session
+fix_translations.py
+audit_translations.py
+check_*.py
+create_*.py
 migrate_*.py
+update_*.py
+upload_*.py
+init_github_repo.py
+build_installers.py
+create_windows_installer.py

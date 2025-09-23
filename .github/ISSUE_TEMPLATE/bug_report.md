@@ -1,44 +1,46 @@
 ---
-name: 🐛 Bug Report
-about: Create a report to help us improve the application
+name: Bug report
+about: Create a report to help us improve
 title: '[BUG] '
-labels: ['bug', 'needs-triage']
+labels: bug
 assignees: ''
 
 ---
 
-## 🐛 Bug Description
+**Describe the bug**
 A clear and concise description of what the bug is.
 
-## 🔄 Steps to Reproduce
+**To Reproduce**
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
-## 🎯 Expected Behavior
+**Expected behavior**
 A clear and concise description of what you expected to happen.
 
-## 📱 Screenshots
+**Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-## 🖥️ Environment
-- **OS**: [e.g. Windows 10, macOS 12.0, Ubuntu 20.04]
-- **Python Version**: [e.g. 3.10.0]
-- **Application Version**: [e.g. 1.0.0]
-- **PyQt5 Version**: [e.g. 5.15.0]
+**Environment (please complete the following information):**
+ - OS: [e.g. Windows 10, macOS 12, Ubuntu 20.04]
+ - Python version: [e.g. 3.10.0]
+ - Application version: [e.g. 1.0.0]
+ - Telegram API version: [e.g. 1.28.0]
 
-## 📋 Additional Context
+**Logs**
+Please include relevant log entries:
+
+```
+Paste log entries here
+```
+
+**Additional context**
 Add any other context about the problem here.
 
-## 🔍 Error Logs
-```
-Paste any relevant error logs here
-```
-
-## ✅ Checklist
-- [ ] I have searched for existing issues before creating this one
-- [ ] I have provided all the requested information
-- [ ] I have tested this on the latest version
-- [ ] I have included error logs if applicable
+**Checklist**
+- [ ] I have searched existing issues to avoid duplicates
+- [ ] I have checked the documentation
+- [ ] I have provided all required information
+- [ ] I have included relevant logs

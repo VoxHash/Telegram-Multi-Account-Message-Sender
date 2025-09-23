@@ -29,9 +29,15 @@ class SendLog(BaseModel, JSONFieldMixin, table=True):
     __tablename__ = "send_logs"
     
     # Campaign and account info
-    campaign_id: int = Field(foreign_key="campaigns.id", index=True)
+    campaign_id: Optional[int] = Field(foreign_key="campaigns.id", index=True, default=None)
     account_id: int = Field(foreign_key="accounts.id", index=True)
-    recipient_id: int = Field(foreign_key="recipients.id", index=True)
+    recipient_id: Optional[int] = Field(foreign_key="recipients.id", index=True, default=None)
+    
+    # Warmup support
+    is_warmup: bool = Field(default=False)
+    recipient_type: Optional[str] = Field(default=None)
+    recipient_identifier: Optional[str] = Field(default=None)
+    sent_at: Optional[datetime] = Field(default=None)
     
     # Message details
     message_text: str
@@ -66,9 +72,9 @@ class SendLog(BaseModel, JSONFieldMixin, table=True):
     ip_address: Optional[str] = Field(default=None)
     
     # Relationships
-    campaign: "Campaign" = Relationship(back_populates="send_logs")
+    campaign: Optional["Campaign"] = Relationship(back_populates="send_logs")
     account: "Account" = Relationship(back_populates="send_logs")
-    recipient: "Recipient" = Relationship(back_populates="send_logs")
+    recipient: Optional["Recipient"] = Relationship(back_populates="send_logs")
     
     def start_sending(self) -> None:
         """Mark the send as started."""

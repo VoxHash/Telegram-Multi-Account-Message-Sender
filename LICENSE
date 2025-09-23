@@ -1,6 +1,7 @@
 BSD 3-Clause License
 
-Copyright (c) 2024, VoxHash
+Copyright (c) 2025, VoxHash
+All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,3 +27,114 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+---
+
+ADDITIONAL TERMS AND CONDITIONS
+
+1. EDUCATIONAL AND LEGITIMATE BUSINESS USE ONLY
+   This software is intended for educational and legitimate business purposes only.
+   Users are responsible for complying with all applicable laws and regulations,
+   including but not limited to:
+   - Telegram's Terms of Service
+   - Local and international privacy laws
+   - Anti-spam regulations
+   - Data protection laws
+
+2. PROHIBITED USES
+   The following uses are strictly prohibited:
+   - Spam or unsolicited messaging
+   - Harassment or abuse
+   - Illegal activities
+   - Violation of Telegram's Terms of Service
+   - Any activity that could harm the reputation of the software or its developers
+
+3. USER RESPONSIBILITY
+   Users are solely responsible for:
+   - Obtaining necessary permissions before sending messages
+   - Complying with all applicable laws and regulations
+   - Ensuring their use of the software is ethical and legal
+   - Protecting their API credentials and account information
+   - Monitoring their account activity and compliance
+
+4. NO WARRANTY
+   This software is provided "as is" without warranty of any kind, express or
+   implied, including but not limited to the warranties of merchantability,
+   fitness for a particular purpose, and noninfringement. In no event shall the
+   authors or copyright holders be liable for any claim, damages, or other
+   liability, whether in an action of contract, tort, or otherwise, arising from,
+   out of, or in connection with the software or the use or other dealings in
+   the software.
+
+5. THIRD-PARTY SERVICES
+   This software integrates with third-party services, including but not limited to:
+   - Telegram API
+   - Various cloud services
+   - External databases
+   
+   Users are responsible for complying with the terms of service of all
+   third-party services they use in connection with this software.
+
+6. DATA PRIVACY
+   Users are responsible for:
+   - Protecting personal data and sensitive information
+   - Complying with data protection regulations
+   - Implementing appropriate security measures
+   - Obtaining necessary consents for data processing
+
+7. ACCOUNT SECURITY
+   Users must:
+   - Keep their API credentials secure and confidential
+   - Use strong, unique passwords
+   - Enable two-factor authentication where available
+   - Regularly monitor their accounts for suspicious activity
+   - Report any security incidents immediately
+
+8. COMPLIANCE MONITORING
+   Users should:
+   - Regularly review their use of the software
+   - Monitor for compliance with applicable laws and regulations
+   - Keep records of their activities as required by law
+   - Seek legal advice when necessary
+
+9. UPDATES AND MODIFICATIONS
+   The software may be updated or modified from time to time. Users are
+   responsible for:
+   - Keeping the software up to date
+   - Reviewing changes and their impact
+   - Ensuring continued compliance with applicable laws
+   - Testing updates before deploying in production
+
+10. TERMINATION
+    The license may be terminated if:
+    - The user violates any of these terms
+    - The user engages in prohibited activities
+    - The user fails to comply with applicable laws
+    - The user misuses the software in any way
+
+11. GOVERNING LAW
+    This license is governed by the laws of the jurisdiction in which the
+    copyright holder is located, without regard to conflict of law principles.
+
+12. SEVERABILITY
+    If any provision of this license is held to be invalid or unenforceable,
+    the remaining provisions shall remain in full force and effect.
+
+13. ENTIRE AGREEMENT
+    This license constitutes the entire agreement between the parties regarding
+    the use of this software and supersedes all prior agreements and
+    understandings.
+
+14. CONTACT INFORMATION
+    For questions about this license or the software, please contact:
+    - Email: contact@voxhash.dev
+    - GitHub: https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender
+    - Website: https://voxhash.dev
+
+---
+
+By using this software, you acknowledge that you have read, understood, and
+agree to be bound by the terms and conditions of this license. If you do not
+agree to these terms, you may not use this software.
+
+Last updated: January 22, 2025

@@ -19,8 +19,9 @@ class ThemeManager:
         self.logger = get_logger()
         self.qsettings = QSettings("VoxHash", "TelegramSender")
         
-        # Load saved theme preference
-        self.current_theme = self.qsettings.value("theme", "auto", str)
+        # Load saved theme preference from database settings
+        # Convert enum to string value
+        self.current_theme = self.settings.theme.value if hasattr(self.settings.theme, 'value') else str(self.settings.theme)
         
         # Apply initial theme
         self.apply_theme(self.current_theme)
@@ -86,6 +87,20 @@ class ThemeManager:
                 "warning": "#ffc107",
                 "error": "#dc3545",
                 "info": "#17a2b8",
+            }
+        elif theme == "dracula":
+            return {
+                "background": "#282a36",
+                "surface": "#44475a",
+                "primary": "#bd93f9",
+                "secondary": "#6272a4",
+                "text": "#f8f8f2",
+                "text_secondary": "#6272a4",
+                "border": "#6272a4",
+                "success": "#50fa7b",
+                "warning": "#ffb86c",
+                "error": "#ff5555",
+                "info": "#8be9fd",
             }
         else:  # light theme
             return {
@@ -288,9 +303,10 @@ class ThemeManager:
         else:
             actual_theme = theme
         
+        # Update current theme
         self.current_theme = actual_theme
         
-        # Save preference
+        # Save preference to both QSettings and database
         self.qsettings.setValue("theme", theme)
         
         # Apply stylesheet
@@ -299,11 +315,11 @@ class ThemeManager:
             stylesheet = self.get_stylesheet(actual_theme)
             app.setStyleSheet(stylesheet)
             
-            self.logger.info(f"Theme applied: {actual_theme}")
+            self.logger.info(f"Theme applied: {actual_theme} (from setting: {theme})")
     
     def get_available_themes(self) -> list:
         """Get list of available themes."""
-        return ["auto", "light", "dark"]
+        return ["auto", "light", "dark", "dracula"]
     
     def get_current_theme(self) -> str:
         """Get current theme."""

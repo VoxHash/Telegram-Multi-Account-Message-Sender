@@ -1,0 +1,276 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [3.10, 3.11, 3.12]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install build twine
+    
+    - name: Build package
+      run: python -m build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-${{ matrix.os }}-python${{ matrix.python-version }}
+        path: dist/
+
+  create-installers:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [3.10]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: dist-${{ matrix.os }}-python${{ matrix.python-version }}
+        path: dist/
+    
+    - name: Create Windows installer
+      if: matrix.os == 'windows-latest'
+      run: |
+        pyinstaller --onefile --windowed --name telegram-sender main.py
+        # Create NSIS installer script
+        echo '!define APPNAME "Telegram Multi-Account Message Sender"' > installer.nsi
+        echo '!define COMPANYNAME "VoxHash"' >> installer.nsi
+        echo '!define DESCRIPTION "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"' >> installer.nsi
+        echo '!define VERSIONMAJOR 1' >> installer.nsi
+        echo '!define VERSIONMINOR 0' >> installer.nsi
+        echo '!define VERSIONBUILD 0' >> installer.nsi
+        echo 'RequestExecutionLevel admin' >> installer.nsi
+        echo 'InstallDir "$PROGRAMFILES\\${COMPANYNAME}\\${APPNAME}"' >> installer.nsi
+        echo 'Name "${APPNAME}"' >> installer.nsi
+        echo 'outFile "TelegramMultiAccountSender-${VERSIONMAJOR}.${VERSIONMINOR}.${VERSIONBUILD}-Setup.exe"' >> installer.nsi
+        echo 'page directory' >> installer.nsi
+        echo 'page instfiles' >> installer.nsi
+        echo 'section "install"' >> installer.nsi
+        echo '  setOutPath $INSTDIR' >> installer.nsi
+        echo '  file "dist\\telegram-sender.exe"' >> installer.nsi
+        echo '  writeUninstaller "$INSTDIR\\uninstall.exe"' >> installer.nsi
+        echo '  createDirectory "$SMPROGRAMS\\${COMPANYNAME}"' >> installer.nsi
+        echo '  createShortCut "$SMPROGRAMS\\${COMPANYNAME}\\${APPNAME}.lnk" "$INSTDIR\\telegram-sender.exe"' >> installer.nsi
+        echo '  createShortCut "$SMPROGRAMS\\${COMPANYNAME}\\Uninstall.lnk" "$INSTDIR\\uninstall.exe"' >> installer.nsi
+        echo 'sectionEnd' >> installer.nsi
+        echo 'section "uninstall"' >> installer.nsi
+        echo '  delete "$INSTDIR\\telegram-sender.exe"' >> installer.nsi
+        echo '  delete "$INSTDIR\\uninstall.exe"' >> installer.nsi
+        echo '  delete "$SMPROGRAMS\\${COMPANYNAME}\\${APPNAME}.lnk"' >> installer.nsi
+        echo '  delete "$SMPROGRAMS\\${COMPANYNAME}\\Uninstall.lnk"' >> installer.nsi
+        echo '  rmDir "$SMPROGRAMS\\${COMPANYNAME}"' >> installer.nsi
+        echo '  rmDir "$INSTDIR"' >> installer.nsi
+        echo 'sectionEnd' >> installer.nsi
+        # Install NSIS
+        choco install nsis -y
+        makensis installer.nsi
+    
+    - name: Create macOS installer
+      if: matrix.os == 'macos-latest'
+      run: |
+        pyinstaller --onefile --windowed --name telegram-sender main.py
+        # Create app bundle
+        mkdir -p dist/TelegramMultiAccountSender.app/Contents/MacOS
+        mkdir -p dist/TelegramMultiAccountSender.app/Contents/Resources
+        cp dist/telegram-sender dist/TelegramMultiAccountSender.app/Contents/MacOS/
+        # Create Info.plist
+        cat > dist/TelegramMultiAccountSender.app/Contents/Info.plist << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleExecutable</key>
+            <string>telegram-sender</string>
+            <key>CFBundleIdentifier</key>
+            <string>dev.voxhash.telegram-multi-account-sender</string>
+            <key>CFBundleName</key>
+            <string>Telegram Multi-Account Message Sender</string>
+            <key>CFBundleVersion</key>
+            <string>1.0.0</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0.0</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleSignature</key>
+            <string>????</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>10.15</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+        </dict>
+        </plist>
+        EOF
+        # Install create-dmg
+        brew install create-dmg
+        # Create DMG
+        create-dmg --volname 'Telegram Multi-Account Message Sender' --window-pos 200 120 --window-size 600 300 --icon-size 100 --icon 'TelegramMultiAccountSender.app' 175 120 --hide-extension 'TelegramMultiAccountSender.app' --app-drop-link 425 120 'TelegramMultiAccountSender-1.0.0.dmg' 'dist/'
+    
+    - name: Create Linux installer
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        pyinstaller --onefile --windowed --name telegram-sender main.py
+        # Create DEB package
+        mkdir -p dist/telegram-multi-account-sender_1.0.0-1_amd64/DEBIAN
+        mkdir -p dist/telegram-multi-account-sender_1.0.0-1_amd64/usr/bin
+        mkdir -p dist/telegram-multi-account-sender_1.0.0-1_amd64/usr/share/applications
+        mkdir -p dist/telegram-multi-account-sender_1.0.0-1_amd64/usr/share/pixmaps
+        # Create control file
+        cat > dist/telegram-multi-account-sender_1.0.0-1_amd64/DEBIAN/control << EOF
+        Package: telegram-multi-account-sender
+        Version: 1.0.0-1
+        Section: utils
+        Priority: optional
+        Architecture: amd64
+        Depends: python3 (>= 3.10), python3-pyqt5, python3-requests
+        Maintainer: VoxHash <contact@voxhash.dev>
+        Description: Professional-grade desktop application for managing and sending messages across multiple Telegram accounts
+         This application provides a comprehensive solution for managing multiple Telegram accounts
+         and sending messages with advanced features like scheduling, spintax, media support, and compliance controls.
+        EOF
+        # Copy executable
+        cp dist/telegram-sender dist/telegram-multi-account-sender_1.0.0-1_amd64/usr/bin/
+        # Create desktop file
+        cat > dist/telegram-multi-account-sender_1.0.0-1_amd64/usr/share/applications/telegram-sender.desktop << EOF
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=Telegram Multi-Account Message Sender
+        Comment=Professional-grade desktop application for managing and sending messages across multiple Telegram accounts
+        Exec=telegram-sender
+        Icon=telegram-sender
+        Terminal=false
+        Categories=Network;InstantMessaging;
+        EOF
+        # Copy icon
+        if [ -f "app/assets/icons/favicon.ico" ]; then
+          cp app/assets/icons/favicon.ico dist/telegram-multi-account-sender_1.0.0-1_amd64/usr/share/pixmaps/telegram-sender.ico
+        fi
+        # Build DEB package
+        dpkg-deb --build dist/telegram-multi-account-sender_1.0.0-1_amd64
+        # Create tar.gz package
+        tar -czf telegram-multi-account-sender-1.0.0-linux-x86_64.tar.gz -C dist telegram-sender
+    
+    - name: Upload installer artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: installers-${{ matrix.os }}
+        path: |
+          dist/*.exe
+          dist/*.dmg
+          dist/*.deb
+          dist/*.tar.gz
+
+  release:
+    needs: [build, create-installers]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: python -m build
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts/
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/installers-windows-latest/*.exe
+          artifacts/installers-macos-latest/*.dmg
+          artifacts/installers-ubuntu-latest/*.deb
+          artifacts/installers-ubuntu-latest/*.tar.gz
+        body: |
+          ## Telegram Multi-Account Message Sender ${{ github.ref_name }}
+          
+          ### What's New
+          - Multi-language support (8 languages)
+          - Enhanced campaign management with retry and duplicate functionality
+          - Improved UI/UX across all tabs
+          - Better error handling and logging
+          - Comprehensive documentation and examples
+          
+          ### Installation
+          
+          **Windows:**
+          - Download `TelegramMultiAccountSender-1.0.0-Setup.exe` and run the installer
+          
+          **macOS:**
+          - Download `TelegramMultiAccountSender-1.0.0.dmg` and mount the disk image
+          - Drag the app to your Applications folder
+          
+          **Linux:**
+          - **Debian/Ubuntu:** `sudo dpkg -i telegram-multi-account-sender_1.0.0-1_amd64.deb`
+          - **Arch Linux:** `pacman -U telegram-multi-account-sender-1.0.0-linux-x86_64.tar.gz`
+          - **Generic:** Extract `telegram-multi-account-sender-1.0.0-linux-x86_64.tar.gz` and run `./telegram-sender`
+          
+          ### Requirements
+          - Python 3.10+
+          - PyQt5
+          - Telegram API credentials
+          
+          ### Documentation
+          - [README](README.md)
+          - [Contributing](CONTRIBUTING.md)
+          - [Changelog](CHANGELOG.md)
+          
+          ### Support
+          - [Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
+          - [Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

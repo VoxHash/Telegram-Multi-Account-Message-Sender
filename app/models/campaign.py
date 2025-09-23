@@ -21,6 +21,8 @@ class CampaignStatus(str, Enum):
     COMPLETED = "completed"
     STOPPED = "stopped"
     ERROR = "error"
+    FAILED = "failed"
+    INCOMPLETED = "incompleted"
 
 
 class CampaignType(str, Enum):
@@ -121,9 +123,14 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         if not self.use_ab_testing or not self.ab_variants:
             return {"text": self.message_text, "media_path": self.media_path}
         
+        # Get variants list
+        variants_list = self.get_ab_variants_list()
+        if not variants_list:
+            return {"text": self.message_text, "media_path": self.media_path}
+        
         # Simple round-robin assignment based on recipient_id
-        variant_index = recipient_id % len(self.ab_variants)
-        return self.ab_variants[variant_index]
+        variant_index = recipient_id % len(variants_list)
+        return variants_list[variant_index]
     
     def get_effective_message_text(self, recipient_id: int) -> str:
         """Get the effective message text for a recipient."""
@@ -142,7 +149,7 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     def can_start(self) -> bool:
         """Check if campaign can be started."""
         return (
-            self.status == CampaignStatus.DRAFT and
+            self.status in [CampaignStatus.DRAFT, CampaignStatus.SCHEDULED] and
             self.is_active and
             not self.is_deleted and
             self.total_recipients > 0

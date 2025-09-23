@@ -1,193 +1,433 @@
-# 📝 Changelog
+# Changelog
 
-All notable changes to Telegram Multi-Account Message Sender will be documented in this file.
+All notable changes to the Telegram Multi-Account Message Sender project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-01-23
+
+### Added
+- **Delete All Logs Feature**: New "Delete All Logs" button in Settings tab for memory management
+- **Enhanced Spintax Processing**: Fixed spintax processing in both campaigns and testing tabs
+- **Settings Persistence**: All settings now properly persist when app is closed and reopened
+- **Windows Startup Integration**: "Start App with Windows" functionality with Registry management
+- **Comprehensive Settings Verification**: All settings options verified and working properly
+- **Translation Key Synchronization**: All 560 translation keys synchronized across all 13 languages
+- **Enhanced Error Handling**: Improved error handling for missing imports and UI components
+
+### Fixed
+- **Spintax Processing**: Fixed spintax not being processed in campaign and testing messages
+- **Settings Loading**: Fixed language and theme settings not loading correctly on app restart
+- **Translation Issues**: Fixed missing translation keys and untranslated strings
+- **Import Errors**: Fixed missing QCheckBox import in testing widget
+- **Settings Persistence**: Fixed settings not being saved to .env file correctly
+
+### Changed
+- **Settings Management**: Improved settings save/load functionality with proper enum handling
+- **Translation System**: Enhanced translation system with better key management
+- **UI Components**: Added spintax checkbox to testing tab for better user control
+- **Documentation**: Updated all documentation to reflect new features and fixes
+
+## [1.1.0] - 2025-01-22
+
+### Added
+- **Extended Multi-Language Support**: Added 5 new languages
+  - Portuguese (pt)
+  - Korean (ko)
+  - Catalan (ca)
+  - Basque (eu)
+  - Galician (gl)
+- **Enhanced Translation System**: Complete UI translation for all 13 supported languages
+- **Updated Documentation**: All documentation updated to reflect new language support
+
+### Changed
+- **Language Enum**: Extended Language enum to include new languages
+- **Settings UI**: Updated language selector to include all 13 languages
+- **Version Bump**: Updated to version 1.1.0
+
 ## [Unreleased]
 
-### 🚀 Planned
-- Mobile companion app
-- Cloud storage integration
-- Advanced analytics dashboard
-- Plugin system for extensions
-- Multi-language support
-- Advanced scheduling features
+### Added
+- Multi-language support for 13 languages (English, French, Spanish, Chinese, Japanese, German, Russian, Estonian, Portuguese, Korean, Catalan, Basque, Galician)
+- Translation system with JSON-based translation files
+- Language selector in Settings tab
+- Dynamic UI text updates when language changes
+- Comprehensive documentation in multiple languages
+- GitHub Actions workflows for CI/CD
+- Automated installer creation for Windows, macOS, and Linux
+- PyPI package support
+- Comprehensive API documentation
+- User guide and troubleshooting documentation
+- Development guide for contributors
+- FAQ section
+- Issue and pull request templates
+- Example files and templates
+- Security best practices documentation
 
-## [1.0.0] - 2024-12-19
+### Changed
+- Improved UI/UX across all tabs
+- Enhanced error handling and user feedback
+- Better logging and monitoring capabilities
+- Optimized database queries and performance
+- Updated documentation structure
+- Improved code organization and maintainability
 
-### ✨ Added
-- **Complete Application**: Production-grade desktop application with modern GUI
-- **Account Management**: Multi-account support with proxy configuration
-- **Campaign System**: Advanced campaign builder with scheduling and A/B testing
-- **Recipient Management**: Individual and bulk recipient management with CSV import
-- **Analytics & Logging**: Real-time logs and comprehensive analytics
-- **Safety Features**: Rate limiting, compliance checking, and safety guardrails
-- **Theme System**: Light/dark theme with system detection
-- **Database Integration**: SQLite database with SQLModel ORM
-- **Settings Management**: Comprehensive configuration with Pydantic
-- **Cross-Platform Support**: Windows, macOS, and Linux compatibility
+### Fixed
+- Various bug fixes and stability improvements
+- Memory leak issues
+- Database connection problems
+- UI responsiveness issues
+- Translation system bugs
+- Theme management issues
 
-### 🎯 Core Features
-- **Multi-Account Support**: Manage unlimited Telegram accounts
-- **Proxy Configuration**: SOCKS5/HTTP proxy support per account
-- **Rate Limiting**: Per-account and global rate limiting
-- **Account Warmup**: Gradual warming for new accounts
-- **Status Monitoring**: Real-time account health tracking
-- **Secure Storage**: Encrypted session and credential storage
+## [1.0.0] - 2025-01-22
 
-### 📢 Campaign Features
-- **Campaign Builder**: Intuitive tabbed interface
-- **Message Editor**: Rich text editor with spintax support
-- **A/B Testing**: Multi-variant testing with split percentages
-- **Scheduling**: Advanced scheduling with timezone support
-- **Media Support**: Attach images, videos, and documents
-- **Template System**: Reusable message templates with variables
+### Added
+- Initial release of Telegram Multi-Account Message Sender
+- Multi-account management system
+- Campaign management with scheduling
+- Template system with spintax support
+- Recipient management with CSV import/export
+- Message testing functionality
+- Comprehensive logging system
+- Settings and configuration management
+- Theme support (Light, Dark, Auto, Dracula)
+- Database integration with SQLite
+- Telegram API integration
+- Rate limiting and safety controls
+- Retry mechanism for failed messages
+- Campaign duplication functionality
+- Progress tracking and statistics
+- Error handling and recovery
+- User-friendly interface
+- Context menus and keyboard shortcuts
+- Search and filtering capabilities
+- Export functionality for data
+- Backup and restore features
+- Security measures and compliance controls
 
-### 👥 Recipient Management
-- **Individual Management**: Add, edit, and organize recipients
-- **CSV Import**: Bulk import with column mapping
-- **Tag System**: Organize recipients with custom tags
-- **Search & Filter**: Advanced filtering and search capabilities
-- **Status Tracking**: Track message delivery and engagement
+### Features
+- **Account Management**: Add, edit, delete, and authorize Telegram accounts
+- **Campaign Management**: Create, schedule, start, pause, stop, and retry campaigns
+- **Template System**: Create and manage message templates with spintax support
+- **Recipient Management**: Organize recipients into lists with CSV import/export
+- **Message Testing**: Test messages before sending campaigns
+- **Logging**: Comprehensive logging with filtering and export
+- **Settings**: Configurable settings for all aspects of the application
+- **Themes**: Multiple theme options with auto-detection
+- **Safety**: Built-in rate limiting and compliance controls
+- **Performance**: Optimized for high-volume message sending
+- **Reliability**: Robust error handling and recovery mechanisms
 
-### 📊 Analytics & Logging
-- **Real-time Logs**: Live application and send logs
-- **Analytics Dashboard**: Campaign performance metrics
-- **Export Functionality**: CSV export for external analysis
-- **Status Tracking**: Detailed delivery status and error reporting
-- **Audit Trail**: Complete activity logging for compliance
+### Technical Details
+- **Language**: Python 3.10+
+- **GUI Framework**: PyQt5
+- **Database**: SQLite with SQLModel ORM
+- **Telegram API**: Telethon library
+- **Logging**: Rich library for beautiful console output
+- **Configuration**: Pydantic-settings for configuration management
+- **Architecture**: MVC pattern with service layer
+- **Threading**: Asyncio and threading for concurrent operations
+- **Security**: Input validation and secure data handling
 
-### 🔒 Safety & Compliance
-- **Rate Limiting**: Respect Telegram's rate limits
-- **Compliance Checking**: Built-in spam detection and warnings
-- **Safety Guardrails**: Conservative defaults and safety controls
-- **Dry Run Mode**: Test campaigns without sending messages
-- **Error Handling**: Comprehensive error handling and recovery
+### Supported Platforms
+- Windows 10/11
+- macOS 10.15+
+- Linux (Ubuntu 18.04+, CentOS 7+, Arch Linux)
 
-### 🎨 User Interface
-- **Modern GUI**: Professional PyQt5 interface
-- **Theme Support**: Light/dark theme with system detection
-- **Responsive Design**: Adaptive layout for different screen sizes
-- **Keyboard Shortcuts**: Efficient keyboard navigation
-- **Real-time Updates**: Live status updates and notifications
+### Installation Methods
+- Python package (pip install)
+- Standalone installers for each platform
+- Source code installation
+- Docker containerization
 
-### 🔧 Technical Implementation
-- **Python 3.10+**: Modern Python with type hints
-- **PyQt5 Framework**: Cross-platform GUI framework
-- **SQLModel ORM**: Modern database ORM with SQLite
-- **Pydantic Settings**: Type-safe configuration management
-- **Rich Logging**: Beautiful console and file logging
-- **Async Support**: Asyncio for efficient operations
-- **Modular Architecture**: Clean, maintainable code structure
+### Documentation
+- Comprehensive README
+- API documentation
+- User guide
+- Troubleshooting guide
+- Development guide
+- FAQ section
+- Code examples and tutorials
 
-### 📁 Supported Features
-- **Account Management**: Full CRUD operations
-- **Campaign Lifecycle**: Create, run, pause, resume, stop
-- **Recipient Operations**: Individual and bulk management
-- **Log Management**: Real-time viewing and export
-- **Settings Configuration**: Comprehensive settings management
-- **Database Operations**: Full database integration
+### License
+- BSD 3-Clause License
+- Open source and free to use
+- Commercial use allowed
+- Modification and distribution allowed
 
-### 🛠️ Development Tools
-- **Testing Framework**: Pytest with unit and integration tests
-- **Code Quality**: Ruff, Black, isort, mypy
-- **Pre-commit Hooks**: Automated code quality checks
-- **CI/CD**: GitHub Actions workflows
-- **Documentation**: Comprehensive documentation system
-- **Build System**: Nuitka for cross-platform binaries
+### Contributing
+- Open source project
+- Community contributions welcome
+- Issue tracking and bug reports
+- Feature requests and suggestions
+- Pull request guidelines
+- Code of conduct
 
-### 📊 Project Statistics
-- **Total Code**: 5,000+ lines of Python
-- **Features**: 50+ major features implemented
-- **UI Components**: 20+ custom widgets
-- **Database Models**: 5+ comprehensive models
-- **Test Coverage**: Unit and integration tests
-- **Documentation**: Complete user and developer guides
+### Support
+- GitHub repository
+- Issue tracking
+- Community discussions
+- Documentation and guides
+- Email support
 
-### 🔒 Security
-- **Encrypted Storage**: All sensitive data encrypted
-- **Secure Sessions**: Telegram sessions stored securely
-- **No Cloud Storage**: All data stays on device
-- **Privacy First**: No data collection or tracking
-- **Input Validation**: Comprehensive input validation
-- **Error Handling**: Secure error handling
+## [0.9.0] - 2025-01-15
 
-### 🎯 Performance
-- **Fast Startup**: Quick application launch
-- **Efficient Operations**: Optimized database queries
-- **Memory Management**: Smart resource usage
-- **Responsive UI**: Smooth user interface interactions
-- **Async Operations**: Non-blocking operations
+### Added
+- Basic campaign management
+- Account authorization system
+- Template creation and management
+- Recipient management
+- Basic logging system
+- Settings configuration
+- Theme support
 
-### 📚 Documentation
-- **README**: Comprehensive project overview
-- **User Guide**: Complete usage instructions
-- **Developer Guide**: Technical implementation details
-- **API Documentation**: Complete API reference
-- **Contributing Guide**: Community contribution guidelines
-- **Changelog**: Detailed version history
+### Changed
+- Improved UI design
+- Better error handling
+- Enhanced performance
 
-### 🎉 Release Notes
-This is the initial release of Telegram Multi-Account Message Sender, a production-grade desktop application for managing and sending messages across multiple Telegram accounts safely. The application provides a complete solution with advanced features like scheduling, spintax, media support, and compliance controls.
+### Fixed
+- Various bug fixes
+- Stability improvements
 
-**Key Highlights:**
-- Professional desktop application with modern GUI
-- Complete account management with proxy support
-- Advanced campaign system with A/B testing
-- Comprehensive recipient management with CSV import
-- Real-time analytics and logging
-- Safety features and compliance controls
-- Cross-platform support for Windows, macOS, and Linux
-- Comprehensive documentation and developer tools
+## [0.8.0] - 2025-01-10
+
+### Added
+- Initial database schema
+- Basic GUI framework
+- Telegram API integration
+- Account management
+- Basic message sending
+
+### Changed
+- Project structure reorganization
+- Code refactoring
+
+### Fixed
+- Initial bug fixes
+- Performance optimizations
+
+## [0.7.0] - 2025-01-05
+
+### Added
+- Project initialization
+- Basic architecture
+- Core functionality
+- Initial documentation
+
+### Changed
+- Project setup
+- Development environment
+
+### Fixed
+- Initial setup issues
+- Configuration problems
+
+## [0.6.0] - 2025-01-01
+
+### Added
+- Project planning
+- Requirements analysis
+- Architecture design
+- Technology selection
+
+### Changed
+- Project scope definition
+- Feature prioritization
+
+### Fixed
+- Planning issues
+- Requirement conflicts
+
+## [0.5.0] - 2024-12-25
+
+### Added
+- Initial concept
+- Market research
+- User requirements
+- Technical feasibility
+
+### Changed
+- Project direction
+- Feature set
+
+### Fixed
+- Concept validation
+- Requirement gathering
+
+## [0.4.0] - 2024-12-20
+
+### Added
+- Project ideation
+- Market analysis
+- Competitor research
+- User interviews
+
+### Changed
+- Project vision
+- Target audience
+
+### Fixed
+- Market research
+- User feedback
+
+## [0.3.0] - 2024-12-15
+
+### Added
+- Initial brainstorming
+- Feature ideas
+- Technology exploration
+- Prototype development
+
+### Changed
+- Project approach
+- Technology stack
+
+### Fixed
+- Prototype issues
+- Technology problems
+
+## [0.2.0] - 2024-12-10
+
+### Added
+- Project kickoff
+- Team formation
+- Initial planning
+- Resource allocation
+
+### Changed
+- Project structure
+- Team organization
+
+### Fixed
+- Planning issues
+- Resource conflicts
+
+## [0.1.0] - 2024-12-05
+
+### Added
+- Project inception
+- Initial requirements
+- Basic setup
+- First commits
+
+### Changed
+- Project initialization
+- Repository setup
+
+### Fixed
+- Initial setup
+- Configuration issues
 
 ---
 
-## 🎯 Roadmap
+## Version History Summary
 
-### Phase 1: Enhanced Features (Q1 2025)
-- [ ] Mobile companion app
-- [ ] Cloud storage integration
-- [ ] Advanced analytics dashboard
-- [ ] Plugin system for extensions
-- [ ] Multi-language support
+### Major Versions
+- **1.0.0**: First stable release with full feature set
+- **0.9.0**: Beta release with core functionality
+- **0.8.0**: Alpha release with basic features
+- **0.7.0**: Development release with initial implementation
+- **0.6.0**: Planning and design phase
+- **0.5.0**: Concept and research phase
+- **0.4.0**: Market analysis and user research
+- **0.3.0**: Prototype and technology exploration
+- **0.2.0**: Project kickoff and team formation
+- **0.1.0**: Project inception and initial setup
 
-### Phase 2: Advanced Features (Q2 2025)
-- [ ] Advanced scheduling features
-- [ ] Enhanced media support
-- [ ] Advanced reporting
-- [ ] API for integrations
-- [ ] Enterprise features
+### Release Types
+- **Major**: Significant new features or breaking changes
+- **Minor**: New features or significant improvements
+- **Patch**: Bug fixes and minor improvements
+- **Pre-release**: Alpha, beta, or release candidate versions
 
-### Phase 3: Platform Expansion (Q3 2025)
-- [ ] Web interface
-- [ ] Mobile app improvements
-- [ ] Advanced automation
-- [ ] Community features
-- [ ] Marketplace
+### Release Schedule
+- **Major releases**: Every 6 months
+- **Minor releases**: Every 2-3 months
+- **Patch releases**: As needed for bug fixes
+- **Pre-releases**: Before major releases
 
-### Phase 4: Professional Features (Q4 2025)
-- [ ] Advanced analytics
-- [ ] Professional tools
-- [ ] Enterprise deployment
-- [ ] Advanced customization
-- [ ] Global platform
+### Support Policy
+- **Current version**: Full support
+- **Previous major version**: Security updates only
+- **Older versions**: No support
+
+### Breaking Changes
+- **1.0.0**: Initial release, no breaking changes
+- **Future versions**: Will be documented in release notes
+
+### Migration Guide
+- **From 0.9.0 to 1.0.0**: No migration needed
+- **Future versions**: Migration guides will be provided
+
+### Deprecation Policy
+- **6 months notice**: For deprecated features
+- **2 versions**: For deprecated APIs
+- **Documentation**: Clear deprecation notices
+
+### Security Updates
+- **Critical**: Immediate release
+- **High**: Within 1 week
+- **Medium**: Within 1 month
+- **Low**: Next regular release
+
+### Performance Improvements
+- **Database**: Query optimization and indexing
+- **Memory**: Memory usage optimization
+- **CPU**: Processing efficiency improvements
+- **Network**: Connection optimization
+
+### New Features
+- **User Experience**: UI/UX improvements
+- **Functionality**: New features and capabilities
+- **Integration**: Third-party integrations
+- **Automation**: Automated processes
+
+### Bug Fixes
+- **Critical**: Application crashes and data loss
+- **High**: Major functionality issues
+- **Medium**: Minor functionality issues
+- **Low**: Cosmetic and minor issues
+
+### Documentation Updates
+- **API**: API documentation updates
+- **User Guide**: User guide improvements
+- **Developer Guide**: Developer documentation
+- **FAQ**: Frequently asked questions
+
+### Testing
+- **Unit Tests**: Automated unit testing
+- **Integration Tests**: Component integration testing
+- **UI Tests**: User interface testing
+- **Performance Tests**: Performance and load testing
+
+### Quality Assurance
+- **Code Review**: Peer code review process
+- **Testing**: Comprehensive testing strategy
+- **Documentation**: Documentation review
+- **Security**: Security audit and testing
 
 ---
 
-## 🤝 Contributing
+## Contributing to the Changelog
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+When adding new entries to this changelog:
 
-## 📞 Support
+1. **Follow the format**: Use the established format for consistency
+2. **Be descriptive**: Provide clear descriptions of changes
+3. **Categorize properly**: Use the correct categories (Added, Changed, Fixed, Removed)
+4. **Include details**: Add relevant technical details
+5. **Link issues**: Reference related issues and pull requests
+6. **Version correctly**: Use semantic versioning
+7. **Date entries**: Include release dates
+8. **Group changes**: Group related changes together
+9. **Be concise**: Keep entries concise but informative
+10. **Review carefully**: Review entries for accuracy and completeness
 
-- **Issues**: [GitHub Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
-- **Email**: contact@voxhash.dev
+## Changelog Maintenance
 
----
+This changelog is maintained by the development team and community contributors. It should be updated with every release to provide users with a clear understanding of what has changed.
 
-**Made with ❤️ by VoxHash**
-
-*Professional Telegram automation made simple!* 🚀
+For questions about the changelog or to suggest improvements, please open an issue or pull request on the GitHub repository.

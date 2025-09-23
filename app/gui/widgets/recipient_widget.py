@@ -14,7 +14,9 @@ from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon, QColor
 
 from ...models import Recipient, RecipientList, RecipientSource, RecipientStatus, RecipientType
-from ...services import get_logger, get_session
+from ...services import get_logger
+from ...services.db import get_session
+from ...services.translation import _, get_translation_manager
 import csv
 import pandas as pd
 
@@ -602,6 +604,11 @@ class RecipientListWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logger = get_logger()
+        self.translation_manager = get_translation_manager()
+        
+        # Connect language change signal
+        self.translation_manager.language_changed.connect(self.on_language_changed)
+        
         self.setup_ui()
         self.load_recipients()
         
@@ -816,6 +823,9 @@ class RecipientListWidget(QWidget):
                 self.recipients_table.setItem(row, 7, messages_item)
             
             self.status_label.setText(f"Loaded {len(recipients)} recipients")
+            
+            # Apply search filter if there's search text
+            self.filter_recipients()
             
         except Exception as e:
             self.logger.error(f"Error loading recipients: {e}")
@@ -1054,6 +1064,13 @@ class RecipientListWidget(QWidget):
                             session.close()
             
             self.recipients_table.setRowHidden(row, not should_show)
+    
+    def on_language_changed(self, language: str):
+        """Handle language change."""
+        self.logger.info(f"Language changed to: {language}")
+        # Recreate the UI with new translations
+        self.setup_ui()
+        self.load_recipients()
 
 
 class RecipientWidget(QWidget):
@@ -1061,6 +1078,12 @@ class RecipientWidget(QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.logger = get_logger()
+        self.translation_manager = get_translation_manager()
+        
+        # Connect language change signal
+        self.translation_manager.language_changed.connect(self.on_language_changed)
+        
         self.setup_ui()
     
     def setup_ui(self):
@@ -1084,3 +1107,9 @@ class RecipientWidget(QWidget):
         """Handle recipient update."""
         # Refresh the list
         self.recipient_list.refresh_recipients()
+    
+    def on_language_changed(self, language: str):
+        """Handle language change."""
+        self.logger.info(f"Language changed to: {language}")
+        # The recipient_list widget will handle its own language change
+        # No need to recreate the UI since it only contains the recipient_list

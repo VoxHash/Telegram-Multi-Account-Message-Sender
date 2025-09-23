@@ -14,7 +14,9 @@ from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon, QColor
 
 from ...models import MessageTemplate
-from ...services import get_logger, get_session
+from ...services import get_logger
+from ...services.db import get_session
+from ...services.translation import _, get_translation_manager
 from ...core import SpintaxProcessor
 
 
@@ -35,7 +37,7 @@ class TemplateDialog(QDialog):
     
     def setup_ui(self):
         """Set up the dialog UI."""
-        self.setWindowTitle("Create Template" if not self.template else "Edit Template")
+        self.setWindowTitle(_("templates.add_template") if not self.template else _("templates.edit_template"))
         self.setModal(True)
         self.resize(600, 500)
         
@@ -45,37 +47,37 @@ class TemplateDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Basic Information
-        basic_group = QGroupBox("Basic Information")
+        basic_group = QGroupBox(_("templates.basic_information"))
         basic_layout = QFormLayout(basic_group)
         
         self.name_edit = QLineEdit()
-        self.name_edit.setPlaceholderText("Template name (e.g., 'Welcome Message')")
-        basic_layout.addRow("Name:", self.name_edit)
+        self.name_edit.setPlaceholderText(_("templates.template_name_placeholder"))
+        basic_layout.addRow(_("common.name") + ":", self.name_edit)
         
         self.description_edit = QLineEdit()
-        self.description_edit.setPlaceholderText("Brief description of this template")
-        basic_layout.addRow("Description:", self.description_edit)
+        self.description_edit.setPlaceholderText(_("templates.template_description_placeholder"))
+        basic_layout.addRow(_("common.description") + ":", self.description_edit)
         
         layout.addWidget(basic_group)
         
         # Message Content
-        message_group = QGroupBox("Message Content")
+        message_group = QGroupBox(_("templates.message_content"))
         message_layout = QVBoxLayout(message_group)
         
         # Message text
-        message_layout.addWidget(QLabel("Message Text:"))
+        message_layout.addWidget(QLabel(_("common.message_text") + ":"))
         self.message_edit = QTextEdit()
-        self.message_edit.setPlaceholderText("Enter your message template here...\n\nYou can use variables like {name}, {email}, etc.")
+        self.message_edit.setPlaceholderText(_("templates.message_template_placeholder"))
         self.message_edit.setMinimumHeight(150)
         message_layout.addWidget(self.message_edit)
         
         # Variables help
-        variables_help = QLabel("Available variables: {name}, {email}, {phone}, {company}, {date}, {time}")
+        variables_help = QLabel(_("templates.available_variables"))
         variables_help.setStyleSheet("color: #888888; font-style: italic;")
         message_layout.addWidget(variables_help)
         
         # Variables vs Spintax explanation
-        explanation = QLabel("💡 Variables ({name}) are replaced with actual values. For message variations, use Spintax ({option1|option2|option3}) below.")
+        explanation = QLabel(_("templates.variables_explanation"))
         explanation.setStyleSheet("color: #4CAF50; font-weight: bold; padding: 8px; background-color: #1a1a1a; border: 1px solid #4CAF50; border-radius: 4px;")
         explanation.setWordWrap(True)
         message_layout.addWidget(explanation)
@@ -83,19 +85,19 @@ class TemplateDialog(QDialog):
         layout.addWidget(message_group)
         
         # Spintax Settings
-        spintax_group = QGroupBox("Spintax Settings")
+        spintax_group = QGroupBox(_("templates.spintax_settings"))
         spintax_layout = QFormLayout(spintax_group)
         
-        self.use_spintax_check = QCheckBox("Enable Spintax")
+        self.use_spintax_check = QCheckBox(_("templates.enable_spintax"))
         self.use_spintax_check.toggled.connect(self.toggle_spintax_settings)
         spintax_layout.addRow(self.use_spintax_check)
         
         self.spintax_example_edit = QLineEdit()
-        self.spintax_example_edit.setPlaceholderText("Example: Hello {name|friend|buddy}, welcome to {our company|our service}!")
-        spintax_layout.addRow("Spintax Example:", self.spintax_example_edit)
+        self.spintax_example_edit.setPlaceholderText(_("templates.spintax_example_placeholder"))
+        spintax_layout.addRow(_("templates.spintax_example") + ":", self.spintax_example_edit)
         
         # Spintax preview button
-        self.preview_spintax_button = QPushButton("Preview Spintax")
+        self.preview_spintax_button = QPushButton(_("templates.preview_spintax"))
         self.preview_spintax_button.clicked.connect(self.preview_spintax)
         self.preview_spintax_button.setEnabled(False)
         spintax_layout.addRow("", self.preview_spintax_button)
@@ -182,7 +184,7 @@ class TemplateDialog(QDialog):
         """
         
         msg = QMessageBox(self)
-        msg.setWindowTitle("Template Help")
+        msg.setWindowTitle(_("templates.help"))
         msg.setTextFormat(Qt.RichText)
         msg.setText(help_text)
         msg.setIcon(QMessageBox.Information)
@@ -218,8 +220,8 @@ class TemplateDialog(QDialog):
                 if has_variables:
                     # Message has variables but no spintax patterns
                     QMessageBox.information(
-                        self, "Spintax vs Variables",
-                        "Your message contains VARIABLES but no SPINTAX patterns.\n\n"
+                        self, _("templates.spintax_validation"),
+                        _("templates.variables_help") + "\n\n"
                         "VARIABLES (what you have):\n"
                         "• {name}, {email}, {company} - These are replaced with actual values\n"
                         "• Example: 'Hello {name}!' becomes 'Hello John!'\n\n"
@@ -234,8 +236,8 @@ class TemplateDialog(QDialog):
                 else:
                     # No variables or spintax patterns
                     QMessageBox.information(
-                        self, "Spintax Information",
-                        "No spintax patterns found in the message.\n\n"
+                        self, _("templates.spintax_validation"),
+                        _("templates.no_patterns_found") + "\n\n"
                         "To use spintax, add patterns like:\n"
                         "• {option1|option2|option3}\n"
                         "• Hello {name|friend|buddy}\n"
@@ -247,14 +249,14 @@ class TemplateDialog(QDialog):
             if not validation_result["valid"]:
                 error_msg = "Invalid spintax syntax:\n\n" + "\n".join(validation_result["errors"])
                 QMessageBox.warning(
-                    self, "Spintax Validation Error",
-                    f"{error_msg}\n\nPlease check your spintax syntax. Use {{option1|option2|option3}} format."
+                    self, _("templates.spintax_validation"),
+                    f"{error_msg}\n\n{_('templates.spintax_help')}"
                 )
                 return False
             return True
         except Exception as e:
             QMessageBox.warning(
-                self, "Spintax Validation Error",
+                self, _("templates.spintax_validation"),
                 f"Error validating spintax syntax:\n\n{str(e)}\n\n"
                 "Please check your spintax syntax. Use {{option1|option2|option3}} format."
             )
@@ -264,7 +266,7 @@ class TemplateDialog(QDialog):
         """Preview spintax generation."""
         message_text = self.message_edit.toPlainText()
         if not message_text.strip():
-            QMessageBox.warning(self, "Preview Error", "Please enter a message first.")
+            QMessageBox.warning(self, _("templates.spintax_preview"), _("templates.no_message_text"))
             return
         
         try:
@@ -278,8 +280,8 @@ class TemplateDialog(QDialog):
                 if has_variables:
                     # Message has variables but no spintax patterns
                     QMessageBox.information(
-                        self, "Spintax Preview - Variables vs Spintax",
-                        "Your message contains VARIABLES but no SPINTAX patterns.\n\n"
+                        self, _("templates.spintax_preview"),
+                        _("templates.variables_help") + "\n\n"
                         "VARIABLES (what you have):\n"
                         "• {name}, {email}, {company} - These are replaced with actual values\n"
                         "• Example: 'Hello {name}!' becomes 'Hello John!'\n\n"
@@ -294,8 +296,8 @@ class TemplateDialog(QDialog):
                 else:
                     # No variables or spintax patterns
                     QMessageBox.information(
-                        self, "Spintax Preview",
-                        "No spintax patterns found in the message.\n\n"
+                        self, _("templates.spintax_preview"),
+                        _("templates.no_patterns_found") + "\n\n"
                         "To use spintax, add patterns like:\n"
                         "• {option1|option2|option3}\n"
                         "• Hello {name|friend|buddy}\n"
@@ -311,7 +313,7 @@ class TemplateDialog(QDialog):
             unique_variations = list(set(variations))
             if len(unique_variations) == 1:
                 QMessageBox.information(
-                    self, "Spintax Preview",
+                    self, _("templates.spintax_preview"),
                     "No variations generated. This might be because:\n\n"
                     "• Spintax patterns are malformed\n"
                     "• All options in patterns are identical\n"
@@ -325,14 +327,14 @@ class TemplateDialog(QDialog):
                 preview_text += f"Variation {i}: {variation}\n\n"
             
             msg = QMessageBox(self)
-            msg.setWindowTitle("Spintax Preview")
+            msg.setWindowTitle(_("templates.spintax_preview"))
             msg.setText(preview_text)
             msg.setIcon(QMessageBox.Information)
             msg.exec_()
             
         except Exception as e:
             QMessageBox.warning(
-                self, "Preview Error",
+                self, _("templates.spintax_preview"),
                 f"Error generating spintax preview:\n\n{str(e)}\n\n"
                 "Please check your spintax syntax."
             )
@@ -358,11 +360,11 @@ class TemplateDialog(QDialog):
         try:
             # Validate required fields
             if not self.name_edit.text().strip():
-                QMessageBox.warning(self, "Validation Error", "Name is required")
+                QMessageBox.warning(self, _("common.error"), _("templates.name_required"))
                 return
             
             if not self.message_edit.toPlainText().strip():
-                QMessageBox.warning(self, "Validation Error", "Message text is required")
+                QMessageBox.warning(self, _("common.error"), _("templates.message_required"))
                 return
             
             # Validate spintax if enabled
@@ -378,13 +380,13 @@ class TemplateDialog(QDialog):
                         if not validation_result["valid"]:
                             error_msg = "Invalid spintax syntax in example:\n\n" + "\n".join(validation_result["errors"])
                             QMessageBox.warning(
-                                self, "Spintax Validation Error",
-                                f"{error_msg}\n\nPlease check your spintax syntax. Use {{option1|option2|option3}} format."
+                                self, _("templates.spintax_validation"),
+                                f"{error_msg}\n\n{_('templates.spintax_help')}"
                             )
                             return
                     except Exception as e:
                         QMessageBox.warning(
-                            self, "Spintax Validation Error",
+                            self, _("templates.spintax_validation"),
                             f"Error validating spintax example:\n\n{str(e)}\n\n"
                             "Please check your spintax syntax. Use {{option1|option2|option3}} format."
                         )
@@ -449,6 +451,11 @@ class TemplateListWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logger = get_logger()
+        self.translation_manager = get_translation_manager()
+        
+        # Connect language change signal
+        self.translation_manager.language_changed.connect(self.on_language_changed)
+        
         self.setup_ui()
         self.load_templates()
         
@@ -636,6 +643,9 @@ class TemplateListWidget(QWidget):
                 self.templates_table.setItem(row, 5, actions_item)
             
             self.status_label.setText(f"Loaded {len(templates)} templates")
+            
+            # Apply search filter if there's search text
+            self.filter_templates()
             
         except Exception as e:
             self.logger.error(f"Error loading templates: {e}")
@@ -985,6 +995,13 @@ class TemplateListWidget(QWidget):
                     break
             
             self.templates_table.setRowHidden(row, not should_show)
+    
+    def on_language_changed(self, language: str):
+        """Handle language change."""
+        self.logger.info(f"Language changed to: {language}")
+        # Recreate the UI with new translations
+        self.setup_ui()
+        self.load_templates()
 
 
 class TemplateWidget(QWidget):
@@ -992,6 +1009,12 @@ class TemplateWidget(QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.logger = get_logger()
+        self.translation_manager = get_translation_manager()
+        
+        # Connect language change signal
+        self.translation_manager.language_changed.connect(self.on_language_changed)
+        
         self.setup_ui()
     
     def setup_ui(self):
@@ -1015,3 +1038,9 @@ class TemplateWidget(QWidget):
         """Handle template update."""
         # Refresh the list
         self.template_list.load_templates()
+    
+    def on_language_changed(self, language: str):
+        """Handle language change."""
+        self.logger.info(f"Language changed to: {language}")
+        # The template_list widget will handle its own language change
+        # No need to recreate the UI since it only contains the template_list

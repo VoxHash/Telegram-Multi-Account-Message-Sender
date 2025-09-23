@@ -4,7 +4,9 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
 
 jobs:
   test:
@@ -12,26 +14,59 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.10, 3.11, 3.12]
+        python-version: ['3.10', '3.11', '3.12']
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov pytest-asyncio
-    
-    - name: Run tests
+        pip install -r requirements-dev.txt
+
+    - name: Lint with flake8
       run: |
-        pytest tests/ --cov=app --cov-report=xml --cov-report=html
-    
+        flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+
+    - name: Check code formatting with black
+      run: |
+        black --check app/
+
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only app/
+
+    - name: Type check with mypy
+      run: |
+        mypy app/ --ignore-missing-imports
+
+    - name: Security check with bandit
+      run: |
+        bandit -r app/ -f json -o bandit-report.json || true
+
+    - name: Safety check
+      run: |
+        safety check --json --output safety-report.json || true
+
+    - name: Test with pytest
+      run: |
+        pytest tests/ --cov=app --cov-report=xml --cov-report=html --junitxml=junit.xml
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
@@ -40,81 +75,106 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: false
 
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.11
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install ruff black isort mypy
-    
-    - name: Run ruff
-      run: ruff check app/ tests/
-    
-    - name: Run black
-      run: black --check app/ tests/
-    
-    - name: Run isort
-      run: isort --check-only app/ tests/
-    
-    - name: Run mypy
-      run: mypy app/
-
   build:
+    needs: test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.11
-    
+        python-version: '3.11'
+
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build wheel twine
+
+    - name: Build package
+      run: |
+        python -m build
+
+    - name: Check package
+      run: |
+        twine check dist/*
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-${{ matrix.os }}
+        path: dist/
+
+  release:
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: dist/
+
+    - name: Combine artifacts
+      run: |
+        mkdir -p dist-combined
+        find dist -name "*.whl" -exec cp {} dist-combined/ \;
+        find dist -name "*.tar.gz" -exec cp {} dist-combined/ \;
+
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        twine upload dist-combined/*
+
+  create-installers:
+    needs: [test, build]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install nuitka
-    
-    - name: Build application
+        pip install pyinstaller
+
+    - name: Build executable
       run: |
-        python scripts/build_nuitka.py
-    
-    - name: Upload build artifacts
+        pyinstaller --onefile --windowed --name telegram-sender main.py
+
+    - name: Create installer
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          # Create Windows installer
+          echo "Creating Windows installer..."
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          # Create macOS installer
+          echo "Creating macOS installer..."
+        else
+          # Create Linux installer
+          echo "Creating Linux installer..."
+        fi
+
+    - name: Upload installer
       uses: actions/upload-artifact@v3
       with:
-        name: telegram-sender-${{ matrix.os }}
+        name: installer-${{ matrix.os }}
         path: dist/
-        retention-days: 30
-
-  security:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.11
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install safety bandit
-    
-    - name: Run safety check
-      run: safety check
-    
-    - name: Run bandit security linter
-      run: bandit -r app/

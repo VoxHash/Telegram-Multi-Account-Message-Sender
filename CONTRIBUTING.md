@@ -1,390 +1,642 @@
-# 🤝 Contributing to Telegram Multi-Account Message Sender
+# Contributing to Telegram Multi-Account Message Sender
 
-Thank you for your interest in contributing to this project! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to the Telegram Multi-Account Message Sender project! This document provides guidelines and information for contributors.
 
-## 🚀 Getting Started
+## Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+- [Development Setup](#development-setup)
+- [Contributing Guidelines](#contributing-guidelines)
+- [Pull Request Process](#pull-request-process)
+- [Issue Reporting](#issue-reporting)
+- [Feature Requests](#feature-requests)
+- [Bug Reports](#bug-reports)
+- [Documentation](#documentation)
+- [Testing](#testing)
+- [Code Style](#code-style)
+- [Commit Guidelines](#commit-guidelines)
+- [Release Process](#release-process)
+- [Community Guidelines](#community-guidelines)
+
+## Code of Conduct
+
+This project follows a code of conduct to ensure a welcoming and inclusive environment for all contributors. By participating, you agree to uphold this code.
+
+### Our Pledge
+
+We pledge to make participation in our project a harassment-free experience for everyone, regardless of:
+- Age, body size, disability, ethnicity, gender identity and expression
+- Level of experience, education, socio-economic status, nationality
+- Personal appearance, race, religion, or sexual identity and orientation
+
+### Our Standards
+
+Examples of behavior that contributes to creating a positive environment include:
+
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Gracefully accepting constructive criticism
+- Focusing on what is best for the community
+- Showing empathy towards other community members
+
+Examples of unacceptable behavior include:
+
+- The use of sexualized language or imagery
+- Trolling, insulting/derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information without explicit permission
+- Other conduct which could reasonably be considered inappropriate
+
+### Enforcement
+
+Project maintainers are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior they deem inappropriate.
+
+## Getting Started
 
 ### Prerequisites
 
+Before contributing, ensure you have:
+
 - Python 3.10 or higher
 - Git
-- Basic knowledge of Python, PyQt5, and Telegram API
-- Understanding of async/await patterns
+- A GitHub account
+- Basic knowledge of Python and PyQt5
+- Understanding of the project's purpose and goals
 
-### Development Setup
+### Fork the Repository
 
-1. **Fork and clone the repository**
+1. Go to the [project repository](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender)
+2. Click the "Fork" button in the top-right corner
+3. Clone your fork locally:
    ```bash
-   git clone https://github.com/your-username/Telegram-Multi-Account-Message-Sender.git
+   git clone https://github.com/YOUR_USERNAME/Telegram-Multi-Account-Message-Sender.git
    cd Telegram-Multi-Account-Message-Sender
    ```
 
-2. **Create a virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+### Set Up Upstream Remote
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   pip install -e .
-   ```
-
-4. **Install pre-commit hooks**
-   ```bash
-   pre-commit install
-   ```
-
-5. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-6. **Run the application**
-   ```bash
-   python main.py
-   ```
-
-## 🛠️ Development Workflow
-
-### Code Style
-
-We use several tools to maintain code quality:
-
-- **Black** for code formatting
-- **isort** for import sorting
-- **ruff** for linting
-- **mypy** for type checking
-- **pytest** for testing
-
-Run all checks before committing:
 ```bash
-black app/ tests/
-isort app/ tests/
-ruff check app/ tests/
+git remote add upstream https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender.git
+```
+
+## Development Setup
+
+### 1. Create Virtual Environment
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+### 3. Set Up Pre-commit Hooks
+
+```bash
+pre-commit install
+```
+
+### 4. Configure Environment
+
+```bash
+cp example_files/env_template.txt .env
+# Edit .env with your configuration
+```
+
+### 5. Run Tests
+
+```bash
+pytest
+```
+
+### 6. Start Development
+
+```bash
+python main.py
+```
+
+## Contributing Guidelines
+
+### Types of Contributions
+
+We welcome various types of contributions:
+
+- **Bug Fixes**: Fix existing issues
+- **Feature Additions**: Add new functionality
+- **Documentation**: Improve or add documentation
+- **Testing**: Add or improve tests
+- **Performance**: Optimize existing code
+- **UI/UX**: Improve user interface and experience
+- **Translations**: Add or improve translations
+- **Examples**: Add code examples or tutorials
+
+### Before Contributing
+
+1. **Check Existing Issues**: Look for existing issues or discussions
+2. **Discuss Major Changes**: Open an issue for significant changes
+3. **Follow the Style Guide**: Adhere to our code style guidelines
+4. **Write Tests**: Include tests for new functionality
+5. **Update Documentation**: Update relevant documentation
+
+### Contribution Process
+
+1. **Create a Branch**: Create a feature branch from `main`
+2. **Make Changes**: Implement your changes
+3. **Write Tests**: Add tests for your changes
+4. **Update Documentation**: Update relevant documentation
+5. **Run Tests**: Ensure all tests pass
+6. **Format Code**: Run code formatting tools
+7. **Commit Changes**: Commit with descriptive messages
+8. **Push Changes**: Push to your fork
+9. **Create Pull Request**: Open a pull request
+
+## Pull Request Process
+
+### Before Submitting
+
+- [ ] Code follows the project's style guidelines
+- [ ] Self-review of code has been performed
+- [ ] Code has been commented, particularly in hard-to-understand areas
+- [ ] Corresponding changes to documentation have been made
+- [ ] Changes generate no new warnings
+- [ ] New and existing unit tests pass locally
+- [ ] Any dependent changes have been merged and published
+
+### Pull Request Template
+
+When creating a pull request, use the provided template:
+
+```markdown
+## Description
+Brief description of the changes
+
+## Type of Change
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+- [ ] Performance improvement
+- [ ] Code refactoring
+
+## Related Issues
+Fixes #(issue number)
+
+## Testing
+- [ ] Tests pass locally
+- [ ] New tests added for new functionality
+- [ ] Manual testing performed
+
+## Screenshots (if applicable)
+Add screenshots to help explain your changes
+
+## Checklist
+- [ ] Code follows the project's style guidelines
+- [ ] Self-review of code has been performed
+- [ ] Code has been commented, particularly in hard-to-understand areas
+- [ ] Corresponding changes to documentation have been made
+- [ ] Changes generate no new warnings
+- [ ] New and existing unit tests pass locally
+- [ ] Any dependent changes have been merged and published
+```
+
+### Review Process
+
+1. **Automated Checks**: CI/CD runs automatically
+2. **Code Review**: At least one reviewer required
+3. **Testing**: All tests must pass
+4. **Documentation**: Documentation must be updated
+5. **Approval**: At least one approval required
+6. **Merge**: Maintainer merges the PR
+
+## Issue Reporting
+
+### Before Creating an Issue
+
+1. **Search Existing Issues**: Check if the issue already exists
+2. **Check Documentation**: Look for solutions in the documentation
+3. **Try Troubleshooting**: Follow the troubleshooting guide
+4. **Gather Information**: Collect relevant information
+
+### Issue Templates
+
+We provide templates for different types of issues:
+
+- **Bug Report**: For reporting bugs
+- **Feature Request**: For requesting new features
+- **Documentation**: For documentation issues
+- **Question**: For asking questions
+
+### Bug Report Template
+
+```markdown
+## Bug Description
+A clear and concise description of what the bug is.
+
+## Steps to Reproduce
+1. Go to '...'
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
+
+## Expected Behavior
+A clear and concise description of what you expected to happen.
+
+## Actual Behavior
+A clear and concise description of what actually happened.
+
+## Environment
+- OS: [e.g. Windows 10, macOS 12, Ubuntu 20.04]
+- Python Version: [e.g. 3.10.0]
+- Application Version: [e.g. 1.0.0]
+- Browser: [e.g. Chrome 91, Firefox 89]
+
+## Screenshots
+If applicable, add screenshots to help explain your problem.
+
+## Additional Context
+Add any other context about the problem here.
+```
+
+### Feature Request Template
+
+```markdown
+## Feature Description
+A clear and concise description of the feature you'd like to see.
+
+## Problem Statement
+Is your feature request related to a problem? Please describe.
+A clear and concise description of what the problem is.
+
+## Proposed Solution
+Describe the solution you'd like to see implemented.
+
+## Alternatives Considered
+Describe any alternative solutions or features you've considered.
+
+## Additional Context
+Add any other context or screenshots about the feature request here.
+```
+
+## Feature Requests
+
+### Guidelines for Feature Requests
+
+1. **Check Existing Issues**: Look for similar feature requests
+2. **Provide Context**: Explain why the feature is needed
+3. **Be Specific**: Provide detailed descriptions
+4. **Consider Implementation**: Think about how it might be implemented
+5. **Provide Examples**: Give examples of how the feature would work
+
+### Feature Request Process
+
+1. **Create Issue**: Use the feature request template
+2. **Discussion**: Engage in discussion with maintainers
+3. **Approval**: Wait for maintainer approval
+4. **Implementation**: Implement the feature
+5. **Testing**: Test the feature thoroughly
+6. **Documentation**: Update documentation
+7. **Pull Request**: Submit a pull request
+
+## Bug Reports
+
+### Guidelines for Bug Reports
+
+1. **Reproducible**: Provide steps to reproduce the bug
+2. **Specific**: Be specific about the problem
+3. **Environment**: Include environment details
+4. **Screenshots**: Add screenshots if applicable
+5. **Logs**: Include relevant log entries
+
+### Bug Report Process
+
+1. **Create Issue**: Use the bug report template
+2. **Investigation**: Maintainers investigate the issue
+3. **Reproduction**: Verify the bug can be reproduced
+4. **Fix**: Implement a fix
+5. **Testing**: Test the fix thoroughly
+6. **Release**: Include fix in next release
+
+## Documentation
+
+### Documentation Guidelines
+
+1. **Clear and Concise**: Write clear, concise documentation
+2. **Up-to-date**: Keep documentation current
+3. **Comprehensive**: Cover all aspects of the feature
+4. **Examples**: Provide code examples
+5. **Formatting**: Use proper markdown formatting
+
+### Documentation Types
+
+- **API Documentation**: Document all APIs
+- **User Guide**: User-facing documentation
+- **Developer Guide**: Developer documentation
+- **README**: Project overview and setup
+- **Changelog**: Record of changes
+- **FAQ**: Frequently asked questions
+
+### Documentation Process
+
+1. **Identify Need**: Identify documentation needs
+2. **Write Content**: Write the documentation
+3. **Review**: Have others review the content
+4. **Update**: Update existing documentation
+5. **Maintain**: Keep documentation current
+
+## Testing
+
+### Testing Guidelines
+
+1. **Write Tests**: Write tests for all new functionality
+2. **Test Coverage**: Aim for high test coverage
+3. **Test Types**: Include unit, integration, and UI tests
+4. **Test Data**: Use appropriate test data
+5. **Test Environment**: Test in different environments
+
+### Test Types
+
+- **Unit Tests**: Test individual functions and methods
+- **Integration Tests**: Test component interactions
+- **UI Tests**: Test user interface components
+- **Performance Tests**: Test performance and load
+- **Security Tests**: Test security aspects
+
+### Testing Process
+
+1. **Write Tests**: Write tests for new functionality
+2. **Run Tests**: Run tests locally
+3. **Fix Issues**: Fix any test failures
+4. **CI/CD**: Ensure tests pass in CI/CD
+5. **Review**: Have tests reviewed
+
+## Code Style
+
+### Python Style Guide
+
+We follow PEP 8 with some modifications:
+
+- **Line Length**: 100 characters (instead of 79)
+- **Import Sorting**: Use isort with black compatibility
+- **Type Hints**: Use type hints for all functions and methods
+- **Docstrings**: Use Google-style docstrings
+
+### Code Formatting
+
+```bash
+# Format code with Black
+black app/
+
+# Sort imports with isort
+isort app/
+
+# Check code style with flake8
+flake8 app/
+
+# Type checking with mypy
 mypy app/
-pytest
 ```
 
-### Testing
+### Example Code Style
 
-Write tests for new features and bug fixes:
+```python
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+from sqlmodel import SQLModel, Field, Relationship
+from enum import Enum
 
-```bash
-# Run all tests
-pytest
+class AccountStatus(str, Enum):
+    """Account status enumeration."""
+    ONLINE = "online"
+    OFFLINE = "offline"
+    ERROR = "error"
 
-# Run with coverage
-pytest --cov=app --cov-report=html
-
-# Run specific test file
-pytest tests/unit/test_spintax.py
-
-# Run integration tests
-pytest tests/integration/
+class Account(SQLModel, table=True):
+    """Account model for storing Telegram account information."""
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    phone_number: str = Field(unique=True, index=True)
+    username: Optional[str] = None
+    status: AccountStatus = AccountStatus.OFFLINE
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    def is_online(self) -> bool:
+        """Check if account is online."""
+        return self.status == AccountStatus.ONLINE
+    
+    def get_display_name(self) -> str:
+        """Get display name for UI."""
+        if self.username:
+            return f"@{self.username}"
+        return self.phone_number
 ```
 
-### Git Workflow
-
-1. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-2. **Make your changes**
-   - Write code
-   - Add tests
-   - Update documentation
-
-3. **Commit your changes**
-   ```bash
-   git add .
-   git commit -m "feat: add your feature description"
-   ```
-
-4. **Push and create a pull request**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+## Commit Guidelines
 
 ### Commit Message Format
 
-We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+We use conventional commits format:
 
 ```
-<type>[optional scope]: <description>
+<type>(<scope>): <description>
 
 [optional body]
 
 [optional footer(s)]
 ```
 
-Types:
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes
-- `refactor`: Code refactoring
-- `test`: Test changes
-- `chore`: Maintenance tasks
+### Commit Types
 
-Examples:
-```
-feat(accounts): add proxy support for accounts
-fix(campaigns): resolve scheduling timezone issue
-docs: update installation instructions
-```
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing tests or correcting existing tests
+- **chore**: Changes to the build process or auxiliary tools
 
-## 📁 Project Structure
+### Examples
 
-```
-app/
-├── core/           # Core business logic
-│   ├── engine.py   # Main orchestration
-│   ├── telethon_client.py  # Telegram client management
-│   ├── throttler.py        # Rate limiting
-│   ├── spintax.py          # Message personalization
-│   ├── compliance.py       # Safety checks
-│   └── analytics.py        # Performance tracking
-├── gui/            # User interface
-│   ├── main.py     # Main window
-│   ├── theme.py    # Theme management
-│   └── widgets/    # UI components
-├── models/         # Database models
-├── services/       # Core services
-└── utils/          # Utility functions
-
-tests/
-├── unit/           # Unit tests
-└── integration/    # Integration tests
-
-scripts/            # Build and utility scripts
-assets/             # Static assets
-docs/               # Documentation
-```
-
-## 🎯 Areas for Contribution
-
-### High Priority
-- [ ] Account management UI improvements
-- [ ] Campaign builder enhancements
-- [ ] Recipient management features
-- [ ] Log viewer improvements
-- [ ] Settings panel enhancements
-
-### Medium Priority
-- [ ] Template management system
-- [ ] Analytics dashboard
-- [ ] Export/import functionality
-- [ ] Plugin system
-- [ ] API documentation
-
-### Low Priority
-- [ ] Mobile app
-- [ ] Web interface
-- [ ] Advanced analytics
-- [ ] Multi-language support
-
-## 🐛 Bug Reports
-
-When reporting bugs, please include:
-
-1. **Description**: Clear description of the issue
-2. **Steps to reproduce**: Detailed steps to reproduce the bug
-3. **Expected behavior**: What should happen
-4. **Actual behavior**: What actually happens
-5. **Environment**: OS, Python version, app version
-6. **Logs**: Relevant log output
-7. **Screenshots**: If applicable
-
-## 💡 Feature Requests
-
-When requesting features, please include:
-
-1. **Description**: Clear description of the feature
-2. **Use case**: Why this feature is needed
-3. **Proposed solution**: How you think it should work
-4. **Alternatives**: Other solutions you've considered
-5. **Additional context**: Any other relevant information
-
-## 🔒 Security
-
-If you discover a security vulnerability, please:
-
-1. **DO NOT** create a public issue
-2. Email us at security@voxhash.dev
-3. Include detailed information about the vulnerability
-4. We will respond within 48 hours
-
-## 📝 Documentation
-
-We welcome contributions to documentation:
-
-- README improvements
-- Code comments
-- API documentation
-- User guides
-- Video tutorials
-
-## 🏷️ Labels
-
-We use labels to categorize issues and pull requests:
-
-- `bug`: Something isn't working
-- `enhancement`: New feature or request
-- `documentation`: Improvements to documentation
-- `good first issue`: Good for newcomers
-- `help wanted`: Extra attention is needed
-- `priority: high`: High priority
-- `priority: medium`: Medium priority
-- `priority: low`: Low priority
-
-## 🤝 Code of Conduct
-
-### Our Pledge
-
-We are committed to providing a welcoming and inclusive environment for all contributors.
-
-### Expected Behavior
-
-- Be respectful and inclusive
-- Use welcoming and inclusive language
-- Be respectful of differing viewpoints
-- Accept constructive criticism gracefully
-- Focus on what's best for the community
-- Show empathy towards other community members
-
-### Unacceptable Behavior
-
-- Harassment, trolling, or discriminatory language
-- Personal attacks or political discussions
-- Public or private harassment
-- Publishing private information without permission
-- Other unprofessional conduct
-
-## 📞 Getting Help
-
-- **GitHub Issues**: For bug reports and feature requests
-- **GitHub Discussions**: For questions and general discussion
-- **Email**: contact@voxhash.dev
-- **Discord**: [Join our Discord server](https://discord.gg/voxhash)
-
-## 🎉 Recognition
-
-Contributors will be recognized in:
-
-- CONTRIBUTORS.md file
-- Release notes
-- Project documentation
-- Social media (with permission)
-
-## 📄 License
-
-By contributing, you agree that your contributions will be licensed under the MIT License.
-
-## 🧪 Testing Guidelines
-
-### Unit Tests
 ```bash
-pytest tests/unit/
+feat(accounts): add account authorization functionality
+fix(campaigns): resolve campaign start time issue
+docs(api): update API documentation
+style(ui): improve button styling
+refactor(database): optimize database queries
+perf(messages): improve message sending performance
+test(campaigns): add campaign creation tests
+chore(deps): update dependencies
 ```
 
-### Integration Tests
-```bash
-pytest tests/integration/
-```
+### Commit Process
 
-### GUI Tests
-```bash
-# Test the main application
-python main.py
+1. **Stage Changes**: `git add .`
+2. **Commit**: `git commit -m "feat(accounts): add account authorization"`
+3. **Push**: `git push origin feature-branch`
+4. **Create PR**: Open a pull request
 
-# Test specific components
-python -m pytest tests/unit/test_gui.py
-```
+## Release Process
 
-### Database Tests
-```bash
-# Test database operations
-python -m pytest tests/unit/test_models.py
-```
+### Release Types
 
-## 🔧 Development Tools
+- **Major**: Significant new features or breaking changes
+- **Minor**: New features or significant improvements
+- **Patch**: Bug fixes and minor improvements
+- **Pre-release**: Alpha, beta, or release candidate versions
 
-### Code Quality
-```bash
-# Format code
-black app/ tests/
+### Release Schedule
 
-# Sort imports
-isort app/ tests/
+- **Major releases**: Every 6 months
+- **Minor releases**: Every 2-3 months
+- **Patch releases**: As needed for bug fixes
+- **Pre-releases**: Before major releases
 
-# Lint code
-ruff check app/ tests/
+### Release Process
 
-# Type checking
-mypy app/
-```
+1. **Version Bump**: Update version numbers
+2. **Changelog**: Update changelog
+3. **Testing**: Run full test suite
+4. **Documentation**: Update documentation
+5. **Release**: Create release
+6. **Announcement**: Announce the release
 
-### Pre-commit Hooks
-```bash
-# Install pre-commit hooks
-pre-commit install
+## Community Guidelines
 
-# Run hooks manually
-pre-commit run --all-files
-```
+### Communication
 
-## 📋 Checklist for Contributors
+- **Be Respectful**: Treat everyone with respect
+- **Be Constructive**: Provide constructive feedback
+- **Be Patient**: Be patient with others
+- **Be Helpful**: Help others when possible
+- **Be Professional**: Maintain professional communication
 
-Before submitting a PR, make sure:
+### Getting Help
 
-- [ ] Code follows the style guidelines
-- [ ] Tests pass locally
+- **Documentation**: Check the documentation first
+- **Issues**: Search existing issues
+- **Discussions**: Use GitHub discussions
+- **Community**: Engage with the community
+- **Maintainers**: Contact maintainers if needed
+
+### Recognition
+
+- **Contributors**: All contributors are recognized
+- **Maintainers**: Maintainers are acknowledged
+- **Community**: Community members are valued
+- **Feedback**: Feedback is appreciated
+- **Suggestions**: Suggestions are welcome
+
+## Development Workflow
+
+### Branch Strategy
+
+- **main**: Production-ready code
+- **develop**: Development branch
+- **feature/**: Feature branches
+- **bugfix/**: Bug fix branches
+- **hotfix/**: Hotfix branches
+
+### Branch Naming
+
+- **feature/**: `feature/account-authorization`
+- **bugfix/**: `bugfix/campaign-start-issue`
+- **hotfix/**: `hotfix/security-patch`
+- **docs/**: `docs/api-documentation`
+- **test/**: `test/campaign-tests`
+
+### Merge Strategy
+
+- **Squash and Merge**: For feature branches
+- **Rebase and Merge**: For bug fix branches
+- **Merge Commit**: For hotfix branches
+
+## Code Review Process
+
+### Review Guidelines
+
+1. **Be Constructive**: Provide constructive feedback
+2. **Be Specific**: Be specific about issues
+3. **Be Respectful**: Be respectful in comments
+4. **Be Thorough**: Review thoroughly
+5. **Be Timely**: Respond in a timely manner
+
+### Review Checklist
+
+- [ ] Code follows style guidelines
+- [ ] Tests are included and pass
 - [ ] Documentation is updated
-- [ ] Changes are tested with different scenarios
-- [ ] Cross-platform compatibility is maintained
-- [ ] Commit messages follow the convention
-- [ ] PR description is clear and detailed
-- [ ] Related issues are linked
-- [ ] Security considerations are addressed
+- [ ] No breaking changes
+- [ ] Performance is acceptable
+- [ ] Security is considered
+- [ ] Error handling is appropriate
+- [ ] Logging is adequate
 
-## 🎯 Quick Start for New Contributors
+## Continuous Integration
 
-1. **Read the documentation**
-2. **Set up the development environment**
-3. **Look for "good first issue" labels**
-4. **Start with small contributions**
-5. **Ask questions if you need help**
-6. **Have fun contributing!**
+### CI/CD Pipeline
 
-## 🎬 Project Philosophy
+1. **Code Quality**: Run code quality checks
+2. **Testing**: Run automated tests
+3. **Building**: Build packages and installers
+4. **Deployment**: Deploy to staging/production
+5. **Monitoring**: Monitor deployment
 
-Telegram Multi-Account Message Sender is designed with these core principles:
+### Automated Checks
 
-- **Professional**: High-quality implementation and user experience
-- **Safe**: Built-in safety features and compliance controls
-- **Efficient**: Fast, responsive, and resource-efficient
-- **User-Friendly**: Intuitive and easy to use
-- **Reliable**: Stable, consistent, and dependable
-- **Secure**: Privacy-first design with encrypted storage
+- **Code Formatting**: Black and isort
+- **Linting**: flake8 and mypy
+- **Testing**: pytest with coverage
+- **Security**: Security scanning
+- **Performance**: Performance testing
 
-When contributing, please keep these principles in mind and help us maintain the project's high standards!
+## Security
 
----
+### Security Guidelines
 
-## 🤖 A Message from the Team
+1. **Input Validation**: Validate all input
+2. **Output Encoding**: Encode output properly
+3. **Authentication**: Implement proper authentication
+4. **Authorization**: Implement proper authorization
+5. **Data Protection**: Protect sensitive data
 
-"Hey there, future contributor! We're super excited that you want to help make Telegram Multi-Account Message Sender even better! Whether you're fixing bugs, adding features, or improving the user experience, every contribution helps us create the best automation tool possible.
+### Security Process
 
-Don't be afraid to ask questions - we're here to help! And remember, coding is like magic... but with more debugging!
+1. **Security Review**: Review code for security issues
+2. **Vulnerability Scanning**: Scan for vulnerabilities
+3. **Penetration Testing**: Perform penetration testing
+4. **Security Updates**: Apply security updates
+5. **Incident Response**: Respond to security incidents
 
-Let's build something amazing together! ✨"
+## Performance
 
----
+### Performance Guidelines
 
-**Made with ❤️ by VoxHash and the amazing community**
+1. **Optimize Queries**: Optimize database queries
+2. **Use Caching**: Implement caching where appropriate
+3. **Minimize I/O**: Minimize input/output operations
+4. **Use Async**: Use async operations where possible
+5. **Monitor Performance**: Monitor performance metrics
 
-*Telegram Multi-Account Message Sender is ready to work with you!* 🚀
+### Performance Process
+
+1. **Performance Testing**: Test performance regularly
+2. **Profiling**: Profile code for bottlenecks
+3. **Optimization**: Optimize identified bottlenecks
+4. **Monitoring**: Monitor performance in production
+5. **Scaling**: Scale as needed
+
+## Conclusion
+
+Thank you for contributing to the Telegram Multi-Account Message Sender project! Your contributions help make this project better for everyone.
+
+If you have any questions or need help, please don't hesitate to reach out to the maintainers or the community.
+
+Remember: This project is for educational and legitimate business purposes only. Always comply with Telegram's Terms of Service and applicable laws.
+
+Happy contributing! 🚀

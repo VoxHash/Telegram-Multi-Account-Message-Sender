@@ -25,6 +25,24 @@ class Theme(str, Enum):
     AUTO = "auto"
     LIGHT = "light"
     DARK = "dark"
+    DRACULA = "dracula"
+
+
+class Language(str, Enum):
+    """Language enumeration."""
+    ENGLISH = "en"
+    FRENCH = "fr"
+    SPANISH = "es"
+    CHINESE = "zh"
+    JAPANESE = "ja"
+    GERMAN = "de"
+    RUSSIAN = "ru"
+    ESTONIAN = "et"
+    PORTUGUESE = "pt"
+    KOREAN = "ko"
+    CATALAN = "ca"
+    BASQUE = "eu"
+    GALICIAN = "gl"
 
 
 class AppEnvironment(str, Enum):
@@ -46,12 +64,16 @@ class Settings(BaseSettings):
     
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.0.0"
-    app_env: AppEnvironment = AppEnvironment.DEVELOPMENT
+    app_version: str = "1.2.0"
+    app_env: AppEnvironment = "development"
     debug: bool = False
+    start_with_windows: bool = False
+    
+    # Localization
+    language: Language = "en"
     
     # Logging
-    log_level: LogLevel = LogLevel.INFO
+    log_level: LogLevel = "INFO"
     log_to_file: bool = True
     log_file_max_size: int = 10 * 1024 * 1024  # 10MB
     log_file_backup_count: int = 5
@@ -86,7 +108,7 @@ class Settings(BaseSettings):
     content_dir: str = "content"
     
     # UI Settings
-    theme: Theme = Theme.AUTO
+    theme: Theme = "auto"
     window_width: int = 1200
     window_height: int = 800
     window_maximized: bool = False

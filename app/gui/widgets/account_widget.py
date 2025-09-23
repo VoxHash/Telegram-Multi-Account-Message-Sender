@@ -16,7 +16,10 @@ from PyQt5.QtGui import QFont, QIcon, QPalette, QColor
 from ...models import Account, AccountStatus, ProxyType
 from ...models.base import SoftDeleteMixin
 from ...services import get_logger, get_session
+from ...services.translation import _, get_translation_manager
+from ...services.warmup_manager import get_warmup_manager
 from ...core import TelegramClientManager
+from ...services.db import get_session as db_get_session
 
 
 class ProgressDialog(QDialog):
@@ -436,7 +439,7 @@ class TelegramWorker(QThread):
     def _update_account_status(self, status):
         """Update account status in database."""
         try:
-            session = get_session()
+            session = db_get_session()
             try:
                 from ...models import Account
                 from sqlmodel import select
@@ -752,7 +755,7 @@ class AccountDialog(QDialog):
             self.account.notes = self.notes_edit.toPlainText().strip() or None
             
             # Save to database
-            session = get_session()
+            session = db_get_session()
             try:
                 if self.account.id is None:
                     session.add(self.account)
@@ -785,6 +788,18 @@ class AccountListWidget(QWidget):
         super().__init__(parent)
         self.logger = get_logger()
         self.client_manager = TelegramClientManager()
+        self.translation_manager = get_translation_manager()
+        
+        # Connect language change signal
+        self.translation_manager.language_changed.connect(self.on_language_changed)
+        
+        # Connect warmup manager signals for real-time updates
+        self.warmup_manager = get_warmup_manager()
+        self.warmup_manager.warmup_started.connect(self.on_warmup_started)
+        self.warmup_manager.warmup_progress.connect(self.on_warmup_progress)
+        self.warmup_manager.warmup_completed.connect(self.on_warmup_completed)
+        self.warmup_manager.warmup_error.connect(self.on_warmup_error)
+        
         self.setup_ui()
         self.load_accounts()
         
@@ -825,6 +840,32 @@ class AccountListWidget(QWidget):
         header_layout.addWidget(self.refresh_button)
         
         layout.addLayout(header_layout)
+        
+        # Search field
+        search_layout = QHBoxLayout()
+        search_label = QLabel(_("common.search") + ":")
+        search_label.setStyleSheet("color: white; font-weight: bold;")
+        search_layout.addWidget(search_label)
+        
+        self.search_edit = QLineEdit()
+        self.search_edit.setPlaceholderText(_("accounts.search_placeholder"))
+        self.search_edit.textChanged.connect(self.filter_accounts)
+        self.search_edit.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                border: 2px solid #404040;
+                border-radius: 4px;
+                background-color: #2d2d2d;
+                color: white;
+            }
+            QLineEdit:focus {
+                border-color: #0078d4;
+            }
+        """)
+        search_layout.addWidget(self.search_edit)
+        search_layout.addStretch()
+        
+        layout.addLayout(search_layout)
         
         # Accounts table
         self.accounts_table = QTableWidget()
@@ -889,7 +930,7 @@ class AccountListWidget(QWidget):
     def load_accounts(self):
         """Load accounts from database."""
         try:
-            session = get_session()
+            session = db_get_session()
             try:
                 from ...models import Account
                 from sqlmodel import select
@@ -973,6 +1014,9 @@ class AccountListWidget(QWidget):
             
             self.status_label.setText(f"Loaded {len(accounts)} accounts")
             
+            # Apply search filter if there's search text
+            self.filter_accounts()
+            
         except Exception as e:
             self.logger.error(f"Error loading accounts: {e}")
             self.status_label.setText(f"Error loading accounts: {e}")
@@ -980,6 +1024,29 @@ class AccountListWidget(QWidget):
     def refresh_accounts(self):
         """Refresh accounts data."""
         self.load_accounts()
+    
+    def filter_accounts(self):
+        """Filter accounts based on search text."""
+        search_text = self.search_edit.text().lower().strip()
+        
+        if not search_text:
+            # Show all accounts
+            for row in range(self.accounts_table.rowCount()):
+                self.accounts_table.setRowHidden(row, False)
+            return
+        
+        # Filter accounts (exclude Actions column - column 7)
+        for row in range(self.accounts_table.rowCount()):
+            should_show = False
+            
+            # Check all columns except Actions column for search text
+            for col in range(self.accounts_table.columnCount() - 1):  # Exclude last column (Actions)
+                item = self.accounts_table.item(row, col)
+                if item and search_text in item.text().lower():
+                    should_show = True
+                    break
+            
+            self.accounts_table.setRowHidden(row, not should_show)
     
     def on_cell_clicked(self, row, column):
         """Handle cell click events."""
@@ -1036,7 +1103,7 @@ class AccountListWidget(QWidget):
         """Start a Telegram operation in a worker thread."""
         try:
             # Get account details from database
-            session = get_session()
+            session = db_get_session()
             try:
                 from ...models import Account
                 from sqlmodel import select
@@ -1148,7 +1215,7 @@ class AccountListWidget(QWidget):
         """Start a Telegram operation with verification code."""
         try:
             # Get account details from database
-            session = get_session()
+            session = db_get_session()
             try:
                 from ...models import Account
                 from sqlmodel import select
@@ -1216,7 +1283,7 @@ class AccountListWidget(QWidget):
     def _update_account_status(self, account_id, status):
         """Update account status in database."""
         try:
-            session = get_session()
+            session = db_get_session()
             try:
                 from ...models import Account
                 from sqlmodel import select
@@ -1300,7 +1367,7 @@ class AccountListWidget(QWidget):
         account_id = self.accounts_table.item(row, 0).data(Qt.UserRole)
         
         # Load account from database
-        session = get_session()
+        session = db_get_session()
         try:
             from ...models import Account
             from sqlmodel import select
@@ -1332,7 +1399,7 @@ class AccountListWidget(QWidget):
         
         if reply == QMessageBox.Yes:
             try:
-                session = get_session()
+                session = db_get_session()
                 try:
                     from ...models import Account
                     from sqlmodel import select
@@ -1349,6 +1416,41 @@ class AccountListWidget(QWidget):
             except Exception as e:
                 self.logger.error(f"Error deleting account: {e}")
                 QMessageBox.critical(self, "Error", f"Failed to delete account: {e}")
+    
+    def on_language_changed(self, language: str):
+        """Handle language change."""
+        self.logger.info(f"Language changed to: {language}")
+        # Recreate the UI with new translations
+        self.setup_ui()
+        self.load_accounts()
+    
+    @pyqtSlot(int)
+    def on_warmup_started(self, account_id: int):
+        """Handle warmup started signal."""
+        self.logger.info(f"Warmup started for account {account_id}")
+        # Refresh the accounts table to show updated status
+        self.refresh_accounts()
+    
+    @pyqtSlot(int, int, int)
+    def on_warmup_progress(self, account_id: int, sent: int, total: int):
+        """Handle warmup progress signal."""
+        self.logger.debug(f"Warmup progress for account {account_id}: {sent}/{total}")
+        # Refresh the accounts table to show updated progress
+        self.refresh_accounts()
+    
+    @pyqtSlot(int)
+    def on_warmup_completed(self, account_id: int):
+        """Handle warmup completed signal."""
+        self.logger.info(f"Warmup completed for account {account_id}")
+        # Refresh the accounts table to show completed status
+        self.refresh_accounts()
+    
+    @pyqtSlot(int, str)
+    def on_warmup_error(self, account_id: int, error: str):
+        """Handle warmup error signal."""
+        self.logger.error(f"Warmup error for account {account_id}: {error}")
+        # Refresh the accounts table to show error status
+        self.refresh_accounts()
 
 
 class AccountWidget(QWidget):
@@ -1356,6 +1458,12 @@ class AccountWidget(QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.logger = get_logger()
+        self.translation_manager = get_translation_manager()
+        
+        # Connect language change signal
+        self.translation_manager.language_changed.connect(self.on_language_changed)
+        
         self.setup_ui()
     
     def setup_ui(self):
@@ -1379,3 +1487,9 @@ class AccountWidget(QWidget):
         """Handle account update."""
         # Refresh the list
         self.account_list.refresh_accounts()
+    
+    def on_language_changed(self, language: str):
+        """Handle language change."""
+        self.logger.info(f"Language changed to: {language}")
+        # The account_list widget will handle its own language change
+        # No need to recreate the UI since it only contains the account_list

@@ -14,6 +14,7 @@ from .db import (
     backup_database,
     restore_database
 )
+from .campaign_manager import get_campaign_manager, CampaignManager
 
 __all__ = [
     # Settings
@@ -35,4 +36,8 @@ __all__ = [
     "health_check",
     "backup_database",
     "restore_database",
+    
+    # Campaign Management
+    "get_campaign_manager",
+    "CampaignManager",
 ]

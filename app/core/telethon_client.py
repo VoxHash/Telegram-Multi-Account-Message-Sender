@@ -139,12 +139,26 @@ class TelegramClientWrapper:
             entity = await self.client.get_entity(peer)
             
             # Send message
-            if media_path and os.path.exists(media_path):
-                message = await self.client.send_file(
-                    entity, 
-                    media_path, 
-                    caption=text
-                )
+            if media_path:
+                # Check if it's a URL or file path
+                if media_path.startswith(('http://', 'https://')):
+                    # It's a URL - send as URL
+                    message = await self.client.send_file(
+                        entity, 
+                        media_path, 
+                        caption=text
+                    )
+                elif os.path.exists(media_path):
+                    # It's a local file path
+                    message = await self.client.send_file(
+                        entity, 
+                        media_path, 
+                        caption=text
+                    )
+                else:
+                    # Invalid media path
+                    self.logger.warning(f"Media path does not exist: {media_path}")
+                    message = await self.client.send_message(entity, text)
             else:
                 message = await self.client.send_message(entity, text)
             
@@ -284,6 +298,13 @@ class TelegramClientManager:
     def get_all_statuses(self) -> Dict[int, Dict[str, Any]]:
         """Get status of all clients."""
         return {account_id: client.get_status() for account_id, client in self.clients.items()}
+    
+    def get_event_loop(self):
+        """Get the main event loop."""
+        try:
+            return asyncio.get_running_loop()
+        except RuntimeError:
+            return None
     
     async def disconnect_all(self):
         """Disconnect all clients."""

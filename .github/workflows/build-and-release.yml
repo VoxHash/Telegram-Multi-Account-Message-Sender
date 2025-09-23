@@ -1,0 +1,260 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 1.2.0)'
+        required: true
+        default: '1.2.0'
+
+env:
+  PYTHON_VERSION: '3.10'
+  PROJECT_NAME: 'telegram-multi-account-sender'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller cx-freeze auto-py-to-exe
+    
+    - name: Build Windows executable
+      run: |
+        pyinstaller --onefile --windowed --name telegram-multi-account-sender main.py
+        pyinstaller --onedir --windowed --name telegram-multi-account-sender-dir main.py
+    
+    - name: Create Windows installer
+      run: |
+        # Create a simple batch installer
+        echo @echo off > install.bat
+        echo echo Installing Telegram Multi-Account Message Sender... >> install.bat
+        echo mkdir "C:\Program Files\TelegramMultiAccountSender" >> install.bat
+        echo xcopy /E /I /Y dist\telegram-multi-account-sender-dir "C:\Program Files\TelegramMultiAccountSender" >> install.bat
+        echo echo Installation complete! >> install.bat
+        echo pause >> install.bat
+    
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-build
+        path: |
+          dist/telegram-multi-account-sender.exe
+          dist/telegram-multi-account-sender-dir/
+          install.bat
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        sudo apt-get update
+        sudo apt-get install -y python3-pyqt5
+    
+    - name: Build Linux executable
+      run: |
+        pyinstaller --onefile --name telegram-multi-account-sender main.py
+        pyinstaller --onedir --name telegram-multi-account-sender-dir main.py
+    
+    - name: Create .deb package
+      run: |
+        mkdir -p debian
+        cat > debian/control << EOF
+        Package: ${{ env.PROJECT_NAME }}
+        Version: ${{ github.ref_name }}
+        Section: net
+        Priority: optional
+        Architecture: amd64
+        Depends: python3 (>= 3.10), python3-pyqt5
+        Maintainer: VoxHash <contact@voxhash.dev>
+        Description: Professional-grade desktop application for managing and sending messages across multiple Telegram accounts
+        EOF
+        
+        # Create simple .deb structure
+        mkdir -p debian-package/usr/bin
+        mkdir -p debian-package/usr/share/applications
+        cp dist/telegram-multi-account-sender debian-package/usr/bin/
+        chmod +x debian-package/usr/bin/telegram-multi-account-sender
+        
+        # Create desktop entry
+        cat > debian-package/usr/share/applications/telegram-multi-account-sender.desktop << EOF
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=Telegram Multi-Account Message Sender
+        Comment=Professional-grade desktop application for managing and sending messages across multiple Telegram accounts
+        Exec=telegram-multi-account-sender
+        Icon=telegram-multi-account-sender
+        Terminal=false
+        Categories=Network;InstantMessaging;
+        EOF
+    
+    - name: Create .tar.gz
+      run: |
+        tar -czf telegram-multi-account-sender-${{ github.ref_name }}-linux.tar.gz dist/telegram-multi-account-sender-dir/
+    
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-build
+        path: |
+          dist/telegram-multi-account-sender
+          dist/telegram-multi-account-sender-dir/
+          telegram-multi-account-sender-${{ github.ref_name }}-linux.tar.gz
+          debian-package/
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller py2app
+    
+    - name: Build macOS application
+      run: |
+        pyinstaller --onefile --name telegram-multi-account-sender main.py
+        pyinstaller --onedir --name telegram-multi-account-sender-dir main.py
+    
+    - name: Create .dmg
+      run: |
+        # Create DMG using hdiutil
+        hdiutil create -srcfolder dist/telegram-multi-account-sender-dir/ -volname "Telegram Multi-Account Message Sender" -fs HFS+ -format UDZO telegram-multi-account-sender-${{ github.ref_name }}-macOS.dmg
+    
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-build
+        path: |
+          dist/telegram-multi-account-sender
+          dist/telegram-multi-account-sender-dir/
+          telegram-multi-account-sender-${{ github.ref_name }}-macOS.dmg
+
+  build-pypi:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: |
+        python -m build
+    
+    - name: Check package
+      run: |
+        twine check dist/*
+    
+    - name: Upload PyPI package
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        twine upload dist/*
+
+  create-release:
+    needs: [build-windows, build-linux, build-macos, build-pypi]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## 🎉 Release ${{ github.ref_name }}
+          
+          ### 📦 Downloads
+          
+          **Windows:**
+          - `telegram-multi-account-sender.exe` - Standalone executable
+          - `install.bat` - Simple installer
+          
+          **Linux:**
+          - `telegram-multi-account-sender` - Standalone executable
+          - `telegram-multi-account-sender-${{ github.ref_name }}-linux.tar.gz` - Source distribution
+          - Debian package files included
+          
+          **macOS:**
+          - `telegram-multi-account-sender` - Standalone executable
+          - `telegram-multi-account-sender-${{ github.ref_name }}-macOS.dmg` - Disk image installer
+          
+          ### 🚀 Installation
+          
+          **From PyPI:**
+          ```bash
+          pip install telegram-multi-account-sender
+          ```
+          
+          **From Source:**
+          ```bash
+          git clone https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender.git
+          cd Telegram-Multi-Account-Message-Sender
+          pip install -r requirements.txt
+          python main.py
+          ```
+          
+          ### 📋 What's New
+          
+          See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+          
+          ### 🆘 Support
+          
+          - [Documentation](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/wiki)
+          - [Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
+          - [Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
+        files: |
+          windows-build/telegram-multi-account-sender.exe
+          windows-build/install.bat
+          linux-build/telegram-multi-account-sender
+          linux-build/telegram-multi-account-sender-${{ github.ref_name }}-linux.tar.gz
+          macos-build/telegram-multi-account-sender
+          macos-build/telegram-multi-account-sender-${{ github.ref_name }}-macOS.dmg
+        draft: false
+        prerelease: false

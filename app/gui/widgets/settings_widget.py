@@ -278,9 +278,10 @@ class SettingsWidget(QWidget):
         warmup_layout.addLayout(warmup_controls_layout)
         
         # Warmup settings info
+        warmup_help_text = _('settings.warmup_help').replace('\n', '<br>')
         self.warmup_info = QLabel(f"""
         <b>{_('settings.warmup_description')}:</b><br>
-        {_('settings.warmup_help').replace('\\n', '<br>')}
+        {warmup_help_text}
         """)
         self.warmup_info.setWordWrap(True)
         self.warmup_info.setStyleSheet("QLabel { background-color: #2d2d2d; color: #ffffff; padding: 10px; border-radius: 5px; border: 1px solid #404040; }")
@@ -293,9 +294,10 @@ class SettingsWidget(QWidget):
         log_layout = QVBoxLayout(log_group)
         
         # Log management info
+        log_help_text = _('settings.log_management_help').replace('\n', '<br>')
         log_info = QLabel(f"""
         <b>{_('settings.log_management_description')}:</b><br>
-        {_('settings.log_management_help').replace('\\n', '<br>')}
+        {log_help_text}
         """)
         log_info.setWordWrap(True)
         log_info.setStyleSheet("QLabel { background-color: #2d2d2d; color: #ffffff; padding: 10px; border-radius: 5px; border: 1px solid #404040; }")
@@ -693,9 +695,10 @@ RETRY_DELAY_SECONDS={self.settings.retry_delay_seconds}
             
             # Update warmup info
             if hasattr(self, 'warmup_info'):
+                warmup_help_text = _('settings.warmup_help').replace('\n', '<br>')
                 self.warmup_info.setText(f"""
                 <b>{_('settings.warmup_description')}:</b><br>
-                {_('settings.warmup_help').replace('\\n', '<br>')}
+                {warmup_help_text}
                 """)
                 
         except Exception as e:

@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     start_with_windows: bool = False
     
     # Localization
-    language: Language = "en"
+    language: Language = Language.ENGLISH
     
     # Logging
     log_level: LogLevel = "INFO"
@@ -179,6 +179,18 @@ class Settings(BaseSettings):
         """Validate application environment."""
         if isinstance(v, str):
             return AppEnvironment(v.lower())
+        return v
+    
+    @validator("language", pre=True)
+    def validate_language(cls, v):
+        """Validate language setting."""
+        if v is None or v == "":
+            return Language.ENGLISH
+        if isinstance(v, str):
+            try:
+                return Language(v.lower())
+            except ValueError:
+                return Language.ENGLISH
         return v
     
     def get_database_path(self) -> Path:

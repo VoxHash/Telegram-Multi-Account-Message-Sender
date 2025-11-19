@@ -9,6 +9,7 @@ mypy>=1.0.0
 pre-commit>=3.0.0
 twine>=4.0.0
 build>=0.10.0
+setuptools>=65.0.0
 sphinx>=6.0.0
 sphinx-rtd-theme>=1.2.0
 myst-parser>=1.0.0

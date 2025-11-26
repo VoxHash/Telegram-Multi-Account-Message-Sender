@@ -28,8 +28,6 @@ share/python-wheels/
 MANIFEST
 
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -55,21 +53,22 @@ coverage.xml
 *.mo
 *.pot
 
-# Django stuff:
+# Django stuff
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Flask stuff:
+# Flask stuff
 instance/
 .webassets-cache
 
-# Scrapy stuff:
+# Scrapy stuff
 .scrapy
 
 # Sphinx documentation
 docs/_build/
+docs/site/
 
 # PyBuilder
 target/
@@ -85,13 +84,9 @@ ipython_config.py
 .python-version
 
 # pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
 #Pipfile.lock
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+# PEP 582
 __pypackages__/
 
 # Celery stuff
@@ -104,8 +99,8 @@ celerybeat.pid
 # Environments
 .env
 .venv
-env/
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
@@ -146,6 +141,9 @@ logs/
 temp/
 tmp/
 *.tmp
+*.bak
+*.backup
+*.old
 
 # IDE files
 .vscode/
@@ -162,39 +160,47 @@ tmp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+.AppleDouble
+.LSOverride
+Icon
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
 
 # Windows
 *.exe
-*.msi
 *.dmg
 *.pkg
 *.deb
 *.rpm
 *.tar.gz
 
-# Test files
-test_*.py
-*_test.py
-tests/
-
-# Development files
-.env.example
-.env.local
-.env.development
-.env.test
-.env.production
-
-# Backup files
-*.bak
-*.backup
-*.old
-
 # Configuration files with sensitive data
 config.ini
 config.json
 secrets.json
-
-# API keys and credentials
 api_keys.txt
 credentials.txt
 secrets.txt
@@ -206,146 +212,16 @@ contacts.csv
 recipients.csv
 accounts.csv
 
-# Generated documentation
-docs/build/
-docs/site/
-
-# Coverage reports
-coverage/
-.coverage
-htmlcov/
-
-# Profiling data
-*.prof
-
-# Jupyter notebook checkpoints
-.ipynb_checkpoints/
-
-# PyCharm
-.idea/
-
-# VS Code
-.vscode/
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# Vim
-*.swp
-*.swo
-
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# MacOS
-.AppleDouble
-.LSOverride
-Icon
-._*
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
-
-# Linux
-*~
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
-
-# Application specific ignores
-# Telegram session files
-*.session
-*.session-journal
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Log files
-*.log
-logs/
-
-# Configuration files
-config.ini
-config.json
-
-# Temporary files
-temp/
-tmp/
-*.tmp
-
-# Test data
-test_data/
-sample_data/
-
-# Build artifacts
-build/
-dist/
-*.egg-info/
-
-# Virtual environments
-venv/
-env/
-ENV/
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Personal/sensitive files
-personal/
-sensitive/
-credentials/
-secrets/
-
-# Development and testing files
+# Test files
 test_*.py
 *_test.py
 test_*.session
+test_session*.session
+
+# Development and testing files
 warmup_demo*.py
 test_warmup*.py
 test_language*.py
-test_session*.session
 fix_translations.py
 audit_translations.py
 check_*.py
@@ -358,10 +234,6 @@ build_installers.py
 create_windows_installer.py
 
 # Build and distribution files
-build/
-dist/
-*.egg-info/
-*.spec
 installer.iss
 create_dmg.sh
 setup_macos.py
@@ -379,7 +251,33 @@ LANGUAGE_UPDATE_SUMMARY.md
 # Temporary and development files
 content/
 scripts/
-warmup_demo_simple.py
-test_warmup_async.py
-test_warmup_demo.py
-test_warmup.py
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Emacs
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Personal/sensitive files
+personal/
+sensitive/
+credentials/
+secrets/
+
+# Test data
+test_data/
+sample_data/
+
+# Coverage reports
+coverage/
+htmlcov/
+
+# Profiling data
+*.prof

@@ -1,5 +1,6 @@
 # Telegram Multi-Account Message Sender
 
+[![CI/CD Pipeline](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/actions/workflows/ci.yml/badge.svg)](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/actions/workflows/ci.yml)
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-green.svg)](https://www.riverbankcomputing.com/software/pyqt/)

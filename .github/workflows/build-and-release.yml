@@ -37,7 +37,7 @@ jobs:
     - name: Build Windows executable
       continue-on-error: true
       run: |
-        pyinstaller --onefile --noconsole --name telegram-multi-account-sender --icon=assets/icons/favicon.ico main.py
+        pyinstaller --onefile --noconsole --name telegram-multi-account-sender --icon=assets/icons/favicon.ico --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic main.py
     
     - name: Upload Windows artifacts
       if: success() || failure()
@@ -64,7 +64,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3-pyqt5 libxcb-xinerama0 libxcb-cursor0 || true
+        sudo apt-get install -y python3-pyqt5 libxcb-xinerama0 libxcb-cursor0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-image0 libxcb-keysyms1 libxcb-icccm4 libxcb-xfixes0 libxcb-sync1 libxcb-xkb1 libxkbcommon0 libxkbcommon-x11-0 || true
     
     - name: Install Python dependencies
       run: |
@@ -77,7 +77,7 @@ jobs:
       env:
         QT_QPA_PLATFORM: offscreen
       run: |
-        pyinstaller --onefile --name telegram-multi-account-sender main.py
+        pyinstaller --onefile --name telegram-multi-account-sender --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic main.py
     
     - name: Create .tar.gz
       if: success()
@@ -116,12 +116,18 @@ jobs:
     - name: Build macOS application
       continue-on-error: true
       run: |
-        pyinstaller --onefile --name telegram-multi-account-sender main.py
+        pyinstaller --windowed --name telegram-multi-account-sender --icon=assets/icons/favicon.ico main.py || pyinstaller --onefile --name telegram-multi-account-sender main.py
     
     - name: Create .dmg
       if: success()
       run: |
-        hdiutil create -srcfolder dist/telegram-multi-account-sender.app -volname "Telegram Multi-Account Message Sender" -fs HFS+ -format UDZO telegram-multi-account-sender-${{ github.ref_name || inputs.version }}-macOS.dmg || true
+        if [ -d "dist/telegram-multi-account-sender.app" ]; then
+          hdiutil create -srcfolder dist/telegram-multi-account-sender.app -volname "Telegram Multi-Account Message Sender" -fs HFS+ -format UDZO telegram-multi-account-sender-${{ github.ref_name || inputs.version }}-macOS.dmg || true
+        elif [ -f "dist/telegram-multi-account-sender" ]; then
+          mkdir -p dist/Telegram-Multi-Account-Sender.app/Contents/MacOS
+          cp dist/telegram-multi-account-sender dist/Telegram-Multi-Account-Sender.app/Contents/MacOS/
+          hdiutil create -srcfolder dist/Telegram-Multi-Account-Sender.app -volname "Telegram Multi-Account Message Sender" -fs HFS+ -format UDZO telegram-multi-account-sender-${{ github.ref_name || inputs.version }}-macOS.dmg || true
+        fi
     
     - name: Upload macOS artifacts
       if: success() || failure()

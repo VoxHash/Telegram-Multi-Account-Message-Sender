@@ -128,7 +128,6 @@ setup(
         "setuptools>=61.0.0",
         "wheel>=0.37.0",
     ],
-    test_suite="tests",
     tests_require=[
         "pytest>=7.0.0",
         "pytest-cov>=4.0.0",

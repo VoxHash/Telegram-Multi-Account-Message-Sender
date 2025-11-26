@@ -181,10 +181,10 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref_name }}
-        name: Release ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name || inputs.version }}
+        name: Release ${{ github.ref_name || inputs.version }}
         body: |
-          ## 🎉 Release ${{ github.ref_name }}
+          ## 🎉 Release ${{ github.ref_name || inputs.version }}
           
           ### 📦 Downloads
           
@@ -193,11 +193,11 @@ jobs:
           
           **Linux:**
           - `telegram-multi-account-sender` - Standalone executable
-          - `telegram-multi-account-sender-${{ github.ref_name }}-linux.tar.gz` - Source distribution
+          - `telegram-multi-account-sender-${{ github.ref_name || inputs.version }}-linux.tar.gz` - Source distribution
           
           **macOS:**
           - `telegram-multi-account-sender` - Standalone executable
-          - `telegram-multi-account-sender-${{ github.ref_name }}-macOS.dmg` - Disk image installer
+          - `telegram-multi-account-sender-${{ github.ref_name || inputs.version }}-macOS.dmg` - Disk image installer
           
           ### 🚀 Installation
           

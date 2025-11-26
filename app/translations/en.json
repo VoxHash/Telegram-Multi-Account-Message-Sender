@@ -206,6 +206,9 @@
     "name": "Name",
     "description": "Description",
     "type": "Type",
+    "account": "Account",
+    "template": "Template",
+    "message": "Message",
     "message_type": "Message Type",
     "message_text": "Message Text",
     "browse": "Browse",
@@ -471,6 +474,7 @@
     "date_range": "Date Range",
     "ready_no_logs": "Ready - No logs loaded",
     "logs": "logs",
+    "rate_limited": "Rate Limited",
     "loaded_successfully": "Loaded {count} send logs successfully",
     "error_loading": "Error loading send logs: {error}",
     "exported_successfully": "Exported {count} logs successfully"

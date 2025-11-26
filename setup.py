@@ -100,10 +100,8 @@ setup(
             "example_files/templates_example.csv",
             "example_files/accounts_example.csv",
             "example_files/campaigns_example.csv",
-            "example_files/README.md",
             "example_files/sample_media_urls.txt",
             "example_files/spintax_examples.txt",
-            "example_files/configurations.md",
         ]),
     ],
     keywords=[

@@ -109,11 +109,12 @@ Download the appropriate installer from the [Releases](https://github.com/VoxHas
 
 ## 📖 Documentation
 
-- **[User Guide](docs/USER_GUIDE.md)**: Comprehensive user guide
-- **[API Documentation](docs/API.md)**: Complete API reference
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)**: Common issues and solutions
-- **[Development Guide](docs/DEVELOPMENT.md)**: Developer documentation
-- **[FAQ](docs/FAQ.md)**: Frequently asked questions
+- **[Documentation Index](docs/index.md)**: Complete documentation overview
+- **[Getting Started](docs/getting-started.md)**: First steps with the application
+- **[Usage Guide](docs/usage.md)**: Comprehensive user guide
+- **[API Documentation](docs/api.md)**: Complete API reference
+- **[Troubleshooting](docs/troubleshooting.md)**: Common issues and solutions
+- **[FAQ](docs/faq.md)**: Frequently asked questions
 - **[Contributing](CONTRIBUTING.md)**: How to contribute to the project
 - **[Roadmap](ROADMAP.md)**: Future development plans
 

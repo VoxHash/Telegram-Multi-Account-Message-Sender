@@ -35,7 +35,7 @@
         }
     },
     
-    "postCreateCommand": "pip install -r requirements.txt && pip install -e .",
+    "postCreateCommand": "pip install -r requirements.txt && pip install -r requirements-dev.txt && pip install -e .",
     
     "remoteUser": "vscode",
     

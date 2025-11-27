@@ -5,6 +5,49 @@ All notable changes to the Telegram Multi-Account Message Sender project will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.6] - 2025-11-26
+
+### Added
+- **API Documentation**: Comprehensive API reference documentation in `docs/api.md`
+- **FAQ Documentation**: Complete frequently asked questions guide in `docs/faq.md`
+- **Troubleshooting Guide**: Detailed troubleshooting documentation in `docs/troubleshooting.md`
+
+### Fixed
+- **Documentation Filenames**: Standardized all documentation filenames to lowercase convention
+- **Broken Documentation Links**: Fixed all broken references in README.md and other documentation files
+- **Empty Documentation Files**: Restored comprehensive content for previously empty documentation files
+- **Documentation References**: Updated all internal documentation links to use correct lowercase filenames
+
+### Changed
+- **README.md**: Updated documentation section with correct links and improved structure
+- **Documentation Structure**: Ensured all .md files follow standardized documentation kit structure
+- **Version Consistency**: Updated version to 1.2.6 in pyproject.toml and setup.py
+
+## [1.2.5] - 2025-11-25
+
+### Fixed
+- **CI/CD Pipelines**: Fixed workflow YAML syntax errors and action versions
+- **Release Workflow**: Fixed version handling for workflow_dispatch triggers
+- **PyPI Upload**: Added validation and error handling for PyPI package uploads
+- **macOS Build**: Fixed PyInstaller icon path handling for macOS builds
+- **Pytest Configuration**: Made pytest more robust with continue-on-error handling
+
+### Changed
+- **GitHub Actions**: Updated action versions and improved workflow reliability
+- **Build Process**: Enhanced cross-platform build process with better error handling
+
+## [1.2.4] - 2025-11-24
+
+### Fixed
+- **Project Depuration**: Removed unnecessary files, build artifacts, and temporary data
+- **Git Configuration**: Fixed dubious ownership issues for repository access
+- **Launcher Scripts**: Enhanced run_telegram_sender.bat and created run_telegram_sender.ps1
+- **Documentation Standardization**: Renamed and standardized all documentation files
+
+### Changed
+- **Project Structure**: Cleaned up project folder structure
+- **Documentation**: Standardized documentation file naming conventions
+
 ## [1.2.3] - 2025-01-23
 
 ### Added

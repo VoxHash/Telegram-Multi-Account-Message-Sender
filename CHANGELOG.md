@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API Documentation**: Comprehensive API reference documentation in `docs/api.md`
 - **FAQ Documentation**: Complete frequently asked questions guide in `docs/faq.md`
 - **Troubleshooting Guide**: Detailed troubleshooting documentation in `docs/troubleshooting.md`
+- **Sponsors Section**: Added sponsors acknowledgment section to README.md
+- **GitHub Sponsors Badge**: Added GitHub Sponsors badge to project badges
+- **First Sponsor**: Acknowledged first monthly sponsor [@dodierandal-arch](https://github.com/dodierandal-arch) ($100/month)
 
 ### Fixed
 - **Documentation Filenames**: Standardized all documentation filenames to lowercase convention

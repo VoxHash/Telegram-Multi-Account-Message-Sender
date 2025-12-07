@@ -7,6 +7,7 @@
 [![Telethon](https://img.shields.io/badge/Telethon-1.24+-orange.svg)](https://github.com/LonamiWebs/Telethon)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-1674b1.svg)](https://github.com/pycqa/isort)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/VoxHash?label=Sponsors&logo=github&color=ea4aaa)](https://github.com/sponsors/VoxHash)
 
 A professional-grade desktop application for managing and sending messages across multiple Telegram accounts with advanced features like scheduling, spintax, media support, and compliance controls.
 
@@ -302,6 +303,18 @@ See [ROADMAP.md](ROADMAP.md) for detailed future development plans and current p
 - **Active Contributors**: 5+
 - **GitHub Stars**: 100+
 - **Downloads**: 1,000+
+
+## 💖 Sponsors
+
+We're incredibly grateful to our sponsors who help support the development and maintenance of this project!
+
+### 🌟 Monthly Sponsors
+
+- **[@dodierandal-arch](https://github.com/dodierandal-arch)** - $100/month (Premium Sponsor) 🎉
+
+Thank you for your generous support! Your contributions help us continue improving the project and adding new features.
+
+**Interested in becoming a sponsor?** [Support us on GitHub Sponsors](https://github.com/sponsors/VoxHash) and help make this project even better!
 
 ## 🏆 Acknowledgments
 

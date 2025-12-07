@@ -554,7 +554,7 @@ class CampaignManager(QObject):
                         media_path = campaign.get_effective_media_path(recipient.id)
                         
                         # Send message
-                        result = await self._send_message(account, recipient, message_text, media_path)
+                        result = await self._send_message(account, recipient, message_text, media_path, campaign)
                         
                         # Update counts and tracking
                         if result["success"]:
@@ -682,15 +682,58 @@ class CampaignManager(QObject):
         
         return message_text
     
-    async def _send_message(self, account: Account, recipient: Recipient, message_text: str, media_path: Optional[str]) -> Dict[str, Any]:
+    async def _send_message(self, account: Account, recipient: Recipient, message_text: str, media_path: Optional[str], campaign: Optional[Campaign] = None) -> Dict[str, Any]:
         """Send a message using a fresh client to avoid event loop conflicts."""
         try:
             self.logger.debug(f"Creating fresh client for account {account.id}")
             # Import here to avoid circular imports
             from telethon import TelegramClient
             from telethon.errors import SessionPasswordNeededError
+            from ..core.message_forwarder import MessageForwarder
             import os
             
+            # Check if forwarding is enabled
+            if campaign and campaign.forward_enabled and campaign.forward_from_message_id:
+                # Forward message instead of sending new one
+                forwarder = MessageForwarder()
+                client = TelegramClient(
+                    account.session_path,
+                    account.api_id,
+                    account.api_hash
+                )
+                
+                try:
+                    await client.start(
+                        phone=account.phone_number,
+                        password=account.session_password
+                    )
+                    
+                    if not client.is_connected():
+                        await client.disconnect()
+                        return {"success": False, "error": "Account not connected"}
+                    
+                    # Get source chat identifier
+                    from_chat = campaign.forward_from_chat_username or str(campaign.forward_from_chat_id)
+                    to_chat = recipient.get_identifier()
+                    
+                    # Forward the message
+                    result = await forwarder.forward_message(
+                        client,
+                        from_chat,
+                        campaign.forward_from_message_id,
+                        to_chat,
+                        recipient.thread_id
+                    )
+                    
+                    await client.disconnect()
+                    return result
+                    
+                except Exception as e:
+                    if client:
+                        await client.disconnect()
+                    return {"success": False, "error": f"Failed to forward message: {e}"}
+            
+            # Regular message sending
             # Create a completely fresh Telegram client
             client = TelegramClient(
                 account.session_path,
@@ -722,27 +765,36 @@ class CampaignManager(QObject):
                 await client.disconnect()
                 return {"success": False, "error": f"Failed to get entity: {e}"}
             
-            # Send message
+            # Send message (with thread support for groups)
             try:
+                send_kwargs = {}
+                if recipient.thread_id:
+                    # For groups with threads, we need to send to the thread
+                    # Note: Telethon's send_message supports reply_to for threads
+                    send_kwargs["reply_to"] = recipient.thread_id
+                
                 if media_path and os.path.exists(media_path):
                     # Send with media
                     sent_message = await client.send_file(
                         entity,
                         media_path,
-                        caption=message_text
+                        caption=message_text,
+                        **send_kwargs
                     )
                 elif media_path and (media_path.startswith('http://') or media_path.startswith('https://')):
                     # Send URL as media
                     sent_message = await client.send_file(
                         entity,
                         media_path,
-                        caption=message_text
+                        caption=message_text,
+                        **send_kwargs
                     )
                 else:
                     # Send text only
                     sent_message = await client.send_message(
                         entity,
-                        message_text
+                        message_text,
+                        **send_kwargs
                     )
                 
                 await client.disconnect()

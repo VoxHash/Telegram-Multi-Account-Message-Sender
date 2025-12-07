@@ -9,6 +9,8 @@ from .recipient_widget import RecipientWidget, RecipientListWidget
 from .testing_widget import TestingWidget
 from .log_widget import LogWidget, LogViewer
 from .settings_widget import SettingsWidget
+from .dashboard_widget import DashboardWidget
+from .telegram_selector import TelegramSelectorDialog
 
 __all__ = [
     "AccountWidget",
@@ -23,4 +25,6 @@ __all__ = [
     "LogWidget",
     "LogViewer",
     "SettingsWidget",
+    "DashboardWidget",
+    "TelegramSelectorDialog",
 ]

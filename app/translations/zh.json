@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "消息转发",
+    "enable_forwarding": "启用消息转发",
+    "forward_from_chat": "从聊天转发",
+    "forward_from_chat_placeholder": "@用户名或聊天 ID",
+    "forward_message_id": "消息 ID",
+    "forward_message_id_placeholder": "要转发的消息 ID",
+    "enter_message_id_manually": "请手动输入消息 ID。您可以通过在 Telegram 中查看消息来找到它。"
   },
   "templates": {
     "title": "模板",
@@ -314,7 +321,21 @@
     "group_title": "群组标题",
     "group_username": "群组用户名",
     "group_type": "群组类型",
-    "member_count": "成员数量"
+    "member_count": "成员数量",
+    "select_from_telegram": "从 Telegram 选择",
+    "browse_telegram": "浏览 Telegram",
+    "search_chats": "搜索聊天...",
+    "telegram_chats": "Telegram 聊天",
+    "members": "成员",
+    "select_thread": "选择主题（可选）",
+    "no_thread": "无主题（发送到主聊天）",
+    "thread_id": "主题 ID",
+    "thread_id_placeholder": "留空为主聊天",
+    "fetching_chats": "正在从 Telegram 获取聊天...",
+    "no_online_accounts": "没有可用的在线账户。请先连接账户。",
+    "api_credentials_required": "需要 Telegram API 凭据。请在设置中配置它们。",
+    "select_chat_first": "请先选择一个聊天",
+    "user_selection_not_supported": "用户选择尚不支持。请仅将此功能用于群组和频道。"
   },
   "testing": {
     "title": "测试",

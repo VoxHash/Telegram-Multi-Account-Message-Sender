@@ -15,6 +15,8 @@ from .db import (
     restore_database
 )
 from .campaign_manager import get_campaign_manager, CampaignManager
+from .account_health import AccountHealthMonitor, HealthStatus
+from .performance import get_performance_monitor, PerformanceMonitor, performance_timer
 
 __all__ = [
     # Settings
@@ -40,4 +42,13 @@ __all__ = [
     # Campaign Management
     "get_campaign_manager",
     "CampaignManager",
+    
+    # Account Health
+    "AccountHealthMonitor",
+    "HealthStatus",
+    
+    # Performance
+    "get_performance_monitor",
+    "PerformanceMonitor",
+    "performance_timer",
 ]

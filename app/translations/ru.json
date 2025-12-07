@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "Пересылка Сообщений",
+    "enable_forwarding": "Включить Пересылку Сообщений",
+    "forward_from_chat": "Переслать Из Чата",
+    "forward_from_chat_placeholder": "@имяпользователя или ID Чата",
+    "forward_message_id": "ID Сообщения",
+    "forward_message_id_placeholder": "ID сообщения для пересылки",
+    "enter_message_id_manually": "Пожалуйста, введите ID сообщения вручную. Вы можете найти его, просмотрев сообщение в Telegram."
   },
   "templates": {
     "title": "Шаблоны",
@@ -314,7 +321,21 @@
     "group_title": "Название группы",
     "group_username": "Имя пользователя группы",
     "group_type": "Тип группы",
-    "member_count": "Количество участников"
+    "member_count": "Количество участников",
+    "select_from_telegram": "Выбрать из Telegram",
+    "browse_telegram": "Просмотреть Telegram",
+    "search_chats": "Поиск чатов...",
+    "telegram_chats": "Чаты Telegram",
+    "members": "Участники",
+    "select_thread": "Выбрать Тред (Опционально)",
+    "no_thread": "Без Треда (Отправить в основной чат)",
+    "thread_id": "ID Треда",
+    "thread_id_placeholder": "Оставить пустым для основного чата",
+    "fetching_chats": "Получение чатов из Telegram...",
+    "no_online_accounts": "Нет доступных онлайн-аккаунтов. Пожалуйста, сначала подключите аккаунт.",
+    "api_credentials_required": "Требуются учетные данные API Telegram. Пожалуйста, настройте их в Настройках.",
+    "select_chat_first": "Пожалуйста, сначала выберите чат",
+    "user_selection_not_supported": "Выбор пользователей пока не поддерживается. Пожалуйста, используйте эту функцию только для групп и каналов."
   },
   "testing": {
     "title": "Тестирование",

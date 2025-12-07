@@ -17,6 +17,7 @@ from ...models import Recipient, RecipientList, RecipientSource, RecipientStatus
 from ...services import get_logger
 from ...services.db import get_session
 from ...services.translation import _, get_translation_manager
+from .telegram_selector import TelegramSelectorDialog
 import csv
 import pandas as pd
 
@@ -75,12 +76,49 @@ class RecipientDialog(QDialog):
             self.group_id_edit.clear()
             self.group_title_edit.clear()
             self.group_username_edit.clear()
+            self.thread_id_edit.clear()
         else:
             self.username_edit.clear()
             self.user_id_edit.clear()
             self.phone_edit.clear()
             self.first_name_edit.clear()
             self.last_name_edit.clear()
+    
+    def browse_telegram_chats(self):
+        """Open Telegram chat selector dialog."""
+        try:
+            selector = TelegramSelectorDialog(self)
+            if selector.exec_() == QDialog.Accepted and selector.selected_chat:
+                chat = selector.selected_chat
+                
+                # Update fields based on selected chat
+                if chat.get("type") in ["group", "supergroup", "channel"]:
+                    # Set recipient type
+                    if chat.get("type") == "channel":
+                        self.type_combo.setCurrentText("Channel")
+                    else:
+                        self.type_combo.setCurrentText("Group")
+                    
+                    # Fill in the fields
+                    if chat.get("username"):
+                        self.group_username_edit.setText(f"@{chat['username']}")
+                    if chat.get("id"):
+                        self.group_id_edit.setText(str(chat["id"]))
+                    if chat.get("title"):
+                        self.group_title_edit.setText(chat["title"])
+                    if chat.get("thread_id"):
+                        self.thread_id_edit.setText(str(chat["thread_id"]))
+                    
+                    self.logger.info(f"Selected chat: {chat.get('title')} (ID: {chat.get('id')})")
+                else:
+                    QMessageBox.information(
+                        self,
+                        _("common.info"),
+                        _("recipients.user_selection_not_supported")
+                    )
+        except Exception as e:
+            self.logger.error(f"Error opening Telegram selector: {e}")
+            QMessageBox.critical(self, _("common.error"), str(e))
     
     def setup_ui(self):
         """Set up the dialog UI."""
@@ -137,9 +175,20 @@ class RecipientDialog(QDialog):
         group_layout.setContentsMargins(0, 0, 0, 0)
         
         # Username for groups/channels
+        username_layout = QHBoxLayout()
         self.group_username_edit = QLineEdit()
         self.group_username_edit.setPlaceholderText("@mygroup")
-        group_layout.addRow("Username:", self.group_username_edit)
+        username_layout.addWidget(self.group_username_edit)
+        
+        self.browse_telegram_button = QPushButton(_("recipients.browse_telegram"))
+        self.browse_telegram_button.clicked.connect(self.browse_telegram_chats)
+        username_layout.addWidget(self.browse_telegram_button)
+        group_layout.addRow("Username:", username_layout)
+        
+        # Thread ID for groups with threads
+        self.thread_id_edit = QLineEdit()
+        self.thread_id_edit.setPlaceholderText(_("recipients.thread_id_placeholder"))
+        group_layout.addRow(_("recipients.thread_id") + ":", self.thread_id_edit)
         
         # Dynamic labels for group/channel fields
         self.group_id_edit = QLineEdit()
@@ -219,6 +268,7 @@ class RecipientDialog(QDialog):
             self.group_username_edit.setText(self.recipient.group_username or "")
             self.group_id_edit.setText(str(self.recipient.group_id) if self.recipient.group_id else "")
             self.group_title_edit.setText(self.recipient.group_title or "")
+            self.thread_id_edit.setText(str(self.recipient.thread_id) if self.recipient.thread_id else "")
     
     def save_recipient(self):
         """Save recipient data."""
@@ -267,6 +317,7 @@ class RecipientDialog(QDialog):
                     self.recipient.group_username = self.group_username_edit.text().strip() or None
                     self.recipient.group_id = int(self.group_id_edit.text().strip()) if self.group_id_edit.text().strip() else None
                     self.recipient.group_title = self.group_title_edit.text().strip() or None
+                    self.recipient.thread_id = int(self.thread_id_edit.text().strip()) if self.thread_id_edit.text().strip() else None
             else:
                 # Create new recipient
                 recipient_data = {
@@ -290,6 +341,7 @@ class RecipientDialog(QDialog):
                         "group_username": self.group_username_edit.text().strip() or None,
                         "group_id": int(self.group_id_edit.text().strip()) if self.group_id_edit.text().strip() else None,
                         "group_title": self.group_title_edit.text().strip() or None,
+                        "thread_id": int(self.thread_id_edit.text().strip()) if self.thread_id_edit.text().strip() else None,
                     })
                 
                 self.recipient = Recipient(**recipient_data)

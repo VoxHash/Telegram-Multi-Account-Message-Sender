@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "Reenvío de Mensaxes",
+    "enable_forwarding": "Habilitar Reenvío de Mensaxes",
+    "forward_from_chat": "Reenviar Dende o Chat",
+    "forward_from_chat_placeholder": "@nomeusuario ou ID do Chat",
+    "forward_message_id": "ID da Mensaxe",
+    "forward_message_id_placeholder": "ID da mensaxe para reenviar",
+    "enter_message_id_manually": "Por favor, introduza o ID da mensaxe manualmente. Pode atopalo vendo a mensaxe en Telegram."
   },
   "templates": {
     "title": "Templates",
@@ -314,7 +321,21 @@
     "group_title": "Group Title",
     "group_username": "Group Username",
     "group_type": "Group Type",
-    "member_count": "Member Count"
+    "member_count": "Member Count",
+    "select_from_telegram": "Seleccionar de Telegram",
+    "browse_telegram": "Explorar Telegram",
+    "search_chats": "Buscar chats...",
+    "telegram_chats": "Chats de Telegram",
+    "members": "Membros",
+    "select_thread": "Seleccionar Fío (Opcional)",
+    "no_thread": "Sen Fío (Enviar ao chat principal)",
+    "thread_id": "ID do Fío",
+    "thread_id_placeholder": "Deixar baleiro para chat principal",
+    "fetching_chats": "Obtendo chats de Telegram...",
+    "no_online_accounts": "Non hai contas en liña dispoñibles. Por favor, conecte unha conta primeiro.",
+    "api_credentials_required": "Requírense credenciais da API de Telegram. Por favor, configúreas en Configuración.",
+    "select_chat_first": "Por favor, seleccione un chat primeiro",
+    "user_selection_not_supported": "A selección de usuarios aínda non está soportada. Por favor, use esta función só para grupos e canles."
   },
   "testing": {
     "title": "Testing",

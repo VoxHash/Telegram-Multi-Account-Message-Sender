@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "Transfert de Messages",
+    "enable_forwarding": "Activer le Transfert de Messages",
+    "forward_from_chat": "Transférer Depuis le Chat",
+    "forward_from_chat_placeholder": "@nomutilisateur ou ID de Chat",
+    "forward_message_id": "ID du Message",
+    "forward_message_id_placeholder": "ID du message à transférer",
+    "enter_message_id_manually": "Veuillez entrer l'ID du message manuellement. Vous pouvez le trouver en affichant le message dans Telegram."
   },
   "templates": {
     "title": "Modèles",
@@ -314,7 +321,21 @@
     "group_title": "Titre du Groupe",
     "group_username": "Nom d'utilisateur du Groupe",
     "group_type": "Type de Groupe",
-    "member_count": "Nombre de Membres"
+    "member_count": "Nombre de Membres",
+    "select_from_telegram": "Sélectionner depuis Telegram",
+    "browse_telegram": "Parcourir Telegram",
+    "search_chats": "Rechercher des chats...",
+    "telegram_chats": "Chats Telegram",
+    "members": "Membres",
+    "select_thread": "Sélectionner un Fil (Optionnel)",
+    "no_thread": "Pas de Fil (Envoyer au chat principal)",
+    "thread_id": "ID du Fil",
+    "thread_id_placeholder": "Laisser vide pour le chat principal",
+    "fetching_chats": "Récupération des chats depuis Telegram...",
+    "no_online_accounts": "Aucun compte en ligne disponible. Veuillez d'abord connecter un compte.",
+    "api_credentials_required": "Les identifiants API Telegram sont requis. Veuillez les configurer dans Paramètres.",
+    "select_chat_first": "Veuillez d'abord sélectionner un chat",
+    "user_selection_not_supported": "La sélection d'utilisateurs n'est pas encore prise en charge. Veuillez utiliser cette fonction uniquement pour les groupes et canaux."
   },
   "testing": {
     "title": "Test",

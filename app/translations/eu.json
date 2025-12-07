@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "Mezuen Birbidalketa",
+    "enable_forwarding": "Gaitu Mezuen Birbidalketa",
+    "forward_from_chat": "Birbidali Txatetik",
+    "forward_from_chat_placeholder": "@erabiltzaileizena edo Txataren ID",
+    "forward_message_id": "Mezuaren ID",
+    "forward_message_id_placeholder": "Birbidaltzeko mezua ID",
+    "enter_message_id_manually": "Mesedez, sartu mezua ID eskuz. Telegramen mezua ikustean aurki dezakezu."
   },
   "templates": {
     "title": "Templates",
@@ -314,7 +321,21 @@
     "group_title": "Group Title",
     "group_username": "Group Username",
     "group_type": "Group Type",
-    "member_count": "Member Count"
+    "member_count": "Member Count",
+    "select_from_telegram": "Telegrametik hautatu",
+    "browse_telegram": "Telegram arakatu",
+    "search_chats": "Txatak bilatu...",
+    "telegram_chats": "Telegrameko txatak",
+    "members": "Kideak",
+    "select_thread": "Haria hautatu (Aukerakoa)",
+    "no_thread": "Haririk ez (Txat nagusira bidali)",
+    "thread_id": "Hariaren ID",
+    "thread_id_placeholder": "Hutsik utzi txat nagusirako",
+    "fetching_chats": "Telegrameko txatak eskuratzen...",
+    "no_online_accounts": "Ez dago lineako konturik eskuragarri. Mesedez, konektatu kontu bat lehenik.",
+    "api_credentials_required": "Telegram API kredentzialak beharrezkoak dira. Mesedez, konfiguratu ezazu Ezarpenetan.",
+    "select_chat_first": "Mesedez, hautatu txat bat lehenik",
+    "user_selection_not_supported": "Erabiltzaileen hautaketa oraindik ez da onartzen. Mesedez, erabili funtzio hau talde eta kanaletan bakarrik."
   },
   "testing": {
     "title": "Testing",

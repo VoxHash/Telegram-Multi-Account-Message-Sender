@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "Sõnumite Edastamine",
+    "enable_forwarding": "Luba Sõnumite Edastamine",
+    "forward_from_chat": "Edasta Vestlusest",
+    "forward_from_chat_placeholder": "@kasutajanimi või Vestluse ID",
+    "forward_message_id": "Sõnumi ID",
+    "forward_message_id_placeholder": "Edastatava sõnumi ID",
+    "enter_message_id_manually": "Palun sisestage sõnumi ID käsitsi. Leiate selle Telegramis sõnumit vaadates."
   },
   "templates": {
     "title": "Mallid",
@@ -314,7 +321,21 @@
     "group_title": "Grupi pealkiri",
     "group_username": "Grupi kasutajanimi",
     "group_type": "Grupi tüüp",
-    "member_count": "Liikmete arv"
+    "member_count": "Liikmete arv",
+    "select_from_telegram": "Vali Telegramist",
+    "browse_telegram": "Sirvi Telegram",
+    "search_chats": "Otsi vestlusi...",
+    "telegram_chats": "Telegrami vestlused",
+    "members": "Liikmed",
+    "select_thread": "Vali Lõim (Valikuline)",
+    "no_thread": "Lõime pole (Saada põhivestlusse)",
+    "thread_id": "Lõime ID",
+    "thread_id_placeholder": "Jäta tühjaks põhivestluse jaoks",
+    "fetching_chats": "Telegrami vestluste hankimine...",
+    "no_online_accounts": "Veebis kontosid pole saadaval. Palun ühendage konto esmalt.",
+    "api_credentials_required": "Telegrami API mandaadid on vajalikud. Palun seadistage need Seaded.",
+    "select_chat_first": "Palun valige esmalt vestlus",
+    "user_selection_not_supported": "Kasutajate valik pole veel toetatud. Palun kasutage seda funktsiooni ainult rühmade ja kanalite jaoks."
   },
   "testing": {
     "title": "Testimine",

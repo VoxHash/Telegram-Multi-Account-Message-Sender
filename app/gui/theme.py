@@ -3,7 +3,7 @@ Theme management for the application.
 """
 
 import platform
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QSettings
 
@@ -74,7 +74,27 @@ class ThemeManager:
     
     def get_theme_colors(self, theme: str) -> Dict[str, str]:
         """Get color palette for a theme."""
-        if theme == "dark":
+        # Check for custom theme first
+        if theme == "custom":
+            custom_colors = self.get_custom_theme_colors()
+            if custom_colors:
+                return custom_colors
+        
+        if theme == "high_contrast":
+            return {
+                "background": "#000000",
+                "surface": "#1a1a1a",
+                "primary": "#00ffff",
+                "secondary": "#808080",
+                "text": "#ffffff",
+                "text_secondary": "#ffffff",
+                "border": "#00ffff",
+                "success": "#00ff00",
+                "warning": "#ffff00",
+                "error": "#ff0000",
+                "info": "#00ffff",
+            }
+        elif theme == "dark":
             return {
                 "background": "#2b2b2b",
                 "surface": "#3c3c3c",
@@ -319,8 +339,94 @@ class ThemeManager:
     
     def get_available_themes(self) -> list:
         """Get list of available themes."""
-        return ["auto", "light", "dark", "dracula"]
+        return ["auto", "light", "dark", "dracula", "high_contrast"]
     
-    def get_current_theme(self) -> str:
-        """Get current theme."""
-        return self.current_theme
+    def get_theme_colors(self, theme: str) -> Dict[str, str]:
+        """Get color palette for a theme."""
+        if theme == "high_contrast":
+            return {
+                "background": "#000000",
+                "surface": "#1a1a1a",
+                "primary": "#00ffff",
+                "secondary": "#808080",
+                "text": "#ffffff",
+                "text_secondary": "#ffffff",
+                "border": "#00ffff",
+                "success": "#00ff00",
+                "warning": "#ffff00",
+                "error": "#ff0000",
+                "info": "#00ffff",
+            }
+        elif theme == "dark":
+            return {
+                "background": "#2b2b2b",
+                "surface": "#3c3c3c",
+                "primary": "#0078d4",
+                "secondary": "#6c757d",
+                "text": "#ffffff",
+                "text_secondary": "#cccccc",
+                "border": "#555555",
+                "success": "#28a745",
+                "warning": "#ffc107",
+                "error": "#dc3545",
+                "info": "#17a2b8",
+            }
+        elif theme == "dracula":
+            return {
+                "background": "#282a36",
+                "surface": "#44475a",
+                "primary": "#bd93f9",
+                "secondary": "#6272a4",
+                "text": "#f8f8f2",
+                "text_secondary": "#6272a4",
+                "border": "#6272a4",
+                "success": "#50fa7b",
+                "warning": "#ffb86c",
+                "error": "#ff5555",
+                "info": "#8be9fd",
+            }
+        else:  # light theme
+            return {
+                "background": "#ffffff",
+                "surface": "#f8f9fa",
+                "primary": "#0078d4",
+                "secondary": "#6c757d",
+                "text": "#212529",
+                "text_secondary": "#6c757d",
+                "border": "#dee2e6",
+                "success": "#28a745",
+                "warning": "#ffc107",
+                "error": "#dc3545",
+                "info": "#17a2b8",
+            }
+    
+    def get_custom_theme_colors(self) -> Optional[Dict[str, str]]:
+        """Get custom theme colors from settings."""
+        custom_colors = self.qsettings.value("custom_theme_colors")
+        if custom_colors:
+            try:
+                import json
+                return json.loads(custom_colors) if isinstance(custom_colors, str) else custom_colors
+            except:
+                return None
+        return None
+    
+    def set_custom_theme_colors(self, colors: Dict[str, str]) -> None:
+        """Set custom theme colors."""
+        import json
+        self.qsettings.setValue("custom_theme_colors", json.dumps(colors))
+        self.logger.info("Custom theme colors saved")
+    
+    def apply_custom_theme(self, colors: Dict[str, str]) -> None:
+        """Apply a custom theme with provided colors."""
+        self.set_custom_theme_colors(colors)
+        app = QApplication.instance()
+        if app:
+            stylesheet = self.get_stylesheet_from_colors(colors)
+            app.setStyleSheet(stylesheet)
+            self.current_theme = "custom"
+            self.logger.info("Custom theme applied")
+    
+    def get_stylesheet_from_colors(self, colors: Dict[str, str]) -> str:
+        """Get stylesheet from color dictionary."""
+        return self.get_stylesheet("")  # Will use colors parameter instead

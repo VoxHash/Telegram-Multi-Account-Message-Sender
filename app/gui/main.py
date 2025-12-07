@@ -14,7 +14,7 @@ from PyQt5.QtGui import QIcon
 from ..services import get_settings, get_logger
 from ..services.translation import get_translation_manager, _
 from .theme import ThemeManager
-from .widgets import AccountWidget, CampaignWidget, LogWidget, RecipientWidget, SettingsWidget
+from .widgets import AccountWidget, CampaignWidget, LogWidget, RecipientWidget, SettingsWidget, DashboardWidget
 from .widgets.about_widget import AboutWidget
 
 
@@ -64,6 +64,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.tab_widget)
         
         # Create tabs
+        self.create_dashboard_tab()
         self.create_accounts_tab()
         self.create_campaigns_tab()
         self.create_templates_tab()
@@ -73,8 +74,13 @@ class MainWindow(QMainWindow):
         self.create_settings_tab()
         self.create_about_tab()
         
-        # Set Accounts as the default tab
+        # Set Dashboard as the default tab
         self.tab_widget.setCurrentIndex(0)
+    
+    def create_dashboard_tab(self):
+        """Create dashboard tab."""
+        self.dashboard_widget = DashboardWidget()
+        self.tab_widget.addTab(self.dashboard_widget, _("tabs.dashboard"))
     
     def create_accounts_tab(self):
         """Create accounts management tab."""

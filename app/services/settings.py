@@ -26,6 +26,7 @@ class Theme(str, Enum):
     LIGHT = "light"
     DARK = "dark"
     DRACULA = "dracula"
+    HIGH_CONTRAST = "high_contrast"
 
 
 class Language(str, Enum):

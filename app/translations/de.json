@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "Nachrichtenweiterleitung",
+    "enable_forwarding": "Nachrichtenweiterleitung aktivieren",
+    "forward_from_chat": "Weiterleiten von Chat",
+    "forward_from_chat_placeholder": "@Benutzername oder Chat-ID",
+    "forward_message_id": "Nachrichten-ID",
+    "forward_message_id_placeholder": "Zu weiterleitende Nachrichten-ID",
+    "enter_message_id_manually": "Bitte geben Sie die Nachrichten-ID manuell ein. Sie finden sie, indem Sie die Nachricht in Telegram anzeigen."
   },
   "templates": {
     "title": "Vorlagen",
@@ -314,7 +321,21 @@
     "group_title": "Gruppentitel",
     "group_username": "Gruppenbenutzername",
     "group_type": "Gruppentyp",
-    "member_count": "Mitgliederanzahl"
+    "member_count": "Mitgliederanzahl",
+    "select_from_telegram": "Von Telegram auswählen",
+    "browse_telegram": "Telegram durchsuchen",
+    "search_chats": "Chats suchen...",
+    "telegram_chats": "Telegram-Chats",
+    "members": "Mitglieder",
+    "select_thread": "Thread auswählen (Optional)",
+    "no_thread": "Kein Thread (An Hauptchat senden)",
+    "thread_id": "Thread-ID",
+    "thread_id_placeholder": "Leer lassen für Hauptchat",
+    "fetching_chats": "Chats von Telegram abrufen...",
+    "no_online_accounts": "Keine Online-Konten verfügbar. Bitte verbinden Sie zuerst ein Konto.",
+    "api_credentials_required": "Telegram-API-Anmeldedaten sind erforderlich. Bitte konfigurieren Sie sie in den Einstellungen.",
+    "select_chat_first": "Bitte wählen Sie zuerst einen Chat aus",
+    "user_selection_not_supported": "Benutzerauswahl wird noch nicht unterstützt. Bitte verwenden Sie diese Funktion nur für Gruppen und Kanäle."
   },
   "testing": {
     "title": "Tests",

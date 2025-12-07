@@ -32,6 +32,14 @@ class CampaignType(str, Enum):
     RECURRING = "recurring"
 
 
+class RecurrencePattern(str, Enum):
+    """Recurrence pattern enumeration."""
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    CUSTOM = "custom"
+
+
 class MessageType(str, Enum):
     """Message type enumeration."""
     TEXT = "text"
@@ -61,6 +69,12 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     media_path: Optional[str] = Field(default=None)
     caption: Optional[str] = Field(default=None)
     
+    # Message forwarding
+    forward_enabled: bool = Field(default=False)
+    forward_from_chat_id: Optional[int] = Field(default=None)  # Source chat/channel ID
+    forward_from_message_id: Optional[int] = Field(default=None)  # Source message ID
+    forward_from_chat_username: Optional[str] = Field(default=None)  # Source chat username
+    
     # Spintax support
     use_spintax: bool = Field(default=False)
     spintax_text: Optional[str] = Field(default=None)
@@ -74,6 +88,17 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     start_time: Optional[datetime] = Field(default=None)
     end_time: Optional[datetime] = Field(default=None)
     timezone: str = Field(default="UTC")
+    
+    # Recurring campaign settings
+    recurrence_pattern: Optional[str] = Field(default=None)  # daily, weekly, monthly, custom
+    recurrence_interval: int = Field(default=1)  # Every N days/weeks/months
+    recurrence_end_date: Optional[datetime] = Field(default=None)
+    recurrence_count: Optional[int] = Field(default=None)  # Max number of occurrences
+    recurrence_days_of_week: Optional[str] = Field(default=None, sa_column=JSON)  # [0-6] for weekly
+    recurrence_day_of_month: Optional[int] = Field(default=None)  # 1-31 for monthly
+    last_recurrence_run: Optional[datetime] = Field(default=None)
+    next_recurrence_run: Optional[datetime] = Field(default=None)
+    recurrence_count_current: int = Field(default=0)  # Current occurrence count
     
     # Rate limiting
     messages_per_minute: int = Field(default=1)
@@ -113,10 +138,12 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     is_active: bool = Field(default=True)
     tags: Optional[str] = Field(default=None, sa_column=JSON)
     notes: Optional[str] = Field(default=None)
+    template_id: Optional[int] = Field(default=None, foreign_key="campaign_templates.id")
     
     # Relationships
     send_logs: List["SendLog"] = Relationship(back_populates="campaign")
     recipient_list: Optional["RecipientList"] = Relationship(back_populates="campaigns")
+    template: Optional["CampaignTemplate"] = Relationship(back_populates="campaigns")
     
     def get_ab_variant(self, recipient_id: int) -> Dict[str, Any]:
         """Get A/B test variant for a recipient."""

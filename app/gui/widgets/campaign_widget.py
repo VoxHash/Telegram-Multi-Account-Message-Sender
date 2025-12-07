@@ -121,6 +121,40 @@ class CampaignDialog(QDialog):
         message_layout.addWidget(QLabel("Caption:"))
         message_layout.addWidget(self.caption_edit)
         
+        # Message Forwarding
+        forward_group = QGroupBox(_("campaigns.forward_message"))
+        forward_layout = QVBoxLayout(forward_group)
+        
+        self.forward_enabled_check = QCheckBox(_("campaigns.enable_forwarding"))
+        self.forward_enabled_check.toggled.connect(self.toggle_forwarding)
+        forward_layout.addWidget(self.forward_enabled_check)
+        
+        forward_form = QFormLayout()
+        
+        self.forward_from_chat_edit = QLineEdit()
+        self.forward_from_chat_edit.setPlaceholderText(_("campaigns.forward_from_chat_placeholder"))
+        forward_form.addRow(_("campaigns.forward_from_chat") + ":", self.forward_from_chat_edit)
+        
+        self.forward_from_message_id_edit = QLineEdit()
+        self.forward_from_message_id_edit.setPlaceholderText(_("campaigns.forward_message_id_placeholder"))
+        forward_form.addRow(_("campaigns.forward_message_id") + ":", self.forward_from_message_id_edit)
+        
+        self.forward_browse_button = QPushButton(_("recipients.browse_telegram"))
+        self.forward_browse_button.clicked.connect(self.browse_forward_source)
+        forward_form.addRow("", self.forward_browse_button)
+        
+        forward_layout.addLayout(forward_form)
+        
+        self.forward_widgets = [
+            self.forward_from_chat_edit,
+            self.forward_from_message_id_edit,
+            self.forward_browse_button
+        ]
+        for widget in self.forward_widgets:
+            widget.setEnabled(False)
+        
+        message_layout.addWidget(forward_group)
+        
         basic_layout.addWidget(message_group)
         
         # A/B Testing
@@ -301,6 +335,7 @@ class CampaignDialog(QDialog):
         # Initialize
         self.toggle_spintax(False)
         self.toggle_ab_testing(False)
+        self.toggle_forwarding()
         self.update_recipient_count()
         self.on_recipient_source_changed("Manual")  # Set initial state
         
@@ -328,6 +363,35 @@ class CampaignDialog(QDialog):
     def toggle_spintax(self, enabled: bool):
         """Toggle spintax controls."""
         self.preview_spintax_button.setEnabled(enabled)
+    
+    def toggle_forwarding(self):
+        """Toggle forwarding controls."""
+        enabled = self.forward_enabled_check.isChecked()
+        for widget in self.forward_widgets:
+            widget.setEnabled(enabled)
+    
+    def browse_forward_source(self):
+        """Browse Telegram to select message to forward."""
+        try:
+            selector = TelegramSelectorDialog(self)
+            if selector.exec_() == QDialog.Accepted and selector.selected_chat:
+                chat = selector.selected_chat
+                # Set the source chat
+                if chat.get("username"):
+                    self.forward_from_chat_edit.setText(f"@{chat['username']}")
+                elif chat.get("id"):
+                    self.forward_from_chat_edit.setText(str(chat["id"]))
+                
+                # Note: User would need to manually enter message ID
+                # In a full implementation, we could add message browsing
+                QMessageBox.information(
+                    self,
+                    _("common.info"),
+                    _("campaigns.enter_message_id_manually")
+                )
+        except Exception as e:
+            self.logger.error(f"Error opening Telegram selector: {e}")
+            QMessageBox.critical(self, _("common.error"), str(e))
     
     def toggle_ab_testing(self, enabled: bool):
         """Toggle A/B testing controls."""
@@ -524,6 +588,16 @@ class CampaignDialog(QDialog):
         self.media_path_edit.setText(self.campaign.media_path or "")
         self.caption_edit.setText(self.campaign.caption or "")
         
+        # Forwarding
+        self.forward_enabled_check.setChecked(self.campaign.forward_enabled)
+        if self.campaign.forward_from_chat_username:
+            self.forward_from_chat_edit.setText(self.campaign.forward_from_chat_username)
+        elif self.campaign.forward_from_chat_id:
+            self.forward_from_chat_edit.setText(str(self.campaign.forward_from_chat_id))
+        if self.campaign.forward_from_message_id:
+            self.forward_from_message_id_edit.setText(str(self.campaign.forward_from_message_id))
+        self.toggle_forwarding()
+        
         # A/B testing
         self.use_ab_testing_check.setChecked(self.campaign.use_ab_testing)
         variants = self.campaign.get_ab_variants_list()
@@ -585,6 +659,34 @@ class CampaignDialog(QDialog):
             self.campaign.use_spintax = self.use_spintax_check.isChecked()
             self.campaign.media_path = self.media_path_edit.text().strip() or None
             self.campaign.caption = self.caption_edit.text().strip() or None
+            
+            # Update forwarding
+            self.campaign.forward_enabled = self.forward_enabled_check.isChecked()
+            forward_chat = self.forward_from_chat_edit.text().strip()
+            if forward_chat:
+                # Try to parse as username or ID
+                if forward_chat.startswith("@"):
+                    self.campaign.forward_from_chat_username = forward_chat
+                    self.campaign.forward_from_chat_id = None
+                else:
+                    try:
+                        self.campaign.forward_from_chat_id = int(forward_chat)
+                        self.campaign.forward_from_chat_username = None
+                    except ValueError:
+                        self.campaign.forward_from_chat_username = forward_chat
+                        self.campaign.forward_from_chat_id = None
+            else:
+                self.campaign.forward_from_chat_id = None
+                self.campaign.forward_from_chat_username = None
+            
+            forward_msg_id = self.forward_from_message_id_edit.text().strip()
+            if forward_msg_id:
+                try:
+                    self.campaign.forward_from_message_id = int(forward_msg_id)
+                except ValueError:
+                    self.campaign.forward_from_message_id = None
+            else:
+                self.campaign.forward_from_message_id = None
             
             # Update A/B testing
             self.campaign.use_ab_testing = self.use_ab_testing_check.isChecked()

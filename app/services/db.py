@@ -3,6 +3,7 @@ Database service with SQLite initialization and session management.
 """
 
 import asyncio
+import time
 from pathlib import Path
 from typing import Optional, AsyncGenerator, Any, Dict
 from contextlib import asynccontextmanager
@@ -14,6 +15,7 @@ from sqlalchemy.pool import StaticPool
 
 from .settings import get_settings
 from .logger import get_logger
+from .performance import get_performance_monitor
 from ..models import (
     BaseModel, Account, Campaign, Recipient, SendLog
 )
@@ -91,10 +93,16 @@ class DatabaseService:
                 cursor.execute("PRAGMA journal_mode=WAL")
                 # Set synchronous mode for better performance
                 cursor.execute("PRAGMA synchronous=NORMAL")
-                # Set cache size
-                cursor.execute("PRAGMA cache_size=10000")
+                # Set cache size (increased for better performance)
+                cursor.execute("PRAGMA cache_size=-64000")  # 64MB cache
                 # Set temp store to memory
                 cursor.execute("PRAGMA temp_store=MEMORY")
+                # Optimize for performance
+                cursor.execute("PRAGMA optimize")
+                # Set page size for better performance
+                cursor.execute("PRAGMA page_size=4096")
+                # Enable mmap for faster reads
+                cursor.execute("PRAGMA mmap_size=268435456")  # 256MB
                 cursor.close()
     
     def create_tables(self) -> None:
@@ -104,7 +112,10 @@ class DatabaseService:
         
         try:
             # Import all models to ensure they are registered with SQLModel
-            from ..models import Account, Campaign, Recipient, SendLog, MessageTemplate
+            from ..models import (
+                Account, Campaign, Recipient, SendLog, MessageTemplate,
+                CampaignTemplate, RecipientGroup, RecipientGroupMember
+            )
             from ..models.recipient import RecipientList, RecipientListRecipient
             SQLModel.metadata.create_all(self.engine)
             self.logger.info("Database tables created successfully")
@@ -125,11 +136,27 @@ class DatabaseService:
             raise
     
     def get_session(self) -> Session:
-        """Get a new database session."""
+        """Get a new database session with query optimization."""
         if not self.engine:
             raise RuntimeError("Database engine not initialized")
         
-        return Session(self.engine)
+        session = Session(self.engine)
+        
+        # Add query performance monitoring
+        @event.listens_for(session, "before_cursor_execute")
+        def receive_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            context._query_start_time = time.time()
+        
+        @event.listens_for(session, "after_cursor_execute")
+        def receive_after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            if hasattr(context, '_query_start_time'):
+                total = time.time() - context._query_start_time
+                monitor = get_performance_monitor()
+                # Extract query name from statement
+                query_name = statement[:50] if statement else "unknown"
+                monitor.record_query_time(query_name, total)
+        
+        return session
     
     @asynccontextmanager
     async def get_async_session(self) -> AsyncGenerator[Session, None]:

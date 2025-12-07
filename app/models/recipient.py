@@ -55,6 +55,7 @@ class Recipient(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     group_username: Optional[str] = Field(default=None, index=True)
     group_type: Optional[str] = Field(default=None)  # "group", "supergroup", "channel"
     member_count: Optional[int] = Field(default=None)
+    thread_id: Optional[int] = Field(default=None)  # For group threads
     
     # Contact info
     email: Optional[str] = Field(default=None)
@@ -128,12 +129,16 @@ class Recipient(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
             else:
                 return f"recipient_{self.id}"
     
+    def get_thread_identifier(self) -> Optional[int]:
+        """Get thread ID if this recipient is a group with threads."""
+        return self.thread_id
+    
     def is_contactable(self) -> bool:
         """Check if recipient can be contacted."""
         return (
             self.status == RecipientStatus.ACTIVE and
             not self.is_deleted and
-            (self.username or self.user_id or self.phone_number)
+            (self.username or self.user_id or self.phone_number or self.group_id or self.group_username)
         )
     
     def increment_message_count(self, success: bool = True) -> None:

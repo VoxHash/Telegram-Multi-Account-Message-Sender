@@ -5,6 +5,27 @@ All notable changes to the Telegram Multi-Account Message Sender project will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.7] - 2025-11-27
+
+### Added
+- **Telegram Chat Selector**: Interactive dialog to browse and select channels/groups from connected Telegram accounts
+- **Thread Support**: Full support for Telegram group threads with thread ID selection and management
+- **Message Forwarding**: Complete message forwarding functionality allowing campaigns to forward messages from source chats/channels
+- **Recipient Browser Integration**: "Browse Telegram" button in recipient dialog for easy chat selection
+- **Forwarding UI**: Campaign dialog now includes forwarding options with source chat and message ID selection
+- **Multi-Language Support**: All new features fully translated into all 13 supported languages
+
+### Changed
+- **Recipient Model**: Added `thread_id` field to support group threads
+- **Campaign Model**: Added forwarding fields (`forward_enabled`, `forward_from_chat_id`, `forward_from_chat_username`, `forward_from_message_id`)
+- **Campaign Manager**: Enhanced to support message forwarding alongside regular message sending
+- **Translation Files**: Updated all 12 non-English translation files with new feature translations
+
+### Technical
+- **New Components**: Created `TelegramSelectorDialog` widget for chat browsing
+- **New Services**: Added `MessageForwarder` service for handling message forwarding operations
+- **Backend Integration**: Full integration of forwarding and thread support in campaign execution engine
+
 ## [1.2.6] - 2025-11-26
 
 ### Added

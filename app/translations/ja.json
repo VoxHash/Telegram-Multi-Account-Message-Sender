@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "メッセージ転送",
+    "enable_forwarding": "メッセージ転送を有効化",
+    "forward_from_chat": "チャットから転送",
+    "forward_from_chat_placeholder": "@ユーザー名またはチャットID",
+    "forward_message_id": "メッセージID",
+    "forward_message_id_placeholder": "転送するメッセージID",
+    "enter_message_id_manually": "メッセージIDを手動で入力してください。Telegramでメッセージを表示することで見つけることができます。"
   },
   "templates": {
     "title": "テンプレート",
@@ -314,7 +321,21 @@
     "group_title": "グループタイトル",
     "group_username": "グループユーザー名",
     "group_type": "グループタイプ",
-    "member_count": "メンバー数"
+    "member_count": "メンバー数",
+    "select_from_telegram": "Telegramから選択",
+    "browse_telegram": "Telegramを閲覧",
+    "search_chats": "チャットを検索...",
+    "telegram_chats": "Telegramチャット",
+    "members": "メンバー",
+    "select_thread": "スレッドを選択（オプション）",
+    "no_thread": "スレッドなし（メインチャットに送信）",
+    "thread_id": "スレッドID",
+    "thread_id_placeholder": "メインチャットの場合は空欄",
+    "fetching_chats": "Telegramからチャットを取得中...",
+    "no_online_accounts": "オンラインアカウントがありません。まずアカウントを接続してください。",
+    "api_credentials_required": "Telegram API認証情報が必要です。設定で設定してください。",
+    "select_chat_first": "まずチャットを選択してください",
+    "user_selection_not_supported": "ユーザー選択はまだサポートされていません。この機能はグループとチャンネルのみで使用してください。"
   },
   "testing": {
     "title": "テスト",

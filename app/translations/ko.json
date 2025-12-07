@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "메시지 전달",
+    "enable_forwarding": "메시지 전달 활성화",
+    "forward_from_chat": "채팅에서 전달",
+    "forward_from_chat_placeholder": "@사용자명 또는 채팅 ID",
+    "forward_message_id": "메시지 ID",
+    "forward_message_id_placeholder": "전달할 메시지 ID",
+    "enter_message_id_manually": "메시지 ID를 수동으로 입력하세요. Telegram에서 메시지를 보면 찾을 수 있습니다."
   },
   "templates": {
     "title": "Templates",
@@ -314,7 +321,21 @@
     "group_title": "Group Title",
     "group_username": "Group Username",
     "group_type": "Group Type",
-    "member_count": "Member Count"
+    "member_count": "Member Count",
+    "select_from_telegram": "Telegram에서 선택",
+    "browse_telegram": "Telegram 탐색",
+    "search_chats": "채팅 검색...",
+    "telegram_chats": "Telegram 채팅",
+    "members": "멤버",
+    "select_thread": "스레드 선택 (선택사항)",
+    "no_thread": "스레드 없음 (메인 채팅으로 전송)",
+    "thread_id": "스레드 ID",
+    "thread_id_placeholder": "메인 채팅의 경우 비워두기",
+    "fetching_chats": "Telegram에서 채팅 가져오는 중...",
+    "no_online_accounts": "온라인 계정이 없습니다. 먼저 계정을 연결하세요.",
+    "api_credentials_required": "Telegram API 자격 증명이 필요합니다. 설정에서 구성하세요.",
+    "select_chat_first": "먼저 채팅을 선택하세요",
+    "user_selection_not_supported": "사용자 선택은 아직 지원되지 않습니다. 이 기능은 그룹 및 채널에만 사용하세요."
   },
   "testing": {
     "title": "Testing",

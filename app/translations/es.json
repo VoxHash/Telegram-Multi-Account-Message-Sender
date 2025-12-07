@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "Reenvío de Mensajes",
+    "enable_forwarding": "Habilitar Reenvío de Mensajes",
+    "forward_from_chat": "Reenviar Desde Chat",
+    "forward_from_chat_placeholder": "@nombreusuario o ID de Chat",
+    "forward_message_id": "ID de Mensaje",
+    "forward_message_id_placeholder": "ID de mensaje a reenviar",
+    "enter_message_id_manually": "Por favor, ingrese el ID del mensaje manualmente. Puede encontrarlo viendo el mensaje en Telegram."
   },
   "templates": {
     "title": "Plantillas",
@@ -314,7 +321,21 @@
     "group_title": "Título del Grupo",
     "group_username": "Nombre de Usuario del Grupo",
     "group_type": "Tipo de Grupo",
-    "member_count": "Número de Miembros"
+    "member_count": "Número de Miembros",
+    "select_from_telegram": "Seleccionar de Telegram",
+    "browse_telegram": "Explorar Telegram",
+    "search_chats": "Buscar chats...",
+    "telegram_chats": "Chats de Telegram",
+    "members": "Miembros",
+    "select_thread": "Seleccionar Hilo (Opcional)",
+    "no_thread": "Sin Hilo (Enviar al chat principal)",
+    "thread_id": "ID de Hilo",
+    "thread_id_placeholder": "Dejar vacío para chat principal",
+    "fetching_chats": "Obteniendo chats de Telegram...",
+    "no_online_accounts": "No hay cuentas en línea disponibles. Por favor, conecte una cuenta primero.",
+    "api_credentials_required": "Se requieren credenciales de API de Telegram. Por favor, configúrelas en Configuración.",
+    "select_chat_first": "Por favor, seleccione un chat primero",
+    "user_selection_not_supported": "La selección de usuarios aún no está soportada. Por favor, use esta función solo para grupos y canales."
   },
   "testing": {
     "title": "Pruebas",

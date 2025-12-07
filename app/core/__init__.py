@@ -16,6 +16,7 @@ from .throttler import Throttler, RateLimiter
 from .spintax import SpintaxProcessor
 from .compliance import ComplianceChecker, SafetyGuard
 from .analytics import AnalyticsCollector, CampaignAnalytics
+from .message_forwarder import MessageForwarder
 
 __all__ = [
     # Telegram Client
@@ -40,4 +41,7 @@ __all__ = [
     # Analytics
     "AnalyticsCollector",
     "CampaignAnalytics",
+    
+    # Message Forwarding
+    "MessageForwarder",
 ]

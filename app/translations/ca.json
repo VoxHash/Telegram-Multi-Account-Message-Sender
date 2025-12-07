@@ -200,7 +200,14 @@
     "campaign_stopped_successfully": "Campaign stopped successfully!",
     "campaign_stop_failed": "Failed to stop campaign.",
     "assign_recipients": "Assign Recipients",
-    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting."
+    "assign_recipients_message": "This campaign has no recipients assigned. Please edit the campaign to assign recipients before starting.",
+    "forward_message": "Reenviament de Missatges",
+    "enable_forwarding": "Habilitar Reenviament de Missatges",
+    "forward_from_chat": "Reenviar Des del Xat",
+    "forward_from_chat_placeholder": "@nomusuari o ID del Xat",
+    "forward_message_id": "ID del Missatge",
+    "forward_message_id_placeholder": "ID del missatge a reenviar",
+    "enter_message_id_manually": "Si us plau, introduïu l'ID del missatge manualment. Podeu trobar-lo veient el missatge a Telegram."
   },
   "templates": {
     "title": "Templates",
@@ -314,7 +321,21 @@
     "group_title": "Group Title",
     "group_username": "Group Username",
     "group_type": "Group Type",
-    "member_count": "Member Count"
+    "member_count": "Member Count",
+    "select_from_telegram": "Seleccionar de Telegram",
+    "browse_telegram": "Explorar Telegram",
+    "search_chats": "Cercar xats...",
+    "telegram_chats": "Xats de Telegram",
+    "members": "Membres",
+    "select_thread": "Seleccionar Fil (Opcional)",
+    "no_thread": "Sense Fil (Enviar al xat principal)",
+    "thread_id": "ID del Fil",
+    "thread_id_placeholder": "Deixar buit per al xat principal",
+    "fetching_chats": "Obtenint xats de Telegram...",
+    "no_online_accounts": "No hi ha comptes en línia disponibles. Si us plau, connecteu un compte primer.",
+    "api_credentials_required": "Es requereixen les credencials de l'API de Telegram. Si us plau, configureu-les a Configuració.",
+    "select_chat_first": "Si us plau, seleccioneu un xat primer",
+    "user_selection_not_supported": "La selecció d'usuaris encara no està suportada. Si us plau, utilitzeu aquesta funció només per a grups i canals."
   },
   "testing": {
     "title": "Testing",

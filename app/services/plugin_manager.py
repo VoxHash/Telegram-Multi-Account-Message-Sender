@@ -10,7 +10,8 @@ from typing import Dict, List, Optional, Any, Type
 from datetime import datetime
 
 from ..core.plugin import (
-    Plugin, PluginAPI, PluginInfo, PluginMetadata, PluginStatus, PluginType
+    Plugin, PluginAPI, PluginInfo, PluginMetadata, PluginStatus, PluginType,
+    MessageFilterPlugin, AnalyticsPlugin, NotificationPlugin, IntegrationPlugin
 )
 from ..services.logger import get_logger
 from ..services.settings import get_settings

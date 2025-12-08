@@ -140,15 +140,30 @@ class PluginManager:
             for name, obj in inspect.getmembers(module):
                 if (inspect.isclass(obj) and 
                     issubclass(obj, Plugin) and 
-                    obj is not Plugin):
+                    obj is not Plugin and
+                    obj is not MessageFilterPlugin and
+                    obj is not AnalyticsPlugin and
+                    obj is not NotificationPlugin and
+                    obj is not IntegrationPlugin):
                     plugin_class = obj
                     break
             
             if plugin_class is None:
                 raise ValueError(f"No Plugin subclass found in {plugin_path}")
             
-            # Instantiate plugin
-            plugin_instance = plugin_class(self.api)
+            # Try to instantiate plugin - Python's ABC will raise TypeError if abstract methods aren't implemented
+            # We catch it and provide better error context
+            try:
+                plugin_instance = plugin_class(self.api)
+            except TypeError as e:
+                error_msg = str(e)
+                if "abstract" in error_msg.lower() or "abstractmethod" in error_msg.lower():
+                    # This is an abstract method error - log it and skip this plugin
+                    self.logger.error(f"Error loading plugin {plugin_path.name}: {error_msg}")
+                    return None
+                else:
+                    # Some other TypeError during instantiation
+                    raise
             
             # Get metadata
             metadata = plugin_instance.metadata

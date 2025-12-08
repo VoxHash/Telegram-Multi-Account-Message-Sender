@@ -17,11 +17,7 @@ class ExampleAnalyticsPlugin(AnalyticsPlugin):
         """Initialize plugin."""
         super().__init__(api)
         self.events = []
-    
-    @property
-    def metadata(self) -> PluginMetadata:
-        """Get plugin metadata."""
-        return PluginMetadata(
+        self._metadata = PluginMetadata(
             name="Example Analytics Plugin",
             version="1.0.0",
             description="Example plugin that demonstrates analytics tracking",
@@ -30,6 +26,11 @@ class ExampleAnalyticsPlugin(AnalyticsPlugin):
             dependencies=[],
             tags=["example", "analytics", "tracking"]
         )
+    
+    @property
+    def metadata(self) -> PluginMetadata:
+        """Get plugin metadata."""
+        return self._metadata
     
     def get_default_config(self) -> Dict[str, Any]:
         """Get default configuration."""

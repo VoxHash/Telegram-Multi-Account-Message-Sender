@@ -12,7 +12,7 @@ from pathlib import Path
 app_dir = Path(__file__).parent / "app"
 sys.path.insert(0, str(app_dir))
 
-from app.services import initialize_database, get_settings, get_logger
+from app.services import initialize_database, get_settings, get_logger, initialize_plugins
 from app.gui.main import MainWindow
 
 # Import all models to ensure they are registered with SQLModel
@@ -28,6 +28,9 @@ def main():
     initialize_database()
     settings = get_settings()
     logger = get_logger()
+    
+    # Initialize plugins
+    initialize_plugins()
     
     logger.info("Starting Telegram Multi-Account Message Sender")
     

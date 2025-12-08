@@ -10,9 +10,11 @@ from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 
 from ..models import Campaign, CampaignStatus, Account, Recipient, SendLog, SendStatus
 from ..services import get_logger, get_session
+from ..services.plugin_manager import get_plugin_manager
 from ..core.engine import MessageEngine, CampaignRunner
 from ..core.telethon_client import TelegramClientManager
 from ..core.spintax import SpintaxProcessor
+from ..core.plugin import MessageFilterPlugin, AnalyticsPlugin
 
 
 class CampaignManager(QObject):
@@ -33,6 +35,7 @@ class CampaignManager(QObject):
         self.message_engine = MessageEngine(self.client_manager)
         self.campaign_runner = CampaignRunner(self.message_engine)
         self.spintax_processor = SpintaxProcessor()
+        self.plugin_manager = get_plugin_manager()
         
         # Running campaigns tracking
         self._running_campaigns: Dict[int, asyncio.Task] = {}
@@ -114,6 +117,13 @@ class CampaignManager(QObject):
                 # Store recipient hash for change detection
                 current_hash = self._calculate_recipient_hash(campaign)
                 self._campaign_recipient_hashes[campaign_id] = current_hash
+                
+                # Track analytics for campaign start
+                self._track_analytics_event("campaign_started", {
+                    "campaign_id": campaign.id,
+                    "campaign_name": campaign.name,
+                    "campaign_type": campaign.campaign_type.value if campaign.campaign_type else None
+                })
                 
                 # Mark as running BEFORE starting thread to prevent race conditions
                 self._running_campaigns[campaign_id] = True
@@ -551,6 +561,13 @@ class CampaignManager(QObject):
                         
                         # Prepare message
                         message_text = self._prepare_message(campaign, recipient)
+                        
+                        # Skip if message was filtered out by plugins
+                        if message_text is None:
+                            skipped_count += 1
+                            self.logger.debug(f"Message filtered out by plugin for recipient {recipient.get_display_name()}")
+                            continue
+                        
                         media_path = campaign.get_effective_media_path(recipient.id)
                         
                         # Send message
@@ -561,9 +578,28 @@ class CampaignManager(QObject):
                             sent_count += 1
                             self._sent_recipients[campaign_id].add(recipient.id)
                             self.logger.info(f"Sent message to {recipient.get_display_name()}")
+                            
+                            # Track analytics
+                            self._track_analytics_event("message_sent", {
+                                "campaign_id": campaign.id,
+                                "campaign_name": campaign.name,
+                                "recipient_id": recipient.id,
+                                "account_id": account.id,
+                                "success": True
+                            })
                         else:
                             failed_count += 1
                             self.logger.warning(f"Failed to send message to {recipient.get_display_name()}: {result.get('error', 'Unknown error')}")
+                            
+                            # Track analytics
+                            self._track_analytics_event("message_failed", {
+                                "campaign_id": campaign.id,
+                                "campaign_name": campaign.name,
+                                "recipient_id": recipient.id,
+                                "account_id": account.id,
+                                "error": result.get("error", "Unknown error"),
+                                "success": False
+                            })
                         
                         # Create send log
                         await self._create_send_log(campaign, account, recipient, result)
@@ -663,8 +699,8 @@ class CampaignManager(QObject):
         # Could be enhanced with weighted selection, random selection, etc.
         return accounts[0]  # For now, just return the first available account
     
-    def _prepare_message(self, campaign: Campaign, recipient: Recipient) -> str:
-        """Prepare message text for sending."""
+    def _prepare_message(self, campaign: Campaign, recipient: Recipient) -> Optional[str]:
+        """Prepare message text for sending, including plugin filtering."""
         message_text = campaign.get_effective_message_text(recipient.id)
         
         # Apply spintax if enabled
@@ -680,7 +716,69 @@ class CampaignManager(QObject):
         message_text = message_text.replace("{name}", recipient.get_display_name())
         message_text = message_text.replace("{username}", recipient.username or "")
         
+        # Apply plugin filters
+        message_text = self._apply_message_filters(message_text, recipient)
+        
         return message_text
+    
+    def _apply_message_filters(self, message_text: str, recipient: Recipient) -> Optional[str]:
+        """
+        Apply message filter plugins to the message.
+        
+        Args:
+            message_text: Message text to filter
+            recipient: Recipient object
+            
+        Returns:
+            Filtered message text, or None if filtered out
+        """
+        if not message_text:
+            return message_text
+        
+        # Get enabled filter plugins
+        enabled_plugins = self.plugin_manager.list_enabled_plugins()
+        
+        recipient_data = {
+            "id": recipient.id,
+            "first_name": recipient.first_name,
+            "last_name": recipient.last_name,
+            "username": recipient.username,
+            "phone_number": recipient.phone_number,
+            "type": recipient.type.value if recipient.type else None,
+        }
+        
+        filtered_message = message_text
+        
+        for plugin_info in enabled_plugins:
+            plugin = self.plugin_manager.get_plugin(f"{plugin_info.metadata.name}@{plugin_info.metadata.version}")
+            if plugin and isinstance(plugin, MessageFilterPlugin):
+                try:
+                    filtered_message = plugin.filter_message(filtered_message, recipient_data)
+                    if filtered_message is None:
+                        # Plugin filtered out the message
+                        return None
+                except Exception as e:
+                    self.logger.error(f"Error in filter plugin {plugin_info.metadata.name}: {e}")
+        
+        return filtered_message
+    
+    def _track_analytics_event(self, event_name: str, data: Dict[str, Any]):
+        """
+        Track analytics event through enabled analytics plugins.
+        
+        Args:
+            event_name: Name of the event
+            data: Event data dictionary
+        """
+        enabled_plugins = self.plugin_manager.list_enabled_plugins()
+        
+        for plugin_info in enabled_plugins:
+            plugin = self.plugin_manager.get_plugin(f"{plugin_info.metadata.name}@{plugin_info.metadata.version}")
+            if plugin and isinstance(plugin, AnalyticsPlugin):
+                try:
+                    plugin.track_event(event_name, data)
+                except Exception as e:
+                    self.logger.error(f"Error in analytics plugin {plugin_info.metadata.name}: {e}")
     
     async def _send_message(self, account: Account, recipient: Recipient, message_text: str, media_path: Optional[str], campaign: Optional[Campaign] = None) -> Dict[str, Any]:
         """Send a message using a fresh client to avoid event loop conflicts."""
@@ -696,10 +794,17 @@ class CampaignManager(QObject):
             if campaign and campaign.forward_enabled and campaign.forward_from_message_id:
                 # Forward message instead of sending new one
                 forwarder = MessageForwarder()
+                
+                # Get proxy configuration from account
+                proxy = account.get_telethon_proxy()
+                if proxy:
+                    self.logger.debug(f"Using proxy for forwarding: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}")
+                
                 client = TelegramClient(
                     account.session_path,
                     account.api_id,
-                    account.api_hash
+                    account.api_hash,
+                    proxy=proxy
                 )
                 
                 try:
@@ -735,10 +840,16 @@ class CampaignManager(QObject):
             
             # Regular message sending
             # Create a completely fresh Telegram client
+            # Get proxy configuration from account
+            proxy = account.get_telethon_proxy()
+            if proxy:
+                self.logger.debug(f"Using proxy for sending: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}")
+            
             client = TelegramClient(
                 account.session_path,
                 account.api_id,
-                account.api_hash
+                account.api_hash,
+                proxy=proxy
             )
             
             # Connect the client

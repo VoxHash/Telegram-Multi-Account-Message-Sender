@@ -92,6 +92,42 @@ class Account(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         
         return f"{self.proxy_type}://{auth}{self.proxy_host}:{self.proxy_port}"
     
+    def get_telethon_proxy(self) -> Optional[Dict[str, Any]]:
+        """
+        Get proxy configuration in Telethon format.
+        
+        Returns:
+            Dict with proxy configuration for Telethon, or None if no proxy configured
+        """
+        if not self.proxy_type or not self.proxy_host or not self.proxy_port:
+            return None
+        
+        # Telethon expects proxy as a dict with these keys:
+        # - proxy_type: 'http', 'socks4', 'socks5', 'mtproto'
+        # - addr: proxy host
+        # - port: proxy port
+        # - username: optional
+        # - password: optional
+        
+        # Note: Telethon uses 'http' for both HTTP and HTTPS proxies
+        proxy_type_value = self.proxy_type.value
+        if proxy_type_value == "https":
+            proxy_type_value = "http"  # Telethon doesn't distinguish between http and https
+        
+        proxy = {
+            "proxy_type": proxy_type_value,
+            "addr": self.proxy_host,
+            "port": self.proxy_port,
+        }
+        
+        # Add authentication if provided
+        if self.proxy_username:
+            proxy["username"] = self.proxy_username
+        if self.proxy_password:
+            proxy["password"] = self.proxy_password
+        
+        return proxy
+    
     def get_rate_limits(self) -> Dict[str, int]:
         """Get rate limits as dictionary."""
         return {

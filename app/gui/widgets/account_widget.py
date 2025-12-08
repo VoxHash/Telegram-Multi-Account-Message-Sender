@@ -3,6 +3,7 @@ Account management widgets.
 """
 
 from typing import Optional, List, Dict, Any
+from pathlib import Path
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
@@ -198,11 +199,32 @@ class TelegramWorker(QThread):
             asyncio.set_event_loop(loop)
             
             try:
+                # Get proxy configuration
+                proxy = None
+                if self.proxy_config:
+                    # proxy_config is already in Telethon format from account.get_telethon_proxy()
+                    proxy = self.proxy_config
+                elif self.account_id:
+                    # Try to get proxy from account if account_id is available
+                    from ...models import Account
+                    from ...services.db import get_session as db_get_session
+                    session = db_get_session()
+                    try:
+                        account = session.get(Account, self.account_id)
+                        if account:
+                            proxy = account.get_telethon_proxy()
+                    finally:
+                        session.close()
+                
+                if proxy:
+                    self.logger.info(f"Using proxy for authorization: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}")
+                
                 # Create client
                 client = TelegramClient(
                     self.session_path or f"app_data/sessions/session_{self.phone_number}",
                     int(self.api_id),
-                    self.api_hash
+                    self.api_hash,
+                    proxy=proxy
                 )
                 
                 if self._should_stop:
@@ -307,11 +329,32 @@ class TelegramWorker(QThread):
             asyncio.set_event_loop(loop)
             
             try:
+                # Get proxy configuration
+                proxy = None
+                if self.proxy_config:
+                    # proxy_config is already in Telethon format from account.get_telethon_proxy()
+                    proxy = self.proxy_config
+                elif self.account_id:
+                    # Try to get proxy from account if account_id is available
+                    from ...models import Account
+                    from ...services.db import get_session as db_get_session
+                    session = db_get_session()
+                    try:
+                        account = session.get(Account, self.account_id)
+                        if account:
+                            proxy = account.get_telethon_proxy()
+                    finally:
+                        session.close()
+                
+                if proxy:
+                    self.logger.info(f"Using proxy for authorization: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}")
+                
                 # Create client
                 client = TelegramClient(
                     self.session_path or f"app_data/sessions/session_{self.phone_number}",
                     int(self.api_id),
-                    self.api_hash
+                    self.api_hash,
+                    proxy=proxy
                 )
                 
                 if self._should_stop:
@@ -387,11 +430,32 @@ class TelegramWorker(QThread):
             asyncio.set_event_loop(loop)
             
             try:
+                # Get proxy configuration
+                proxy = None
+                if self.proxy_config:
+                    # proxy_config is already in Telethon format from account.get_telethon_proxy()
+                    proxy = self.proxy_config
+                elif self.account_id:
+                    # Try to get proxy from account if account_id is available
+                    from ...models import Account
+                    from ...services.db import get_session as db_get_session
+                    session = db_get_session()
+                    try:
+                        account = session.get(Account, self.account_id)
+                        if account:
+                            proxy = account.get_telethon_proxy()
+                    finally:
+                        session.close()
+                
+                if proxy:
+                    self.logger.info(f"Using proxy for authorization: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}")
+                
                 # Create client
                 client = TelegramClient(
                     self.session_path or f"app_data/sessions/session_{self.phone_number}",
                     int(self.api_id),
-                    self.api_hash
+                    self.api_hash,
+                    proxy=proxy
                 )
                 
                 if self._should_stop:
@@ -453,6 +517,193 @@ class TelegramWorker(QThread):
             self.logger.error(f"Error updating account status: {e}")
 
 
+class ProxyTestWorker(QThread):
+    """Worker thread to test proxy connection."""
+    
+    finished = pyqtSignal(bool, str)  # success, message
+    progress = pyqtSignal(str)
+    
+    def __init__(self, proxy_config: Dict[str, Any]):
+        super().__init__()
+        self.proxy_config = proxy_config
+        self.logger = get_logger()
+    
+    def run(self):
+        """Test proxy connection."""
+        try:
+            self.progress.emit("Connecting to Telegram through proxy...")
+            
+            import asyncio
+            from telethon import TelegramClient
+            from telethon.errors import ConnectionError as TelethonConnectionError
+            from ...services import get_settings
+            import tempfile
+            import os
+            
+            settings = get_settings()
+            if not settings.telegram_api_id or not settings.telegram_api_hash:
+                self.finished.emit(False, "API credentials not configured in Settings")
+                return
+            
+            # Create a temporary session file for testing
+            temp_session = tempfile.NamedTemporaryFile(delete=False, suffix='.session')
+            temp_session.close()
+            temp_session_path = temp_session.name
+            
+            try:
+                # Create event loop
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                try:
+                    # Create client with proxy
+                    client = TelegramClient(
+                        temp_session_path,
+                        settings.telegram_api_id,
+                        settings.telegram_api_hash,
+                        proxy=self.proxy_config
+                    )
+                    
+                    # Test connection
+                    async def test_connection():
+                        try:
+                            self.progress.emit("Attempting to connect...")
+                            await client.connect()
+                            
+                            # Try to get DC info to verify connection
+                            self.progress.emit("Verifying connection...")
+                            dc = await client.get_dc()
+                            
+                            # Get IP address if possible
+                            try:
+                                # Try to get our own user info (if authorized) or just verify connection
+                                if await client.is_user_authorized():
+                                    me = await client.get_me()
+                                    user_info = f"User: {me.first_name or ''} {me.last_name or ''}".strip() or me.username or "Unknown"
+                                else:
+                                    user_info = "Connection established (not authorized)"
+                            except:
+                                user_info = "Connection established"
+                            
+                            await client.disconnect()
+                            
+                            proxy_info = f"Proxy: {self.proxy_config['proxy_type']}://{self.proxy_config['addr']}:{self.proxy_config['port']}"
+                            dc_info = f"Data Center: {dc.id} ({dc.ip_address})"
+                            
+                            return True, f"{proxy_info}\n{dc_info}\n{user_info}"
+                            
+                        except TelethonConnectionError as e:
+                            await client.disconnect()
+                            return False, f"Connection error: {str(e)}"
+                        except Exception as e:
+                            try:
+                                await client.disconnect()
+                            except:
+                                pass
+                            return False, f"Error: {str(e)}"
+                    
+                    success, message = loop.run_until_complete(test_connection())
+                    self.finished.emit(success, message)
+                    
+                finally:
+                    loop.close()
+                    
+            finally:
+                # Clean up temporary session file
+                try:
+                    if os.path.exists(temp_session_path):
+                        os.remove(temp_session_path)
+                    if os.path.exists(temp_session_path + '.journal'):
+                        os.remove(temp_session_path + '.journal')
+                except:
+                    pass
+                    
+        except Exception as e:
+            self.logger.error(f"Error testing proxy: {e}")
+            self.finished.emit(False, f"Test failed: {str(e)}")
+
+
+class SessionImportWorker(QThread):
+    """Worker thread to import and validate session file."""
+    
+    finished = pyqtSignal(bool, dict)  # success, account_info
+    progress = pyqtSignal(str)
+    
+    def __init__(self, session_file_path: str):
+        super().__init__()
+        self.session_file_path = session_file_path
+        self.logger = get_logger()
+    
+    def run(self):
+        """Import session file and extract account information."""
+        try:
+            self.progress.emit("Connecting to Telegram with session file...")
+            
+            import asyncio
+            from telethon import TelegramClient
+            from ...services import get_settings
+            
+            settings = get_settings()
+            if not settings.telegram_api_id or not settings.telegram_api_hash:
+                self.finished.emit(False, {"error": "API credentials not configured in Settings"})
+                return
+            
+            # Create event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                # Create client with session file
+                client = TelegramClient(
+                    self.session_file_path,
+                    settings.telegram_api_id,
+                    settings.telegram_api_hash
+                )
+                
+                # Connect and get account info
+                async def get_account_info():
+                    try:
+                        await client.connect()
+                        
+                        if not await client.is_user_authorized():
+                            await client.disconnect()
+                            return None, "Session file is not authorized"
+                        
+                        # Get user info
+                        me = await client.get_me()
+                        account_info = {
+                            "phone_number": me.phone or "",
+                            "name": f"{me.first_name or ''} {me.last_name or ''}".strip() or me.username or "Unknown",
+                            "username": me.username or "",
+                            "user_id": me.id
+                        }
+                        
+                        await client.disconnect()
+                        return account_info, None
+                    except Exception as e:
+                        try:
+                            await client.disconnect()
+                        except:
+                            pass
+                        raise e
+                
+                account_info, error = loop.run_until_complete(get_account_info())
+                
+                if error:
+                    self.finished.emit(False, {"error": error})
+                elif account_info:
+                    self.finished.emit(True, account_info)
+                else:
+                    self.finished.emit(False, {"error": "Failed to extract account information"})
+                    
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            self.logger.error(f"Error importing session file: {e}")
+            self.finished.emit(False, {"error": str(e)})
+
+
 class AccountDialog(QDialog):
     """Dialog for adding/editing accounts."""
     
@@ -462,6 +713,7 @@ class AccountDialog(QDialog):
         super().__init__(parent)
         self.account = account
         self.logger = get_logger()
+        self.imported_session_path = None
         self.setup_ui()
         
         if account:
@@ -486,9 +738,55 @@ class AccountDialog(QDialog):
         self.name_edit.setPlaceholderText("Account name (e.g., 'My Business Account')")
         basic_layout.addRow("Name:", self.name_edit)
         
+        # Import Method Selection (only show when adding new account)
+        if not self.account:
+            import_method_group = QGroupBox("Import Method")
+            import_method_layout = QVBoxLayout(import_method_group)
+            
+            self.import_method_phone = QCheckBox("Import by Phone Number")
+            self.import_method_phone.setChecked(True)
+            self.import_method_phone.toggled.connect(self.on_import_method_changed)
+            import_method_layout.addWidget(self.import_method_phone)
+            
+            self.import_method_session = QCheckBox("Import by Session File")
+            self.import_method_session.toggled.connect(self.on_import_method_changed)
+            import_method_layout.addWidget(self.import_method_session)
+            
+            layout.addWidget(import_method_group)
+        
+        # Phone Number Input (shown by default)
+        self.phone_group = QGroupBox("Phone Number")
+        phone_layout = QFormLayout(self.phone_group)
+        
         self.phone_edit = QLineEdit()
         self.phone_edit.setPlaceholderText("+1234567890")
-        basic_layout.addRow("Phone Number:", self.phone_edit)
+        phone_layout.addRow("Phone Number:", self.phone_edit)
+        
+        layout.addWidget(self.phone_group)
+        
+        # Session File Input (hidden by default)
+        self.session_group = QGroupBox("Session File")
+        session_layout = QFormLayout(self.session_group)
+        
+        session_file_layout = QHBoxLayout()
+        self.session_file_edit = QLineEdit()
+        self.session_file_edit.setPlaceholderText("Select a .session file...")
+        self.session_file_edit.setReadOnly(True)
+        session_file_layout.addWidget(self.session_file_edit)
+        
+        self.browse_session_btn = QPushButton("Browse")
+        self.browse_session_btn.clicked.connect(self.browse_session_file)
+        session_file_layout.addWidget(self.browse_session_btn)
+        
+        session_layout.addRow("Session File:", session_file_layout)
+        
+        session_help = QLabel("Select a .session file exported from Telethon or another compatible tool.")
+        session_help.setStyleSheet("color: #888888; font-style: italic; font-size: 10px;")
+        session_help.setWordWrap(True)
+        session_layout.addRow("", session_help)
+        
+        self.session_group.setVisible(False)
+        layout.addWidget(self.session_group)
         
         # Note about API credentials
         api_note = QLabel("Note: API ID and API Hash are configured globally in Settings.")
@@ -526,6 +824,15 @@ class AccountDialog(QDialog):
         self.proxy_password_edit.setEchoMode(QLineEdit.Password)
         self.proxy_password_edit.setPlaceholderText("Password (optional)")
         proxy_layout.addRow("Password:", self.proxy_password_edit)
+        
+        # Test Proxy button
+        test_proxy_layout = QHBoxLayout()
+        test_proxy_layout.addStretch()
+        self.test_proxy_btn = QPushButton("Test Proxy")
+        self.test_proxy_btn.clicked.connect(self.test_proxy)
+        self.test_proxy_btn.setEnabled(False)  # Disabled until proxy is enabled
+        test_proxy_layout.addWidget(self.test_proxy_btn)
+        proxy_layout.addRow("", test_proxy_layout)
         
         layout.addWidget(proxy_group)
         
@@ -648,6 +955,94 @@ class AccountDialog(QDialog):
             return True
         return super().event(event)
     
+    def on_import_method_changed(self):
+        """Handle import method selection change."""
+        if self.import_method_phone.isChecked():
+            self.phone_group.setVisible(True)
+            self.session_group.setVisible(False)
+            self.import_method_session.setChecked(False)
+        elif self.import_method_session.isChecked():
+            self.phone_group.setVisible(False)
+            self.session_group.setVisible(True)
+            self.import_method_phone.setChecked(False)
+    
+    def browse_session_file(self):
+        """Open file dialog to select session file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Session File",
+            "",
+            "Session Files (*.session);;All Files (*.*)"
+        )
+        if file_path:
+            self.session_file_edit.setText(file_path)
+            # Auto-import the session file
+            self.import_session_file(file_path)
+    
+    def import_session_file(self, session_file_path: str):
+        """Import session file and extract account information."""
+        if not session_file_path or not Path(session_file_path).exists():
+            QMessageBox.warning(self, "Error", "Session file not found.")
+            return
+        
+        # Show progress dialog
+        progress_dialog = ProgressDialog(self, "Importing Session", "Extracting account information from session file...")
+        progress_dialog.show()
+        
+        # Create worker thread to import session
+        worker = SessionImportWorker(session_file_path)
+        worker.finished.connect(lambda success, account_info: self.on_session_imported(progress_dialog, success, account_info))
+        worker.progress.connect(progress_dialog.update_status)
+        worker.start()
+    
+    def on_session_imported(self, progress_dialog, success: bool, account_info: Optional[Dict[str, Any]]):
+        """Handle session import completion."""
+        progress_dialog.close()
+        
+        if success and account_info:
+            # Populate form with extracted account info
+            if account_info.get("phone_number"):
+                self.phone_edit.setText(account_info["phone_number"])
+            if account_info.get("name") and not self.name_edit.text():
+                self.name_edit.setText(account_info["name"])
+            
+            # Copy session file to app sessions directory
+            from ...services import get_settings
+            import shutil
+            
+            settings = get_settings()
+            sessions_dir = settings.get_sessions_path()
+            sessions_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Generate new session path
+            phone = account_info.get("phone_number", "unknown").replace("+", "").replace("-", "").replace(" ", "")
+            new_session_path = sessions_dir / f"session_{phone}.session"
+            
+            try:
+                # Copy session file
+                shutil.copy2(self.session_file_edit.text(), str(new_session_path))
+                self.logger.info(f"Session file copied to: {new_session_path}")
+                
+                # Store the new session path for later use
+                self.imported_session_path = str(new_session_path)
+                
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Session file imported successfully!\n\n"
+                    f"Phone: {account_info.get('phone_number', 'Unknown')}\n"
+                    f"Name: {account_info.get('name', 'Unknown')}"
+                )
+            except Exception as e:
+                self.logger.error(f"Error copying session file: {e}")
+                QMessageBox.warning(self, "Warning", f"Session imported but failed to copy file: {e}")
+        else:
+            QMessageBox.critical(
+                self,
+                "Error",
+                account_info.get("error", "Failed to import session file. Please check if the file is valid.") if account_info else "Failed to import session file."
+            )
+    
     def toggle_proxy_settings(self, enabled: bool):
         """Toggle proxy settings visibility."""
         self.proxy_type_combo.setEnabled(enabled)
@@ -655,6 +1050,60 @@ class AccountDialog(QDialog):
         self.proxy_port_spin.setEnabled(enabled)
         self.proxy_username_edit.setEnabled(enabled)
         self.proxy_password_edit.setEnabled(enabled)
+        self.test_proxy_btn.setEnabled(enabled)  # Enable test button when proxy is enabled
+    
+    def test_proxy(self):
+        """Test proxy connection."""
+        # Validate proxy settings
+        if not self.proxy_host_edit.text().strip():
+            QMessageBox.warning(self, "Validation Error", "Please enter a proxy host")
+            return
+        
+        if not self.proxy_port_spin.value():
+            QMessageBox.warning(self, "Validation Error", "Please enter a proxy port")
+            return
+        
+        # Get proxy configuration
+        proxy_type = ProxyType(self.proxy_type_combo.currentText())
+        proxy_host = self.proxy_host_edit.text().strip()
+        proxy_port = self.proxy_port_spin.value()
+        proxy_username = self.proxy_username_edit.text().strip() or None
+        proxy_password = self.proxy_password_edit.text().strip() or None
+        
+        # Convert to Telethon format
+        proxy_type_value = proxy_type.value
+        if proxy_type_value == "https":
+            proxy_type_value = "http"
+        
+        proxy_config = {
+            "proxy_type": proxy_type_value,
+            "addr": proxy_host,
+            "port": proxy_port,
+        }
+        
+        if proxy_username:
+            proxy_config["username"] = proxy_username
+        if proxy_password:
+            proxy_config["password"] = proxy_password
+        
+        # Show progress dialog
+        progress_dialog = ProgressDialog(self, "Testing Proxy", "Connecting through proxy...")
+        progress_dialog.show()
+        
+        # Create worker thread to test proxy
+        worker = ProxyTestWorker(proxy_config)
+        worker.finished.connect(lambda success, message: self.on_proxy_test_finished(progress_dialog, success, message))
+        worker.progress.connect(progress_dialog.update_status)
+        worker.start()
+    
+    def on_proxy_test_finished(self, progress_dialog, success: bool, message: str):
+        """Handle proxy test completion."""
+        progress_dialog.close()
+        
+        if success:
+            QMessageBox.information(self, "Proxy Test", f"✅ Proxy connection successful!\n\n{message}")
+        else:
+            QMessageBox.critical(self, "Proxy Test", f"❌ Proxy connection failed!\n\n{message}")
     
     def load_account_data(self):
         """Load account data into the form."""
@@ -694,9 +1143,45 @@ class AccountDialog(QDialog):
                 QMessageBox.warning(self, "Validation Error", "Name is required")
                 return
             
-            if not self.phone_edit.text().strip():
-                QMessageBox.warning(self, "Validation Error", "Phone number is required")
-                return
+            # Check import method
+            use_session_file = False
+            if not self.account:  # Only for new accounts
+                use_session_file = self.import_method_session.isChecked() if hasattr(self, 'import_method_session') else False
+            
+            if use_session_file:
+                # Validate session file
+                session_file_path = self.session_file_edit.text().strip()
+                if not session_file_path:
+                    QMessageBox.warning(self, "Validation Error", "Please select a session file")
+                    return
+                
+                if not Path(session_file_path).exists():
+                    QMessageBox.warning(self, "Validation Error", "Session file not found")
+                    return
+                
+                # Use imported session path if available
+                if hasattr(self, 'imported_session_path'):
+                    session_path = self.imported_session_path
+                else:
+                    # Generate session path from file
+                    from ...services import get_settings
+                    settings = get_settings()
+                    sessions_dir = settings.get_sessions_path()
+                    sessions_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    # Try to extract phone from session or use filename
+                    phone = self.phone_edit.text().strip() or Path(session_file_path).stem.replace("session_", "")
+                    session_path = str(sessions_dir / f"session_{phone}.session")
+                    
+                    # Copy session file if not already in sessions directory
+                    if Path(session_path) != Path(session_file_path):
+                        import shutil
+                        shutil.copy2(session_file_path, session_path)
+            else:
+                # Validate phone number
+                if not self.phone_edit.text().strip():
+                    QMessageBox.warning(self, "Validation Error", "Phone number is required")
+                    return
             
             # Get global API credentials from settings
             from ...services import get_settings
@@ -718,13 +1203,28 @@ class AccountDialog(QDialog):
                 self.account.api_id = settings.telegram_api_id
                 self.account.api_hash = settings.telegram_api_hash
             else:
+                # Determine session path
+                if use_session_file and hasattr(self, 'imported_session_path') and self.imported_session_path:
+                    final_session_path = self.imported_session_path
+                elif use_session_file:
+                    final_session_path = session_path
+                else:
+                    phone = self.phone_edit.text().strip().replace("+", "").replace("-", "").replace(" ", "")
+                    final_session_path = f"app_data/sessions/session_{phone}.session"
+                
+                # Get phone number (may be extracted from session or entered manually)
+                phone_number = self.phone_edit.text().strip()
+                if not phone_number and use_session_file:
+                    # Try to extract from session file name or use placeholder
+                    phone_number = Path(session_file_path).stem.replace("session_", "") or "unknown"
+                
                 # Create new account
                 self.account = Account(
                     name=self.name_edit.text().strip(),
-                    phone_number=self.phone_edit.text().strip(),
+                    phone_number=phone_number,
                     api_id=settings.telegram_api_id,
                     api_hash=settings.telegram_api_hash,
-                    session_path=f"app_data/sessions/session_{self.phone_edit.text().strip()}"
+                    session_path=final_session_path
                 )
             
             # Update proxy settings
@@ -1132,6 +1632,9 @@ class AccountListWidget(QWidget):
                 )
                 
                 # Create worker thread
+                # Get proxy configuration from account
+                proxy_config = account.get_telethon_proxy()
+                
                 self.worker = TelegramWorker(
                     operation=operation,
                     account_id=account_id,
@@ -1140,7 +1643,7 @@ class AccountListWidget(QWidget):
                     api_hash=settings.telegram_api_hash,
                     phone_number=account.phone_number,
                     session_path=account.session_path,
-                    proxy_config=None  # TODO: Add proxy support
+                    proxy_config=proxy_config
                 )
                 
                 # Connect signals
@@ -1236,6 +1739,9 @@ class AccountListWidget(QWidget):
                 )
                 
                 # Create worker thread with code
+                # Get proxy configuration from account
+                proxy_config = account.get_telethon_proxy()
+                
                 self.worker = TelegramWorker(
                     operation=operation,
                     account_id=account_id,
@@ -1244,7 +1750,7 @@ class AccountListWidget(QWidget):
                     api_hash=settings.telegram_api_hash,
                     phone_number=account.phone_number,
                     session_path=account.session_path,
-                    proxy_config=None,
+                    proxy_config=proxy_config,
                     verification_code=verification_code,
                     password=password,
                     phone_code_hash=phone_code_hash

@@ -39,22 +39,27 @@ class StatCard(QFrame):
         layout.setContentsMargins(12, 12, 12, 12)
         
         # Title
-        title_label = QLabel(title)
-        title_label.setStyleSheet("color: palette(mid); font-size: 12px;")
-        layout.addWidget(title_label)
+        self.title_label = QLabel(title)
+        self.title_label.setStyleSheet("color: palette(mid); font-size: 12px;")
+        layout.addWidget(self.title_label)
         
         # Value
-        value_label = QLabel(value)
-        value_label.setStyleSheet("color: palette(text); font-size: 24px; font-weight: bold;")
-        layout.addWidget(value_label)
+        self.value_label = QLabel(value)
+        self.value_label.setStyleSheet("color: palette(text); font-size: 24px; font-weight: bold;")
+        layout.addWidget(self.value_label)
         
         # Subtitle
+        self.subtitle_label = None
         if subtitle:
-            subtitle_label = QLabel(subtitle)
-            subtitle_label.setStyleSheet("color: palette(mid); font-size: 10px;")
-            layout.addWidget(subtitle_label)
+            self.subtitle_label = QLabel(subtitle)
+            self.subtitle_label.setStyleSheet("color: palette(mid); font-size: 10px;")
+            layout.addWidget(self.subtitle_label)
         
         layout.addStretch()
+    
+    def set_value(self, value: str):
+        """Update the value displayed in the card."""
+        self.value_label.setText(value)
 
 
 class DashboardWidget(QWidget):

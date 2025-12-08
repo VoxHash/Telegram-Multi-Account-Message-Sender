@@ -31,12 +31,13 @@ class TelegramChatFetcher(QThread):
     error_occurred = pyqtSignal(str)
     progress = pyqtSignal(str)
     
-    def __init__(self, account_id: int, api_id: int, api_hash: str, session_path: str):
+    def __init__(self, account_id: int, api_id: int, api_hash: str, session_path: str, proxy: Optional[Dict[str, Any]] = None):
         super().__init__()
         self.account_id = account_id
         self.api_id = api_id
         self.api_hash = api_hash
         self.session_path = session_path
+        self.proxy = proxy
         self.logger = get_logger()
         self._should_stop = False
     
@@ -67,8 +68,12 @@ class TelegramChatFetcher(QThread):
             client = TelegramClient(
                 self.session_path,
                 self.api_id,
-                self.api_hash
+                self.api_hash,
+                proxy=self.proxy
             )
+            
+            if self.proxy:
+                self.logger.info(f"Using proxy for chat fetching: {self.proxy['proxy_type']}://{self.proxy['addr']}:{self.proxy['port']}")
             
             await client.connect()
             
@@ -302,12 +307,16 @@ class TelegramSelectorDialog(QDialog):
                 progress.setCancelButton(None)
                 progress.show()
                 
+                # Get proxy configuration from account
+                proxy = account.get_telethon_proxy()
+                
                 # Create fetcher
                 self.fetcher = TelegramChatFetcher(
                     account.id,
                     settings.telegram_api_id,
                     settings.telegram_api_hash,
-                    account.session_path
+                    account.session_path,
+                    proxy=proxy
                 )
                 
                 self.fetcher.chats_fetched.connect(

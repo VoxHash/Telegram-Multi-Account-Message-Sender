@@ -5,6 +5,32 @@ All notable changes to the Telegram Multi-Account Message Sender project will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.8] - 2025-01-XX
+
+### Added
+- **Proxy Test Functionality**: Added "Test Proxy" button in account proxy settings to verify proxy connection before saving
+- **Session File Import**: New method to add accounts by importing Telethon session files (.session files)
+- **Proxy Connection Testing**: Real-time proxy validation with detailed connection information
+- **Session Import Worker**: Background worker thread for validating and extracting account info from session files
+- **Proxy Test Worker**: Background worker thread for testing proxy connections through Telegram API
+
+### Fixed
+- **Proxy Functionality**: Fixed proxy settings not being applied when creating TelegramClient instances throughout the application
+- **Proxy Format**: Corrected proxy configuration format to match Telethon requirements (HTTPS proxies converted to HTTP)
+- **Campaign Manager**: Fixed proxy not being passed when creating clients for message sending and forwarding
+- **Telegram Selector**: Fixed proxy not being used when fetching chats from Telegram accounts
+- **Account Widget**: Fixed proxy not being used during account authorization, testing, and connection
+
+### Changed
+- **Account Model**: Added `get_telethon_proxy()` method to convert account proxy settings to Telethon format
+- **Translation Files**: Updated all 12 non-English translation files with new proxy test and session import keys
+- **Proxy Logging**: Enhanced logging to show when proxy is being used with connection details
+
+### Technical
+- **Proxy Integration**: Ensured all TelegramClient instances receive proxy configuration from account settings
+- **Session Import**: Added UI for selecting and importing session files with automatic account info extraction
+- **Proxy Validation**: Added comprehensive proxy testing with connection verification and DC information
+
 ## [1.2.7] - 2025-11-27
 
 ### Added

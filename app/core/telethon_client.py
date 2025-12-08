@@ -48,6 +48,9 @@ class TelegramClientWrapper:
                 proxy=self.proxy
             )
             
+            if self.proxy:
+                self.logger.info(f"Using proxy for account {self.account.id}: {self.proxy['proxy_type']}://{self.proxy['addr']}:{self.proxy['port']}")
+            
             # Connect
             await self.client.connect()
             self._connected = True
@@ -233,16 +236,11 @@ class TelegramClientManager:
     async def add_account(self, account: Account) -> bool:
         """Add an account to the manager."""
         try:
-            # Create proxy config if needed
-            proxy = None
-            if account.proxy_type and account.proxy_host and account.proxy_port:
-                proxy = {
-                    "proxy_type": account.proxy_type,
-                    "addr": account.proxy_host,
-                    "port": account.proxy_port,
-                    "username": account.proxy_username,
-                    "password": account.proxy_password
-                }
+            # Get proxy config from account
+            proxy = account.get_telethon_proxy()
+            
+            if proxy:
+                self.logger.info(f"Using proxy for account {account.id}: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}")
             
             # Create client wrapper
             client = TelegramClientWrapper(account, proxy)

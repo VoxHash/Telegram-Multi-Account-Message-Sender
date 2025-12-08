@@ -104,6 +104,23 @@ class DatabaseService:
                 # Enable mmap for faster reads
                 cursor.execute("PRAGMA mmap_size=268435456")  # 256MB
                 cursor.close()
+        
+        # Setup performance monitoring at engine level
+        try:
+            @event.listens_for(self.engine, "before_cursor_execute")
+            def receive_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+                context._query_start_time = time.time()
+            
+            @event.listens_for(self.engine, "after_cursor_execute")
+            def receive_after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+                if hasattr(context, '_query_start_time'):
+                    total = time.time() - context._query_start_time
+                    monitor = get_performance_monitor()
+                    # Extract query name from statement
+                    query_name = statement[:50] if statement else "unknown"
+                    monitor.record_query_time(query_name, total)
+        except Exception as e:
+            self.logger.warning(f"Could not setup performance monitoring: {e}")
     
     def create_tables(self) -> None:
         """Create all database tables."""
@@ -142,19 +159,8 @@ class DatabaseService:
         
         session = Session(self.engine)
         
-        # Add query performance monitoring
-        @event.listens_for(session, "before_cursor_execute")
-        def receive_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-            context._query_start_time = time.time()
-        
-        @event.listens_for(session, "after_cursor_execute")
-        def receive_after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-            if hasattr(context, '_query_start_time'):
-                total = time.time() - context._query_start_time
-                monitor = get_performance_monitor()
-                # Extract query name from statement
-                query_name = statement[:50] if statement else "unknown"
-                monitor.record_query_time(query_name, total)
+        # Note: Query performance monitoring is handled at the engine level
+        # to avoid event registration issues with SQLModel sessions
         
         return session
     

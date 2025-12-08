@@ -1,13 +1,44 @@
-# Core dependencies for quick installation
-telethon>=1.35.0
+# Core dependencies for Telegram Multi-Account Message Sender
+# This file should be kept in sync with pyproject.toml dependencies
+
+# GUI Framework
 PyQt5>=5.15.0
-pydantic>=2.0.0
+
+# Telegram API
+telethon>=1.24.0
+
+# Database & ORM
+sqlmodel>=0.0.8
+sqlalchemy>=1.4.0
+alembic>=1.8.0
+aiosqlite>=0.17.0
+
+# Data Validation & Settings
+pydantic>=1.10.0
 pydantic-settings>=2.0.0
-sqlmodel>=0.0.14
+
+# Data Processing
 pandas>=2.0.0
 openpyxl>=3.1.0
+
+# Utilities
 rich>=13.0.0
-cryptography>=41.0.0
 python-dotenv>=1.0.0
+cryptography>=3.4.8
+python-dateutil>=2.8.0
+pytz>=2022.1
+tzdata>=2022.1
+click>=8.0.0
+typer>=0.7.0
+colorama>=0.4.4
+tqdm>=4.64.0
+psutil>=5.9.0
+schedule>=1.2.0
+
+# Media & QR Code
+pillow>=9.0.0
+qrcode>=7.3.0
+
+# Async & File Operations
 aiofiles>=23.0.0
 asyncio-throttle>=1.0.0

@@ -27,7 +27,9 @@
     "testing": "Probas",
     "logs": "Rexistros",
     "settings": "Configuración",
-    "about": "Acerca de"
+    "about": "Acerca de",
+    "dashboard": "Dashboard",
+    "plugins": "Plugins"
   },
   "accounts": {
     "title": "Accounts",
@@ -64,7 +66,27 @@
     "invalid_account": "Selected account is invalid.",
     "account_not_found": "Account not found.",
     "help_text": "Add and manage your Telegram accounts. Each account needs to be authorized before use.",
-    "search_placeholder": "Search accounts by name, phone, or status..."
+    "search_placeholder": "Search accounts by name, phone, or status...",
+    "import_method": "Import Method",
+    "import_by_phone": "Import by Phone Number",
+    "import_by_session": "Import by Session File",
+    "session_file": "Session File",
+    "select_session_file": "Select Session File",
+    "session_file_path": "Session File Path",
+    "browse_session_file": "Browse",
+    "importing_session": "Importing session file...",
+    "session_imported_successfully": "Session file imported successfully!",
+    "session_import_failed": "Failed to import session file: {error}",
+    "invalid_session_file": "Invalid session file. Please select a valid Telethon session file.",
+    "session_file_not_found": "Session file not found.",
+    "extracting_account_info": "Extracting account information from session...",
+    "session_file_help": "Select a .session file exported from Telethon or another compatible tool.",
+    "test_proxy": "Test Proxy",
+    "testing_proxy": "Testing proxy connection...",
+    "proxy_test_successful": "Proxy connection successful!",
+    "proxy_test_failed": "Proxy connection failed!",
+    "proxy_test_connecting": "Connecting to Telegram through proxy...",
+    "proxy_test_verifying": "Verifying connection..."
   },
   "campaigns": {
     "title": "Campaigns",
@@ -207,7 +229,8 @@
     "forward_from_chat_placeholder": "@nomeusuario ou ID do Chat",
     "forward_message_id": "ID da Mensaxe",
     "forward_message_id_placeholder": "ID da mensaxe para reenviar",
-    "enter_message_id_manually": "Por favor, introduza o ID da mensaxe manualmente. Pode atopalo vendo a mensaxe en Telegram."
+    "enter_message_id_manually": "Por favor, introduza o ID da mensaxe manualmente. Pode atopalo vendo a mensaxe en Telegram.",
+    "success_rate": "Success Rate"
   },
   "templates": {
     "title": "Templates",
@@ -605,5 +628,51 @@
     "scheduled": "Programado",
     "incompleted": "Incompleted"
   },
-  "completed": "completed"
+  "completed": "completed",
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Overview",
+    "total_campaigns": "Total Campaigns",
+    "running_campaigns": "Running Campaigns",
+    "total_accounts": "Total Accounts",
+    "online_accounts": "Online Accounts",
+    "messages_sent": "Messages Sent (24h)",
+    "success_rate": "Success Rate (24h)",
+    "recent_campaigns": "Recent Campaigns",
+    "account_health": "Account Health",
+    "health_status": "Health Status",
+    "health_score": "Health Score",
+    "warnings": "Warnings",
+    "no_warnings": "No warnings"
+  },
+  "plugins": {
+    "title": "Plugins",
+    "description": "Manage plugins to extend application functionality. Plugins can add new features, integrations, and customizations.",
+    "name": "Name",
+    "version": "Version",
+    "type": "Type",
+    "status": "Status",
+    "author": "Author",
+    "load_plugin": "Load Plugin",
+    "reload_all": "Reload All",
+    "enable": "Enable",
+    "disable": "Disable",
+    "configure": "Configure",
+    "configure_plugin": "Configure Plugin: {name}",
+    "enabled_successfully": "Plugin enabled successfully",
+    "disabled_successfully": "Plugin disabled successfully",
+    "enable_failed": "Failed to enable plugin",
+    "disable_failed": "Failed to disable plugin",
+    "plugin_not_found": "Plugin not found",
+    "config_saved": "Configuration saved successfully",
+    "config_save_failed": "Failed to save configuration",
+    "plugin_info": "Plugin Information",
+    "homepage": "Homepage",
+    "repository": "Repository",
+    "select_plugin_file": "Select Plugin File",
+    "loaded_successfully": "Plugin loaded successfully",
+    "load_failed": "Failed to load plugin",
+    "reload_all_confirm": "Are you sure you want to reload all plugins? This will disable all currently enabled plugins.",
+    "reloaded_successfully": "All plugins reloaded successfully"
+  }
 }

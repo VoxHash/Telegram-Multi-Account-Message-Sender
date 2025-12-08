@@ -11,6 +11,7 @@ from .log_widget import LogWidget, LogViewer
 from .settings_widget import SettingsWidget
 from .dashboard_widget import DashboardWidget
 from .telegram_selector import TelegramSelectorDialog
+from .plugin_widget import PluginWidget, PluginListWidget
 
 __all__ = [
     "AccountWidget",
@@ -27,4 +28,6 @@ __all__ = [
     "SettingsWidget",
     "DashboardWidget",
     "TelegramSelectorDialog",
+    "PluginWidget",
+    "PluginListWidget",
 ]

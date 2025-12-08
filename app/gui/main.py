@@ -14,7 +14,7 @@ from PyQt5.QtGui import QIcon
 from ..services import get_settings, get_logger
 from ..services.translation import get_translation_manager, _
 from .theme import ThemeManager
-from .widgets import AccountWidget, CampaignWidget, LogWidget, RecipientWidget, SettingsWidget, DashboardWidget
+from .widgets import AccountWidget, CampaignWidget, LogWidget, RecipientWidget, SettingsWidget, DashboardWidget, PluginWidget
 from .widgets.about_widget import AboutWidget
 
 
@@ -71,6 +71,7 @@ class MainWindow(QMainWindow):
         self.create_recipients_tab()
         self.create_testing_tab()
         self.create_logs_tab()
+        self.create_plugins_tab()
         self.create_settings_tab()
         self.create_about_tab()
         
@@ -113,6 +114,11 @@ class MainWindow(QMainWindow):
         """Create logs viewer tab."""
         self.logs_widget = LogWidget()
         self.tab_widget.addTab(self.logs_widget, _("tabs.logs"))
+    
+    def create_plugins_tab(self):
+        """Create plugins management tab."""
+        self.plugins_widget = PluginWidget()
+        self.tab_widget.addTab(self.plugins_widget, _("tabs.plugins"))
     
     def create_settings_tab(self):
         """Create settings tab."""

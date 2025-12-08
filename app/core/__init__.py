@@ -17,6 +17,10 @@ from .spintax import SpintaxProcessor
 from .compliance import ComplianceChecker, SafetyGuard
 from .analytics import AnalyticsCollector, CampaignAnalytics
 from .message_forwarder import MessageForwarder
+from .plugin import (
+    Plugin, PluginAPI, PluginMetadata, PluginInfo, PluginStatus, PluginType,
+    MessageFilterPlugin, AnalyticsPlugin, NotificationPlugin, IntegrationPlugin
+)
 
 __all__ = [
     # Telegram Client
@@ -44,4 +48,16 @@ __all__ = [
     
     # Message Forwarding
     "MessageForwarder",
+    
+    # Plugin System
+    "Plugin",
+    "PluginAPI",
+    "PluginMetadata",
+    "PluginInfo",
+    "PluginStatus",
+    "PluginType",
+    "MessageFilterPlugin",
+    "AnalyticsPlugin",
+    "NotificationPlugin",
+    "IntegrationPlugin",
 ]

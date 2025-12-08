@@ -30,6 +30,15 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
+*.exe
+*.dmg
+*.pkg
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+*.app
+*.dmg
 
 # Installer logs
 pip-log.txt
@@ -48,6 +57,11 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+junit.xml
+.pytest_cache/
+.coverage.*
+coverage/
+*.lcov
 
 # Translations
 *.mo
@@ -69,12 +83,14 @@ instance/
 # Sphinx documentation
 docs/_build/
 docs/site/
+docs/.doctrees/
 
 # PyBuilder
 target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
 
 # IPython
 profile_default/
@@ -98,6 +114,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
 .venv
 venv/
 env/
@@ -123,6 +140,12 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+
 # Application specific
 app_data/
 *.db
@@ -136,6 +159,7 @@ app_data/
 # Log files
 logs/
 *.log
+*.log.*
 
 # Temporary files
 temp/
@@ -144,13 +168,24 @@ tmp/
 *.bak
 *.backup
 *.old
+*.swp
+*.swo
+*~
 
 # IDE files
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
+*.sublime-project
+*.sublime-workspace
+
+# Emacs
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
 
 # OS generated files
 .DS_Store
@@ -204,6 +239,9 @@ secrets.json
 api_keys.txt
 credentials.txt
 secrets.txt
+*.key
+*.pem
+*.cert
 
 # Personal data
 personal_data/
@@ -212,9 +250,9 @@ contacts.csv
 recipients.csv
 accounts.csv
 
-# Test files
-test_*.py
-*_test.py
+# Test files (in root directory only, tests/ directory is tracked)
+/test_*.py
+/*_test.py
 test_*.session
 test_session*.session
 
@@ -232,6 +270,10 @@ upload_*.py
 init_github_repo.py
 build_installers.py
 create_windows_installer.py
+translate_*.py
+complete_*.py
+finalize_*.py
+update_translations.py
 
 # Build and distribution files
 installer.iss
@@ -252,19 +294,6 @@ LANGUAGE_UPDATE_SUMMARY.md
 content/
 scripts/
 
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# Emacs
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
 # Personal/sensitive files
 personal/
 sensitive/
@@ -278,6 +307,65 @@ sample_data/
 # Coverage reports
 coverage/
 htmlcov/
+.coverage
+.coverage.*
 
 # Profiling data
 *.prof
+*.pstats
+
+# CI/CD artifacts
+.github/workflows/*.log
+.github/workflows/*.tmp
+*.junit.xml
+
+# Pre-commit
+.pre-commit-config.yaml.bak
+
+# Ruff (if used in future)
+.ruff_cache/
+
+# Bandit (security linting)
+.bandit
+
+# Safety (dependency checking)
+.safety
+
+# Local development files
+local/
+local_*.py
+dev_*.py
+debug_*.py
+
+# Database migrations (if using Alembic)
+alembic/versions/*.pyc
+
+# Backup files
+*.orig
+*.rej
+*.patch
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+.directory
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Temporary Python files
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Project-specific temporary files
+tatus*
+*_temp.*
+*_tmp.*

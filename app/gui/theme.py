@@ -400,6 +400,10 @@ class ThemeManager:
                 "info": "#17a2b8",
             }
     
+    def get_current_theme(self) -> str:
+        """Get the current active theme."""
+        return self.current_theme
+    
     def get_custom_theme_colors(self) -> Optional[Dict[str, str]]:
         """Get custom theme colors from settings."""
         custom_colors = self.qsettings.value("custom_theme_colors")

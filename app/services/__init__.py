@@ -17,6 +17,7 @@ from .db import (
 from .campaign_manager import get_campaign_manager, CampaignManager
 from .account_health import AccountHealthMonitor, HealthStatus
 from .performance import get_performance_monitor, PerformanceMonitor, performance_timer
+from .plugin_manager import get_plugin_manager, PluginManager, initialize_plugins
 
 __all__ = [
     # Settings
@@ -51,4 +52,9 @@ __all__ = [
     "get_performance_monitor",
     "PerformanceMonitor",
     "performance_timer",
+    
+    # Plugin Management
+    "get_plugin_manager",
+    "PluginManager",
+    "initialize_plugins",
 ]

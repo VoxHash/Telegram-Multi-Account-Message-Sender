@@ -14,7 +14,9 @@ A professional-grade desktop application for managing and sending messages acros
 ## ✨ Features
 
 ### 🚀 Core Functionality
-- **Multi-Account Management**: Manage multiple Telegram accounts simultaneously
+- **Multi-Account Management**: Manage multiple Telegram accounts simultaneously with proxy support
+- **Account Import Methods**: Add accounts via phone number or by importing Telethon session files
+- **Proxy Support**: Full proxy support (HTTP, HTTPS, SOCKS4, SOCKS5) with connection testing
 - **Campaign Management**: Create, schedule, and manage message campaigns
 - **Template System**: Create and manage message templates with spintax support
 - **Recipient Management**: Organize and manage recipient lists

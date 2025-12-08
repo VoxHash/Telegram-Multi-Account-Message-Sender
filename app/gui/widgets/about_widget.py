@@ -42,7 +42,7 @@ class AboutWidget(QWidget):
         content_layout.addWidget(self.title_label)
         
         # Version
-        self.version_label = QLabel(_("app.version").format(version="1.0.0"))
+        self.version_label = QLabel(_("app.version").format(version="1.2.8"))
         version_font = QFont()
         version_font.setPointSize(12)
         self.version_label.setFont(version_font)
@@ -91,5 +91,5 @@ class AboutWidget(QWidget):
         self.logger.info(f"Language changed to: {language}")
         # Update the content with new translations
         self.title_label.setText(f"🚀 {_('app.title')}")
-        self.version_label.setText(_("app.version").format(version="1.0.0"))
+        self.version_label.setText(_("app.version").format(version="1.2.8"))
         self.update_about_content()

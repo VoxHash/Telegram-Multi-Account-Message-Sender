@@ -18,6 +18,7 @@ from ...services import get_logger, get_campaign_manager
 from ...services.db import get_session
 from ...services.translation import _, get_translation_manager
 from ...core import SpintaxProcessor
+from app.gui.widgets.telegram_selector import TelegramSelectorDialog
 
 
 class CampaignDialog(QDialog):

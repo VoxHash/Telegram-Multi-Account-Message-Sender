@@ -17,7 +17,7 @@ from ...models import Recipient, RecipientList, RecipientSource, RecipientStatus
 from ...services import get_logger
 from ...services.db import get_session
 from ...services.translation import _, get_translation_manager
-from .telegram_selector import TelegramSelectorDialog
+from app.gui.widgets.telegram_selector import TelegramSelectorDialog
 import csv
 import pandas as pd
 

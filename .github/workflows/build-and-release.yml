@@ -37,7 +37,7 @@ jobs:
     - name: Build Windows executable
       continue-on-error: true
       run: |
-        pyinstaller --onefile --noconsole --name telegram-multi-account-sender --icon=assets/icons/favicon.ico --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic main.py
+        pyinstaller --onefile --noconsole --name telegram-multi-account-sender --icon=assets/icons/favicon.ico --additional-hooks-dir=hooks --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic --hidden-import=app.gui.widgets.telegram_selector main.py
     
     - name: Upload Windows artifacts
       if: success() || failure()
@@ -77,7 +77,7 @@ jobs:
       env:
         QT_QPA_PLATFORM: offscreen
       run: |
-        pyinstaller --onefile --name telegram-multi-account-sender --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic main.py
+        pyinstaller --onefile --name telegram-multi-account-sender --additional-hooks-dir=hooks --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic --hidden-import=app.gui.widgets.telegram_selector main.py
     
     - name: Set version for Linux build
       id: set_version_linux
@@ -130,9 +130,9 @@ jobs:
       continue-on-error: true
       run: |
         if [ -f "assets/icons/favicon.ico" ]; then
-          pyinstaller --windowed --name telegram-multi-account-sender --icon=assets/icons/favicon.ico main.py || pyinstaller --onefile --name telegram-multi-account-sender main.py
+          pyinstaller --windowed --name telegram-multi-account-sender --icon=assets/icons/favicon.ico --additional-hooks-dir=hooks --hidden-import=app.gui.widgets.telegram_selector main.py || pyinstaller --onefile --name telegram-multi-account-sender --additional-hooks-dir=hooks --hidden-import=app.gui.widgets.telegram_selector main.py
         else
-          pyinstaller --windowed --name telegram-multi-account-sender main.py || pyinstaller --onefile --name telegram-multi-account-sender main.py
+          pyinstaller --windowed --name telegram-multi-account-sender --additional-hooks-dir=hooks --hidden-import=app.gui.widgets.telegram_selector main.py || pyinstaller --onefile --name telegram-multi-account-sender --additional-hooks-dir=hooks --hidden-import=app.gui.widgets.telegram_selector main.py
         fi
     
     - name: Set version for macOS build

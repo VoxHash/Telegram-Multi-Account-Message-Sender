@@ -14,6 +14,8 @@ from PyQt5.QtGui import QIcon
 from ..services import get_settings, get_logger
 from ..services.translation import get_translation_manager, _
 from .theme import ThemeManager
+# Explicitly import telegram_selector to ensure PyInstaller includes it
+from .widgets.telegram_selector import TelegramSelectorDialog
 from .widgets import AccountWidget, CampaignWidget, LogWidget, RecipientWidget, SettingsWidget, DashboardWidget, PluginWidget
 from .widgets.about_widget import AboutWidget
 

@@ -13,6 +13,8 @@ app_dir = Path(__file__).parent / "app"
 sys.path.insert(0, str(app_dir))
 
 from app.services import initialize_database, get_settings, get_logger, initialize_plugins
+# Explicitly import telegram_selector early to ensure PyInstaller includes it
+from app.gui.widgets.telegram_selector import TelegramSelectorDialog
 from app.gui.main import MainWindow
 
 # Import all models to ensure they are registered with SQLModel

@@ -1,0 +1,81 @@
+# Spintax Examples
+# Use these examples to understand and test spintax functionality
+
+## Basic Spintax Patterns
+
+### Simple Choices
+Hello {John|Jane|Alex}!
+Result: "Hello John!" or "Hello Jane!" or "Hello Alex!"
+
+### Multiple Words
+{Good morning|Good afternoon|Good evening} {everyone|folks|friends}!
+Result: "Good morning everyone!" or "Good afternoon folks!" etc.
+
+### Nested Spintax
+{Welcome|Greetings} to our {amazing|fantastic|incredible} {community|platform|service}!
+Result: "Welcome to our amazing community!" or "Greetings to our fantastic platform!" etc.
+
+## Advanced Spintax Patterns
+
+### Complex Nested
+{Hi|Hello|Hey} {there|everyone|folks}! {Thanks|Thank you} for {joining|being part of} our {awesome|amazing|fantastic} {community|group|team}!
+
+### With Punctuation
+{Exciting|Amazing|Incredible} news! {We're|We are} launching {something new|a new product|our latest feature} {today|this week|soon}!
+
+### Mixed Content
+{Check out|Take a look at|Don't miss} our {latest|newest|brand new} {update|feature|release} - {it's|it is} {awesome|amazing|fantastic}!
+
+## Real-World Examples
+
+### Welcome Messages
+{Welcome|Greetings|Hi there} {name}! {We're|We are} {excited|thrilled|happy} to have you {join|be part of} our {community|platform|service}!
+
+### Product Announcements
+{Exciting|Amazing|Incredible} news! {We're|We are} launching {product_name} on {launch_date}. {Get early access now!|Don't miss out!|Be the first to try it!}
+
+### Follow-up Messages
+{Hi|Hello} {name}, I {wanted|hope} to follow up on our conversation about {topic}. {Do you have any questions?|Let me know if you need anything!|Feel free to reach out!}
+
+### Event Invitations
+{You're invited|You're welcome} to {event_name} on {event_date} at {event_location}. {RSVP now!|Don't miss it!|Join us!}
+
+### Thank You Messages
+{Thank you|Thanks} {name} for your {support|help|contribution}! {We really|We truly|We sincerely} appreciate it.
+
+## Testing Tips
+
+### Preview Function
+- Use the "Preview Spintax" button in template editor
+- Generate 5 variations to see different combinations
+- Check if variations are too similar or too different
+
+### Validation
+- Ensure all braces are properly closed
+- Use pipe (|) to separate options
+- Avoid empty options: {option1||option3} ❌
+- Use: {option1|option2|option3} ✅
+
+### Best Practices
+- Keep options similar in length when possible
+- Use meaningful variations
+- Test with different recipients
+- Monitor performance and engagement
+
+## Common Mistakes
+
+### Unclosed Braces
+{Hello|Hi|Hey there!  ❌ (missing closing brace)
+{Hello|Hi|Hey there!} ✅
+
+### Empty Options
+{Hello||Hi|Hey}  ❌ (empty option)
+{Hello|Hi|Hey} ✅
+
+### Too Many Options
+{Option1|Option2|Option3|Option4|Option5|Option6|Option7|Option8|Option9|Option10}  ❌ (too many)
+{Option1|Option2|Option3} ✅ (3-5 options recommended)
+
+### Inconsistent Tone
+{Hello|Greetings|Yo}  ❌ (inconsistent formality)
+{Hello|Hi|Hey} ✅ (consistent formality)

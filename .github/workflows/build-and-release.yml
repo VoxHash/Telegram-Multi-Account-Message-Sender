@@ -1,0 +1,284 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 1.2.0)'
+        required: true
+        default: '1.2.3'
+
+env:
+  PYTHON_VERSION: '3.11'
+  PROJECT_NAME: 'telegram-multi-account-sender'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Windows executable
+      continue-on-error: true
+      run: |
+        # Use spec file for more reliable builds
+        pyinstaller main.spec || pyinstaller --onefile --noconsole --name telegram-multi-account-sender --icon=assets/icons/favicon.ico --additional-hooks-dir=hooks --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic --hidden-import=app.gui.widgets.telegram_selector main.py
+    
+    - name: Upload Windows artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-build
+        path: |
+          dist/telegram-multi-account-sender.exe
+        retention-days: 30
+        if-no-files-found: warn
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pyqt5 libxcb-xinerama0 libxcb-cursor0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-image0 libxcb-keysyms1 libxcb-icccm4 libxcb-xfixes0 libxcb-sync1 libxcb-xkb1 libxkbcommon0 libxkbcommon-x11-0 || true
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Linux executable
+      continue-on-error: true
+      env:
+        QT_QPA_PLATFORM: offscreen
+      run: |
+        # Use spec file for more reliable builds (modify console setting for Linux)
+        sed -i 's/console=False/console=True/' main.spec || true
+        pyinstaller main.spec || pyinstaller --onefile --name telegram-multi-account-sender --additional-hooks-dir=hooks --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic --hidden-import=app.gui.widgets.telegram_selector main.py
+    
+    - name: Set version for Linux build
+      id: set_version_linux
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^v ]]; then
+            VERSION="v$VERSION"
+          fi
+        else
+          VERSION="${{ github.ref_name }}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Create .tar.gz
+      if: success()
+      run: |
+        tar -czf telegram-multi-account-sender-${{ steps.set_version_linux.outputs.version }}-linux.tar.gz dist/telegram-multi-account-sender || true
+    
+    - name: Upload Linux artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-build
+        path: |
+          dist/telegram-multi-account-sender
+          telegram-multi-account-sender-*.tar.gz
+        retention-days: 30
+        if-no-files-found: warn
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build macOS application
+      continue-on-error: true
+      run: |
+        # Use spec file for more reliable builds
+        pyinstaller main.spec || pyinstaller --windowed --name telegram-multi-account-sender --icon=assets/icons/favicon.ico --additional-hooks-dir=hooks --hidden-import=app.gui.widgets.telegram_selector main.py || pyinstaller --onefile --name telegram-multi-account-sender --additional-hooks-dir=hooks --hidden-import=app.gui.widgets.telegram_selector main.py
+    
+    - name: Set version for macOS build
+      id: set_version_macos
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^v ]]; then
+            VERSION="v$VERSION"
+          fi
+        else
+          VERSION="${{ github.ref_name }}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Create .dmg
+      if: success()
+      run: |
+        if [ -d "dist/telegram-multi-account-sender.app" ]; then
+          hdiutil create -srcfolder dist/telegram-multi-account-sender.app -volname "Telegram Multi-Account Message Sender" -fs HFS+ -format UDZO telegram-multi-account-sender-${{ steps.set_version_macos.outputs.version }}-macOS.dmg || true
+        elif [ -f "dist/telegram-multi-account-sender" ]; then
+          mkdir -p dist/Telegram-Multi-Account-Sender.app/Contents/MacOS
+          cp dist/telegram-multi-account-sender dist/Telegram-Multi-Account-Sender.app/Contents/MacOS/
+          hdiutil create -srcfolder dist/Telegram-Multi-Account-Sender.app -volname "Telegram Multi-Account Message Sender" -fs HFS+ -format UDZO telegram-multi-account-sender-${{ steps.set_version_macos.outputs.version }}-macOS.dmg || true
+        fi
+    
+    - name: Upload macOS artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-build
+        path: |
+          dist/telegram-multi-account-sender
+          telegram-multi-account-sender-*.dmg
+        retention-days: 30
+        if-no-files-found: warn
+
+  build-pypi:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: |
+        python -m build
+    
+    - name: Check package
+      run: |
+        twine check dist/*
+    
+    - name: Upload PyPI package
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        twine upload dist/* || echo "PyPI upload skipped (no token or already exists)"
+
+  create-release:
+    needs: [build-windows, build-linux, build-macos, build-pypi]
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set release version
+      id: set_version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^v ]]; then
+            VERSION="v$VERSION"
+          fi
+        else
+          VERSION="${{ github.ref_name }}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.set_version.outputs.version }}
+        name: Release ${{ steps.set_version.outputs.version }}
+        body: |
+          ## 🎉 Release ${{ steps.set_version.outputs.version }}
+          
+          ### 📦 Downloads
+          
+          **Windows:**
+          - `telegram-multi-account-sender.exe` - Standalone executable
+          
+          **Linux:**
+          - `telegram-multi-account-sender` - Standalone executable
+          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-linux.tar.gz` - Source distribution
+          
+          **macOS:**
+          - `telegram-multi-account-sender` - Standalone executable
+          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-macOS.dmg` - Disk image installer
+          
+          ### 🚀 Installation
+          
+          **From PyPI:**
+          ```bash
+          pip install telegram-multi-account-sender
+          ```
+          
+          **From Source:**
+          ```bash
+          git clone https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender.git
+          cd Telegram-Multi-Account-Message-Sender
+          pip install -r requirements.txt
+          python main.py
+          ```
+          
+          ### 📋 What's New
+          
+          See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+          
+          ### 🆘 Support
+          
+          - [Documentation](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/wiki)
+          - [Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
+          - [Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
+        files: |
+          windows-build/*
+          linux-build/*
+          macos-build/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

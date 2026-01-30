@@ -1,0 +1,6 @@
+recipient_type,username,user_id,phone_number,first_name,last_name,display_name,group_id,group_title,group_username,group_type,member_count,email,bio,profile_photo_url,status,source,tags,notes,custom_fields
+USER,johndoe,123456789,+1234567890,John,Doe,John Doe,,,,,,,john.doe@example.com,Software Developer,https://example.com/photo.jpg,ACTIVE,MANUAL,"developer,tech,friend","Met at conference","company:TechCorp,role:Senior Developer"
+USER,janesmith,987654321,+1987654321,Jane,Smith,Jane Smith,,,,,,,jane.smith@example.com,Marketing Manager,https://example.com/jane.jpg,ACTIVE,MANUAL,"marketing,business,colleague","Work colleague","company:MarketingInc,role:Manager"
+GROUP,,,,"Tech Community","","Tech Community",-1001234567890,Tech Community,tech_community,SUPERGROUP,1500,,,https://example.com/group.jpg,ACTIVE,MANUAL,"tech,community,programming","Programming discussion group","category:Technology,language:English"
+CHANNEL,,,,"News Channel","","Tech News",-1009876543210,Tech News,tech_news,CHANNEL,5000,,,https://example.com/channel.jpg,ACTIVE,MANUAL,"news,technology,updates","Latest tech news and updates","category:News,language:English"
+USER,alexbrown,555666777,+1555666777,Alex,Brown,Alex Brown,,,,,,,alex.brown@example.com,Designer,https://example.com/alex.jpg,ACTIVE,MANUAL,"design,creative,friend","Designer friend","company:DesignStudio,role:Lead Designer"

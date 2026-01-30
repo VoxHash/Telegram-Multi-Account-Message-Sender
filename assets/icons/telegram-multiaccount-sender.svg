@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00D3FF"/>
+      <stop offset="100%" stop-color="#7B1FFF"/>
+    </linearGradient>
+    <filter id="innerShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feOffset dx="4" dy="4" result="off"/>
+      <feGaussianBlur in="off" stdDeviation="4" result="blur"/>
+      <feComposite in="blur" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="inner"/>
+      <feColorMatrix in="inner" type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0.3 0"/>
+      <feComposite in="SourceGraphic" in2="inner" operator="over"/>
+    </filter>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="220" fill="url(#g)" filter="url(#innerShadow)"/>
+  <!-- paper plane (generic) -->
+  <path fill="#FFFFFF" d="M810 512 L220 360 L430 430 L470 300 L520 450 L220 664 Z" transform="translate(0,0) rotate(-10,512,512)"/>
+  <rect x="42" y="42" width="940" height="940" rx="240" fill="none" stroke="white" stroke-opacity="0.12" stroke-width="4"/>
+</svg>

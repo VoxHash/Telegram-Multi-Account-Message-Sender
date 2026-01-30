@@ -1,0 +1,433 @@
+# =============================================================================
+# Python
+# =============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+*.exe
+*.dmg
+*.pkg
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+*.app
+
+# Virtual environments
+.venv
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# pipenv
+# Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# pyenv
+.python-version
+
+# =============================================================================
+# Testing
+# =============================================================================
+# Coverage reports
+coverage/
+.nyc_output
+*.lcov
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+junit.xml
+*.test.js.snap
+
+# =============================================================================
+# Production builds
+# =============================================================================
+build/
+dist/
+out/
+
+# =============================================================================
+# Environment variables
+# =============================================================================
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =============================================================================
+# TypeScript / JavaScript (if used in future)
+# =============================================================================
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# =============================================================================
+# IDE and editors
+# =============================================================================
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Emacs
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# SpecStory
+.specstory
+
+# DevContainer
+.devcontainer
+
+# Cursor
+.cursorindexingignore
+
+# =============================================================================
+# OS files
+# =============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+Icon
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+*.stackdump
+
+# Linux
+.directory
+.fuse_hidden*
+.Trash-*
+.nfs*
+
+# =============================================================================
+# Logs
+# =============================================================================
+*.log
+*.log.*
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+pip-log.txt
+pip-delete-this-directory.txt
+
+# =============================================================================
+# Temporary files
+# =============================================================================
+*.tmp
+*.temp
+.cache/
+.temp/
+temp/
+tmp/
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.patch
+
+# =============================================================================
+# Security
+# =============================================================================
+*.pem
+*.key
+*.cert
+config.ini
+config.json
+secrets.json
+api_keys.txt
+credentials.txt
+secrets.txt
+
+# =============================================================================
+# Application specific
+# =============================================================================
+# Application data
+app_data/
+*.db
+*.sqlite
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
+
+# Telegram session files
+*.session
+*.session-journal
+
+# Personal data
+personal_data/
+user_data/
+contacts.csv
+recipients.csv
+accounts.csv
+personal/
+sensitive/
+credentials/
+secrets/
+
+# Test data
+test_data/
+sample_data/
+
+# =============================================================================
+# Development and testing files
+# =============================================================================
+# Test files (in root directory only, tests/ directory is tracked)
+/test_*.py
+/*_test.py
+test_*.session
+test_session*.session
+
+# Development scripts
+warmup_demo*.py
+test_warmup*.py
+test_language*.py
+fix_translations.py
+audit_translations.py
+check_*.py
+create_*.py
+migrate_*.py
+update_*.py
+upload_*.py
+init_github_repo.py
+build_installers.py
+create_windows_installer.py
+translate_*.py
+complete_*.py
+finalize_*.py
+update_translations.py
+local_*.py
+dev_*.py
+debug_*.py
+
+# Build and distribution files
+installer.iss
+create_dmg.sh
+setup_macos.py
+
+# Development summary files
+*_SUMMARY.md
+*_READY_SUMMARY.md
+*_UPDATE_SUMMARY.md
+FINAL_RELEASE_SUMMARY.md
+RELEASE_SUMMARY_v*.md
+PYPI_READY_SUMMARY.md
+LANGUAGE_UPDATE_SUMMARY.md
+GITHUB_TOPICS.md
+
+# Temporary and development files
+content/
+scripts/
+local/
+
+# Project-specific temporary files
+tatus*
+*_temp.*
+*_tmp.*
+
+# =============================================================================
+# Documentation
+# =============================================================================
+# Sphinx documentation
+docs/_build/
+docs/site/
+docs/.doctrees/
+
+# mkdocs documentation
+/site
+
+# =============================================================================
+# Type checkers and linters
+# =============================================================================
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Ruff (if used in future)
+.ruff_cache/
+
+# ESLint
+.eslintcache
+
+# =============================================================================
+# CI/CD
+# =============================================================================
+.github/workflows/*.log
+.github/workflows/*.tmp
+*.junit.xml
+
+# Pre-commit
+.pre-commit-config.yaml.bak
+
+# =============================================================================
+# Profiling and debugging
+# =============================================================================
+*.prof
+*.pstats
+
+# =============================================================================
+# Security tools
+# =============================================================================
+# Bandit (security linting)
+.bandit
+
+# Safety (dependency checking)
+.safety
+
+# =============================================================================
+# Database
+# =============================================================================
+# Database migrations (if using Alembic)
+alembic/versions/*.pyc
+
+# Prisma (if used in future)
+prisma/migrations/*.sql
+prisma/*.db
+prisma/*.db-journal
+
+# =============================================================================
+# Other tools and frameworks
+# =============================================================================
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Django stuff
+local_settings.py
+
+# Flask stuff
+instance/
+.webassets-cache
+
+# Scrapy stuff
+.scrapy
+
+# PyBuilder
+target/
+
+# Translations
+*.mo
+*.pot
+
+# Turbo (if used in future)
+.turbo
+
+# Vercel (if used in future)
+.vercel
+
+# =============================================================================
+# Misc
+# =============================================================================
+*.swp
+*.swo
+*~
+.DS_Store

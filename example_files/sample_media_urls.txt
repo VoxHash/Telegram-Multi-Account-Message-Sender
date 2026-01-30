@@ -1,0 +1,27 @@
+# Sample Media URLs for Testing
+# Use these URLs in the Testing tab to test media functionality
+
+## Images
+https://picsum.photos/800/600
+https://picsum.photos/400/300
+https://via.placeholder.com/800x600/0066CC/FFFFFF?text=Sample+Image
+https://via.placeholder.com/400x300/FF6600/FFFFFF?text=Test+Image
+
+## Videos
+https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4
+https://sample-videos.com/zip/10/mp4/SampleVideo_640x360_1mb.mp4
+https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
+
+## Audio
+https://www.soundjay.com/misc/sounds/bell-ringing-05.wav
+https://www.soundjay.com/misc/sounds/fail-buzzer-02.wav
+
+## Documents
+https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+https://www.learningcontainer.com/wp-content/uploads/2019/09/sample-pdf-file.pdf
+
+## Notes
+- These are public test URLs that should work for testing
+- Some URLs may be temporary or have bandwidth limits
+- For production use, use your own media files
+- Always respect copyright and terms of service

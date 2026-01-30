@@ -1,0 +1,110 @@
+# =============================================================================
+# Telegram Multi-Account Message Sender - Environment Configuration
+# =============================================================================
+# Copy this file to the root directory as .env and fill in your values
+# NEVER commit .env to version control - it contains sensitive information
+# =============================================================================
+
+# =============================================================================
+# 🔒 SENSITIVE VARIABLES - DO NOT SHARE OR COMMIT
+# =============================================================================
+# These variables contain sensitive credentials and must be kept secret
+
+# Telegram API Credentials (SENSITIVE - Required)
+# Get these from https://my.telegram.org/apps
+# ⚠️ SENSITIVE: Keep these secret, never commit to git
+TELEGRAM_API_ID=your_api_id_here
+TELEGRAM_API_HASH=your_api_hash_here
+
+# Session Encryption Key (SENSITIVE - Optional but Recommended)
+# Generate a random 32-character string for encrypting session files
+# ⚠️ SENSITIVE: If set, keep this secret
+# SESSION_ENCRYPTION_KEY=your_32_character_encryption_key_here
+
+# Proxy Credentials (SENSITIVE - Optional)
+# ⚠️ SENSITIVE: Proxy passwords are sensitive
+# PROXY_USERNAME=your_proxy_username
+# PROXY_PASSWORD=your_proxy_password
+
+# Sentry DSN (SENSITIVE - Optional)
+# Error tracking service DSN (if using Sentry)
+# ⚠️ SENSITIVE: Contains authentication token
+# SENTRY_DSN=your_sentry_dsn_here
+
+# =============================================================================
+# ⚙️ NON-SENSITIVE CONFIGURATION VARIABLES
+# =============================================================================
+# These variables are safe to share and can be committed to version control
+
+# Database Configuration (NON-SENSITIVE)
+# SQLite database file path (relative to app root)
+DATABASE_URL=sqlite:///./app_data/app.db
+
+# Application Settings (NON-SENSITIVE)
+APP_NAME=Telegram Multi-Account Message Sender
+APP_ENV=development
+DEBUG=false
+LOG_LEVEL=INFO
+
+# Localization (NON-SENSITIVE)
+LANGUAGE=en
+THEME=auto
+
+# Window Settings (NON-SENSITIVE)
+WINDOW_WIDTH=1200
+WINDOW_HEIGHT=800
+WINDOW_MAXIMIZED=false
+START_WITH_WINDOWS=false
+
+# Rate Limiting (NON-SENSITIVE)
+# Global rate limits (can be overridden per account)
+DEFAULT_RATE_LIMITS=30
+GLOBAL_MAX_CONCURRENCY=5
+MAX_MESSAGES_PER_HOUR=100
+MAX_MESSAGES_PER_DAY=1000
+RANDOM_JITTER_SECONDS=5
+
+# Warmup Settings (NON-SENSITIVE)
+WARMUP_ENABLED=true
+WARMUP_MESSAGES=5
+WARMUP_INTERVAL_MINUTES=60
+
+# Safety Settings (NON-SENSITIVE)
+RESPECT_RATE_LIMITS=true
+STOP_ON_ERROR=false
+MAX_RETRIES=3
+RETRY_DELAY_SECONDS=5
+
+# Proxy Settings (NON-SENSITIVE - Credentials are sensitive, see above)
+# PROXY_TYPE=none  # none, http, socks4, socks5
+# PROXY_HOST=
+# PROXY_PORT=
+
+# Logging Settings (NON-SENSITIVE)
+LOG_TO_FILE=true
+LOG_FILE_MAX_SIZE=10485760  # 10MB in bytes
+LOG_FILE_BACKUP_COUNT=5
+
+# Application Data Paths (NON-SENSITIVE)
+APP_DATA_DIR=app_data
+SESSIONS_DIR=app_data/sessions
+LOGS_DIR=app_data/logs
+CONTENT_DIR=content
+
+# Notification Settings (NON-SENSITIVE)
+ENABLE_NOTIFICATIONS=true
+
+# Backup Settings (NON-SENSITIVE)
+AUTO_BACKUP=true
+BACKUP_INTERVAL_HOURS=24
+MAX_BACKUP_FILES=7
+
+# =============================================================================
+# 📝 NOTES
+# =============================================================================
+# - Variables marked with ⚠️ SENSITIVE must never be committed to git
+# - Use .gitignore to exclude .env from version control
+# - Copy this file to .env and fill in your actual values
+# - Remove the "your_*_here" placeholders with real values
+# - Optional variables can be left commented out
+# =============================================================================

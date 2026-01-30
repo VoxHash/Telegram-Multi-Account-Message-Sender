@@ -1,0 +1,57 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include requirements.txt
+include requirements-dev.txt
+include pyproject.toml
+include setup.py
+
+recursive-include app/translations *.json
+recursive-include app/assets *.ico
+recursive-include app/assets *.png
+recursive-include app/assets *.svg
+
+recursive-include example_files *
+recursive-include docs *.md
+
+recursive-include .github *.yml
+recursive-include .github *.yaml
+recursive-include .github *.md
+
+include .gitignore
+include .pre-commit-config.yaml
+
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .DS_Store
+global-exclude Thumbs.db
+global-exclude *.log
+global-exclude *.tmp
+global-exclude *.temp
+global-exclude .env
+global-exclude .env.*
+global-exclude *.db
+global-exclude *.sqlite
+global-exclude *.sqlite3
+global-exclude venv/
+global-exclude env/
+global-exclude .venv/
+global-exclude .env/
+global-exclude build/
+global-exclude dist/
+global-exclude *.egg-info/
+global-exclude .pytest_cache/
+global-exclude .coverage
+global-exclude htmlcov/
+global-exclude .mypy_cache/
+global-exclude .tox/
+global-exclude .cache/
+global-exclude .vscode/
+global-exclude .idea/
+global-exclude *.swp
+global-exclude *.swo
+global-exclude *~

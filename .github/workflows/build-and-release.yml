@@ -39,6 +39,27 @@ jobs:
       run: |
         # Use spec file for more reliable builds
         pyinstaller main.spec || pyinstaller --onefile --noconsole --name telegram-multi-account-sender --icon=assets/icons/favicon.ico --additional-hooks-dir=hooks --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic --hidden-import=app.gui.widgets.telegram_selector main.py
+
+    - name: Set version for Windows build
+      id: set_version_windows
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^v ]]; then
+            VERSION="v$VERSION"
+          fi
+        else
+          VERSION="${{ github.ref_name }}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Normalize Windows asset name
+      shell: bash
+      run: |
+        if [ -f "dist/telegram-multi-account-sender.exe" ]; then
+          cp "dist/telegram-multi-account-sender.exe" "telegram-multi-account-sender-${{ steps.set_version_windows.outputs.version }}-windows.exe"
+        fi
     
     - name: Upload Windows artifacts
       if: success() || failure()
@@ -46,7 +67,7 @@ jobs:
       with:
         name: windows-build
         path: |
-          dist/telegram-multi-account-sender.exe
+          telegram-multi-account-sender-*-windows.exe
         retention-days: 30
         if-no-files-found: warn
 
@@ -106,7 +127,6 @@ jobs:
       with:
         name: linux-build
         path: |
-          dist/telegram-multi-account-sender
           telegram-multi-account-sender-*.tar.gz
         retention-days: 30
         if-no-files-found: warn
@@ -165,7 +185,6 @@ jobs:
       with:
         name: macos-build
         path: |
-          dist/telegram-multi-account-sender
           telegram-multi-account-sender-*.dmg
         retention-days: 30
         if-no-files-found: warn
@@ -228,6 +247,51 @@ jobs:
     
     - name: Download all artifacts
       uses: actions/download-artifact@v4
+
+    - name: Validate release asset sizes
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        WIN_ASSET="$(find windows-build -type f -name '*.exe' | head -n1 || true)"
+        LINUX_ASSET="$(find linux-build -type f -name '*-linux.tar.gz' | head -n1 || true)"
+        MAC_ASSET="$(find macos-build -type f -name '*-macOS.dmg' | head -n1 || true)"
+
+        if [ -z "$WIN_ASSET" ] || [ -z "$LINUX_ASSET" ] || [ -z "$MAC_ASSET" ]; then
+          echo "Missing one or more release assets (.exe/.tar.gz/.dmg)."
+          echo "WIN_ASSET=$WIN_ASSET"
+          echo "LINUX_ASSET=$LINUX_ASSET"
+          echo "MAC_ASSET=$MAC_ASSET"
+          exit 1
+        fi
+
+        WIN_SIZE="$(stat -c%s "$WIN_ASSET")"
+        LINUX_SIZE="$(stat -c%s "$LINUX_ASSET")"
+        MAC_SIZE="$(stat -c%s "$MAC_ASSET")"
+
+        # Guardrails tuned to current build footprint and expected PyInstaller packaging.
+        WIN_MIN=$((50 * 1024 * 1024))
+        WIN_MAX=$((250 * 1024 * 1024))
+        LINUX_MIN=$((70 * 1024 * 1024))
+        LINUX_MAX=$((250 * 1024 * 1024))
+        MAC_MIN=$((50 * 1024 * 1024))
+        MAC_MAX=$((200 * 1024 * 1024))
+
+        check_size() {
+          local name="$1"
+          local size="$2"
+          local min="$3"
+          local max="$4"
+          if [ "$size" -lt "$min" ] || [ "$size" -gt "$max" ]; then
+            echo "$name size check failed: $size bytes (expected $min..$max)"
+            exit 1
+          fi
+          echo "$name size OK: $size bytes"
+        }
+
+        check_size "Windows EXE" "$WIN_SIZE" "$WIN_MIN" "$WIN_MAX"
+        check_size "Linux TAR.GZ" "$LINUX_SIZE" "$LINUX_MIN" "$LINUX_MAX"
+        check_size "macOS DMG" "$MAC_SIZE" "$MAC_MIN" "$MAC_MAX"
     
     - name: Create Release
       uses: softprops/action-gh-release@v2
@@ -240,14 +304,12 @@ jobs:
           ### 📦 Downloads
           
           **Windows:**
-          - `telegram-multi-account-sender.exe` - Standalone executable
+          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-windows.exe` - Standalone executable
           
           **Linux:**
-          - `telegram-multi-account-sender` - Standalone executable
-          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-linux.tar.gz` - Source distribution
+          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-linux.tar.gz` - Linux distribution
           
           **macOS:**
-          - `telegram-multi-account-sender` - Standalone executable
           - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-macOS.dmg` - Disk image installer
           
           ### 🚀 Installation

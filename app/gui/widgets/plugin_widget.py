@@ -2,25 +2,33 @@
 Plugin management widget for the Telegram Multi-Account Message Sender.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Dict, Any
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
-    QHeaderView, QGroupBox, QComboBox, QCheckBox, QSpinBox,
-    QMessageBox, QDialog, QDialogButtonBox, QFormLayout,
-    QTextEdit, QDateTimeEdit, QProgressBar, QTabWidget, QFrame,
-    QFileDialog, QListWidget, QListWidgetItem
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QCheckBox,
+    QSpinBox,
+    QMessageBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QFileDialog,
 )
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QDateTime
-from PyQt5.QtGui import QFont, QIcon, QColor
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QFont, QColor
 
 from pathlib import Path
-from ...models import Account, AccountStatus, Campaign, CampaignStatus
-from ...services import get_logger, get_session
-from ...services.translation import _, get_translation_manager
+from ...services import get_logger
+from ...services.translation import _
 from ...services.plugin_manager import get_plugin_manager
-from ...core.plugin import PluginInfo, PluginStatus, PluginType
-from sqlmodel import select, func
+from ...core.plugin import PluginStatus
 
 
 class PluginListWidget(QWidget):
@@ -43,7 +51,7 @@ class PluginListWidget(QWidget):
 
         # Toolbar
         toolbar = QHBoxLayout()
-        
+
         self.refresh_button = QPushButton(_("common.refresh"))
         self.refresh_button.clicked.connect(self.refresh_plugins)
         toolbar.addWidget(self.refresh_button)
@@ -62,14 +70,16 @@ class PluginListWidget(QWidget):
         # Plugins table
         self.plugins_table = QTableWidget()
         self.plugins_table.setColumnCount(6)
-        self.plugins_table.setHorizontalHeaderLabels([
-            _("plugins.name"),
-            _("plugins.version"),
-            _("plugins.type"),
-            _("plugins.status"),
-            _("plugins.author"),
-            _("common.actions")
-        ])
+        self.plugins_table.setHorizontalHeaderLabels(
+            [
+                _("plugins.name"),
+                _("plugins.version"),
+                _("plugins.type"),
+                _("plugins.status"),
+                _("plugins.author"),
+                _("common.actions"),
+            ]
+        )
         self.plugins_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.plugins_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.plugins_table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -92,7 +102,9 @@ class PluginListWidget(QWidget):
             self.plugins_table.setItem(row, 1, QTableWidgetItem(metadata.version))
 
             # Type
-            self.plugins_table.setItem(row, 2, QTableWidgetItem(plugin_info.metadata.plugin_type.value.title()))
+            self.plugins_table.setItem(
+                row, 2, QTableWidgetItem(plugin_info.metadata.plugin_type.value.title())
+            )
 
             # Status
             status_item = QTableWidgetItem(plugin_info.status.value.title())
@@ -127,7 +139,7 @@ class PluginListWidget(QWidget):
             config_btn.clicked.connect(lambda _, pid=plugin_id: self.configure_plugin(pid))
             actions_layout.addWidget(config_btn)
 
-            info_btn = QPushButton(_("common.info"))
+            info_btn = QPushButton(_("common.information"))
             info_btn.clicked.connect(lambda _, pid=plugin_id: self.show_plugin_info(pid))
             actions_layout.addWidget(info_btn)
 
@@ -198,13 +210,13 @@ class PluginListWidget(QWidget):
         <p><b>{_('plugins.status')}:</b> {plugin_info.status.value.title()}</p>
         <p><b>{_('plugins.description')}:</b> {metadata.description}</p>
         """
-        
+
         if metadata.homepage:
             info_text += f"<p><b>{_('plugins.homepage')}:</b> <a href='{metadata.homepage}'>{metadata.homepage}</a></p>"
-        
+
         if metadata.repository:
             info_text += f"<p><b>{_('plugins.repository')}:</b> <a href='{metadata.repository}'>{metadata.repository}</a></p>"
-        
+
         if plugin_info.error_message:
             info_text += f"<p><b>{_('common.error')}:</b> {plugin_info.error_message}</p>"
 
@@ -212,11 +224,8 @@ class PluginListWidget(QWidget):
 
     def load_plugin_file(self):
         """Load a plugin from a file."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            _("plugins.select_plugin_file"),
-            "",
-            "Python Files (*.py);;All Files (*)"
+        file_path, _selected_filter = QFileDialog.getOpenFileName(
+            self, _("plugins.select_plugin_file"), "", "Python Files (*.py);;All Files (*)"
         )
 
         if file_path:
@@ -233,7 +242,7 @@ class PluginListWidget(QWidget):
             self,
             _("common.confirm"),
             _("plugins.reload_all_confirm"),
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
@@ -330,4 +339,3 @@ class PluginWidget(QWidget):
         layout.addWidget(self.plugin_list)
 
         layout.addStretch()
-

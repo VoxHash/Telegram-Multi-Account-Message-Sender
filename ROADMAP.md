@@ -5,7 +5,7 @@
 ## 🎯 Vision Statement
 Transform Telegram Multi-Account Message Sender into the ultimate Telegram automation platform with advanced features, cross-platform support, and professional integration, while maintaining its safety-first design philosophy.
 
-## 📊 Current Status (v1.2.8)
+## 📊 Current Status (v1.2.9)
 
 ### ✅ Completed Features
 - **Multi-Account Management**: Full account lifecycle management
@@ -39,6 +39,13 @@ Transform Telegram Multi-Account Message Sender into the ultimate Telegram autom
 - **Performance Optimization**: Ongoing database and UI optimizations
 - **Code Quality**: Continuous testing and refactoring improvements
 - **Community Growth**: Building sponsor community and contributor base
+
+### 🆕 Latest Release Highlights (v1.2.9 - 2026-03-12)
+- **Spintax Reliability**: Seeded spintax output is now reproducible and validation correctly flags empty/nested patterns.
+- **Testing Stability**: Async test execution is now fully supported via `pytest-asyncio`.
+- **UI Localization Fixes**: Corrected translation-key usage in core dialogs (`common.information`).
+- **Code Quality Sweep**: Reduced lint backlog significantly by removing unused symbols and normalizing boolean query expressions.
+- **Warmup Service Typing**: Improved `WarmupManager` worker typing with `QThread` references for clearer maintenance.
 
 ---
 
@@ -352,12 +359,13 @@ Transform Telegram Multi-Account Message Sender into the ultimate Telegram autom
 
 ## 💖 Community Milestones
 
-### 🎉 Recent Achievements (v1.2.4 - v1.2.6)
+### 🎉 Recent Achievements (v1.2.4 - v1.2.9)
 - **First Monthly Sponsor**: [@dodierandal-arch](https://github.com/dodierandal-arch) - $100/month (Premium Sponsor) 🎉
 - **Complete Documentation Suite**: API docs, FAQ, and troubleshooting guides
 - **CI/CD Excellence**: Robust automated pipelines for testing, building, and releasing
 - **Documentation Standardization**: Professional documentation kit with consistent structure
 - **Development Environment**: DevContainer and Docker support for seamless development
+- **Quality Hardening (v1.2.9)**: Spintax reliability fixes, async test stability, and core UI localization corrections
 
 ### 🌟 Community Growth
 The project has reached an important milestone with our first monthly sponsor! This support enables us to:

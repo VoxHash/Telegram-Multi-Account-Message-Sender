@@ -4,41 +4,39 @@ Command-line interface for Telegram Multi-Account Message Sender.
 """
 
 import sys
-import asyncio
 from pathlib import Path
 
 # Add app directory to Python path
 app_dir = Path(__file__).parent
 sys.path.insert(0, str(app_dir))
 
-from app.services import initialize_database, get_settings, get_logger
-from app.gui.main import MainWindow
+from app.services import initialize_database, get_settings, get_logger  # noqa: E402
+from app.gui.main import MainWindow  # noqa: E402
 
 # Import all models to ensure they are registered with SQLModel
-from app.models import Account, Campaign, Recipient, SendLog
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication  # noqa: E402
 
 
 def main():
     """Main entry point for the CLI."""
     # Initialize database
     initialize_database()
-    
+
     # Get settings and logger
-    settings = get_settings()
+    get_settings()
     logger = get_logger()
-    
+
     logger.info("Starting Telegram Multi-Account Message Sender...")
-    
+
     # Create QApplication
     app = QApplication(sys.argv)
     app.setApplicationName("Telegram Multi-Account Message Sender")
-    app.setApplicationVersion("1.2.1")
-    
+    app.setApplicationVersion("1.2.9")
+
     # Create and show main window
     main_window = MainWindow()
     main_window.show()
-    
+
     # Run application
     sys.exit(app.exec_())
 

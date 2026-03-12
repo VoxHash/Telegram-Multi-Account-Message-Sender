@@ -2,8 +2,7 @@
 Campaign template and preset models.
 """
 
-from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, TYPE_CHECKING
 from enum import Enum
 
 from sqlmodel import Field, Relationship
@@ -12,9 +11,13 @@ from sqlalchemy import JSON
 from .base import BaseModel, SoftDeleteMixin, JSONFieldMixin
 from .campaign import CampaignType, MessageType
 
+if TYPE_CHECKING:
+    from .campaign import Campaign
+
 
 class TemplateCategory(str, Enum):
     """Template category enumeration."""
+
     MARKETING = "marketing"
     NOTIFICATION = "notification"
     PROMOTIONAL = "promotional"
@@ -24,54 +27,54 @@ class TemplateCategory(str, Enum):
 
 class CampaignTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     """Campaign template/preset model."""
-    
+
     __tablename__ = "campaign_templates"
-    
+
     # Basic info
     name: str = Field(index=True)
     description: Optional[str] = Field(default=None)
     category: TemplateCategory = Field(default=TemplateCategory.CUSTOM)
-    
+
     # Template settings (stored as JSON to match Campaign structure)
     campaign_type: CampaignType = Field(default=CampaignType.IMMEDIATE)
     message_text: str
     message_type: MessageType = Field(default=MessageType.TEXT)
     media_path: Optional[str] = Field(default=None)
     caption: Optional[str] = Field(default=None)
-    
+
     # Spintax and A/B testing
     use_spintax: bool = Field(default=False)
     spintax_text: Optional[str] = Field(default=None)
     use_ab_testing: bool = Field(default=False)
     ab_variants: Optional[str] = Field(default=None, sa_column=JSON)
     ab_split_percentages: Optional[str] = Field(default=None, sa_column=JSON)
-    
+
     # Scheduling defaults
     messages_per_minute: int = Field(default=1)
     messages_per_hour: int = Field(default=30)
     messages_per_day: int = Field(default=500)
     random_jitter_seconds: int = Field(default=5)
-    
+
     # Account selection defaults
     account_selection_strategy: str = Field(default="round_robin")
     account_weights: Optional[str] = Field(default=None, sa_column=JSON)
     max_concurrent_accounts: int = Field(default=3)
-    
+
     # Safety defaults
     dry_run: bool = Field(default=False)
     respect_rate_limits: bool = Field(default=True)
     stop_on_error: bool = Field(default=False)
     max_retries: int = Field(default=3)
-    
+
     # Metadata
     tags: Optional[str] = Field(default=None, sa_column=JSON)
     usage_count: int = Field(default=0)
     is_public: bool = Field(default=False)  # For sharing templates
     created_by: Optional[str] = Field(default=None)
-    
+
     # Relationships
     campaigns: List["Campaign"] = Relationship(back_populates="template")
-    
+
     def create_campaign_from_template(self, name: str, **overrides) -> Dict[str, Any]:
         """Create campaign data from template with optional overrides."""
         campaign_data = {
@@ -100,30 +103,31 @@ class CampaignTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
             "max_retries": self.max_retries,
             "tags": self.tags,
         }
-        
+
         # Apply overrides
         campaign_data.update(overrides)
-        
+
         # Increment usage count
         self.usage_count += 1
-        
+
         return campaign_data
-    
+
     def get_tags_list(self) -> List[str]:
         """Get tags as a list."""
         if self.tags is None:
             return []
         try:
             import json
+
             return json.loads(self.tags) if isinstance(self.tags, str) else self.tags
         except (json.JSONDecodeError, TypeError):
             return []
-    
+
     def set_tags_list(self, tags: List[str]) -> None:
         """Set tags from a list."""
         if not tags:
             self.tags = None
         else:
             import json
-            self.tags = json.dumps(tags)
 
+            self.tags = json.dumps(tags)

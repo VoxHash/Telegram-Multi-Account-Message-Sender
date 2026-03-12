@@ -4,7 +4,7 @@ Campaign management service for handling campaign execution, scheduling, and sta
 
 import asyncio
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional, Any
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 
@@ -19,7 +19,7 @@ from ..core.plugin import MessageFilterPlugin, AnalyticsPlugin
 
 class CampaignManager(QObject):
     """Manages campaign execution, scheduling, and status updates."""
-    
+
     # Signals for GUI updates
     campaign_started = pyqtSignal(int)  # campaign_id
     campaign_paused = pyqtSignal(int)  # campaign_id
@@ -27,7 +27,7 @@ class CampaignManager(QObject):
     campaign_completed = pyqtSignal(int)  # campaign_id
     campaign_progress_updated = pyqtSignal(int, dict)  # campaign_id, progress_data
     campaign_error = pyqtSignal(int, str)  # campaign_id, error_message
-    
+
     def __init__(self):
         super().__init__()
         self.logger = get_logger()
@@ -36,26 +36,26 @@ class CampaignManager(QObject):
         self.campaign_runner = CampaignRunner(self.message_engine)
         self.spintax_processor = SpintaxProcessor()
         self.plugin_manager = get_plugin_manager()
-        
+
         # Running campaigns tracking
         self._running_campaigns: Dict[int, asyncio.Task] = {}
         self._campaign_tasks: Dict[int, threading.Thread] = {}
         self._campaign_status: Dict[int, str] = {}
-        
+
         # Track sent recipients per campaign to avoid resending
         self._sent_recipients: Dict[int, set] = {}  # campaign_id -> set of recipient_ids
         self._campaign_recipient_hashes: Dict[int, str] = {}  # campaign_id -> recipient_list_hash
-        
+
         # Setup timer for status updates
         self.status_timer = QTimer()
         self.status_timer.timeout.connect(self._update_campaign_status)
         self.status_timer.start(5000)  # Update every 5 seconds
-        
+
         # Setup timer for scheduled campaigns
         self.scheduler_timer = QTimer()
         self.scheduler_timer.timeout.connect(self._check_scheduled_campaigns)
         self.scheduler_timer.start(60000)  # Check every minute
-    
+
     def start_campaign(self, campaign_id: int) -> bool:
         """Start a campaign."""
         try:
@@ -64,35 +64,41 @@ class CampaignManager(QObject):
                 if not campaign:
                     self.logger.error(f"Campaign {campaign_id} not found")
                     return False
-                
+
                 if not campaign.can_start():
                     self.logger.warning(f"Campaign {campaign_id} cannot be started")
                     return False
-                
+
                 # Check if already running
                 if campaign_id in self._running_campaigns:
                     self.logger.warning(f"Campaign {campaign_id} is already running")
                     return False
-                
+
                 # Double-check database status
                 if campaign.status == CampaignStatus.RUNNING:
                     self.logger.warning(f"Campaign {campaign_id} is already running in database")
                     return False
-                
+
                 # Check if this is a retry and handle accordingly
-                is_retry = campaign.status in [CampaignStatus.COMPLETED, CampaignStatus.STOPPED, CampaignStatus.ERROR]
+                is_retry = campaign.status in [
+                    CampaignStatus.COMPLETED,
+                    CampaignStatus.STOPPED,
+                    CampaignStatus.ERROR,
+                ]
                 recipients_changed = False
-                
+
                 if is_retry:
                     # Check if recipients have changed
                     current_hash = self._calculate_recipient_hash(campaign)
                     stored_hash = self._campaign_recipient_hashes.get(campaign_id)
                     recipients_changed = current_hash != stored_hash
-                    
+
                     if not recipients_changed and campaign.failed_count == 0:
-                        self.logger.warning(f"Campaign {campaign_id} has no failed messages and recipients unchanged - no retry needed")
+                        self.logger.warning(
+                            f"Campaign {campaign_id} has no failed messages and recipients unchanged - no retry needed"
+                        )
                         return False
-                
+
                 # Update campaign status
                 if campaign.status == CampaignStatus.SCHEDULED:
                     campaign.status = CampaignStatus.RUNNING
@@ -100,7 +106,7 @@ class CampaignManager(QObject):
                     campaign.status = CampaignStatus.RUNNING
                 else:
                     campaign.status = CampaignStatus.RUNNING
-                
+
                 # Reset progress if this is a retry with changed recipients
                 if is_retry and recipients_changed:
                     campaign.sent_count = 0
@@ -109,45 +115,48 @@ class CampaignManager(QObject):
                     campaign.progress_percentage = 0.0
                     # Clear sent recipients tracking for this campaign
                     self._sent_recipients[campaign_id] = set()
-                
+
                 campaign.start_time_actual = datetime.utcnow()
                 campaign.last_activity = datetime.utcnow()
                 session.commit()
-                
+
                 # Store recipient hash for change detection
                 current_hash = self._calculate_recipient_hash(campaign)
                 self._campaign_recipient_hashes[campaign_id] = current_hash
-                
+
                 # Track analytics for campaign start
-                self._track_analytics_event("campaign_started", {
-                    "campaign_id": campaign.id,
-                    "campaign_name": campaign.name,
-                    "campaign_type": campaign.campaign_type.value if campaign.campaign_type else None
-                })
-                
+                self._track_analytics_event(
+                    "campaign_started",
+                    {
+                        "campaign_id": campaign.id,
+                        "campaign_name": campaign.name,
+                        "campaign_type": (
+                            campaign.campaign_type.value if campaign.campaign_type else None
+                        ),
+                    },
+                )
+
                 # Mark as running BEFORE starting thread to prevent race conditions
                 self._running_campaigns[campaign_id] = True
                 self._campaign_status[campaign_id] = "running"
-                
+
                 # Start campaign in background thread
                 thread = threading.Thread(
-                    target=self._run_campaign_thread,
-                    args=(campaign_id,),
-                    daemon=True
+                    target=self._run_campaign_thread, args=(campaign_id,), daemon=True
                 )
                 thread.start()
                 self._campaign_tasks[campaign_id] = thread
-                
+
                 self.logger.info(f"Started campaign {campaign_id}: {campaign.name}")
                 self.logger.debug(f"Campaign {campaign_id} marked as running in tracking")
                 self.campaign_started.emit(campaign_id)
                 return True
-                
+
         except Exception as e:
             self.logger.error(f"Error starting campaign {campaign_id}: {e}")
             self.campaign_error.emit(campaign_id, str(e))
             return False
-    
+
     def pause_campaign(self, campaign_id: int) -> bool:
         """Pause a running campaign."""
         try:
@@ -156,34 +165,34 @@ class CampaignManager(QObject):
                 if not campaign:
                     self.logger.error(f"Campaign {campaign_id} not found")
                     return False
-                
+
                 if campaign.status != CampaignStatus.RUNNING:
                     self.logger.warning(f"Campaign {campaign_id} is not running")
                     return False
-                
+
                 # Update campaign status
                 campaign.status = CampaignStatus.PAUSED
                 campaign.last_activity = datetime.utcnow()
                 session.commit()
-                
+
                 # Cancel running task
                 if campaign_id in self._running_campaigns:
                     del self._running_campaigns[campaign_id]
-                
+
                 if campaign_id in self._campaign_tasks:
                     del self._campaign_tasks[campaign_id]
-                
+
                 self._campaign_status[campaign_id] = "paused"
-                
+
                 self.logger.info(f"Paused campaign {campaign_id}: {campaign.name}")
                 self.campaign_paused.emit(campaign_id)
                 return True
-                
+
         except Exception as e:
             self.logger.error(f"Error pausing campaign {campaign_id}: {e}")
             self.campaign_error.emit(campaign_id, str(e))
             return False
-    
+
     def stop_campaign(self, campaign_id: int) -> bool:
         """Stop a campaign."""
         try:
@@ -192,31 +201,31 @@ class CampaignManager(QObject):
                 if not campaign:
                     self.logger.error(f"Campaign {campaign_id} not found")
                     return False
-                
+
                 # Update campaign status
                 campaign.status = CampaignStatus.STOPPED
                 campaign.end_time_actual = datetime.utcnow()
                 campaign.last_activity = datetime.utcnow()
                 session.commit()
-                
+
                 # Cancel running task
                 if campaign_id in self._running_campaigns:
                     del self._running_campaigns[campaign_id]
-                
+
                 if campaign_id in self._campaign_tasks:
                     del self._campaign_tasks[campaign_id]
-                
+
                 self._campaign_status[campaign_id] = "stopped"
-                
+
                 self.logger.info(f"Stopped campaign {campaign_id}: {campaign.name}")
                 self.campaign_stopped.emit(campaign_id)
                 return True
-                
+
         except Exception as e:
             self.logger.error(f"Error stopping campaign {campaign_id}: {e}")
             self.campaign_error.emit(campaign_id, str(e))
             return False
-    
+
     def resume_campaign(self, campaign_id: int) -> bool:
         """Resume a paused campaign."""
         try:
@@ -225,35 +234,38 @@ class CampaignManager(QObject):
                 if not campaign:
                     self.logger.error(f"Campaign {campaign_id} not found")
                     return False
-                
+
                 if campaign.status != CampaignStatus.PAUSED:
-                    self.logger.warning(f"Cannot resume campaign {campaign_id} with status {campaign.status}")
+                    self.logger.warning(
+                        f"Cannot resume campaign {campaign_id} with status {campaign.status}"
+                    )
                     return False
-                
+
                 # Update status to RUNNING
                 campaign.status = CampaignStatus.RUNNING
                 campaign.last_activity = datetime.now()
                 session.commit()
-                
+
                 # Start the campaign thread
                 self._running_campaigns[campaign_id] = True
                 self._campaign_status[campaign_id] = "RUNNING"
-                
+
                 # Start campaign thread
                 import threading
+
                 thread = threading.Thread(target=self._run_campaign_thread, args=(campaign_id,))
                 thread.daemon = True
                 thread.start()
-                
+
                 self.logger.info(f"Resumed campaign {campaign_id}")
                 self.campaign_started.emit(campaign_id)
                 return True
-                
+
         except Exception as e:
             self.logger.error(f"Error resuming campaign {campaign_id}: {e}")
             self.campaign_error.emit(campaign_id, str(e))
             return False
-    
+
     def retry_campaign(self, campaign_id: int) -> bool:
         """Retry a failed campaign."""
         try:
@@ -262,11 +274,19 @@ class CampaignManager(QObject):
                 if not campaign:
                     self.logger.error(f"Campaign {campaign_id} not found")
                     return False
-                
-                if campaign.status not in [CampaignStatus.FAILED, CampaignStatus.INCOMPLETED, CampaignStatus.STOPPED, CampaignStatus.COMPLETED, CampaignStatus.ERROR]:
-                    self.logger.warning(f"Cannot retry campaign {campaign_id} with status {campaign.status}")
+
+                if campaign.status not in [
+                    CampaignStatus.FAILED,
+                    CampaignStatus.INCOMPLETED,
+                    CampaignStatus.STOPPED,
+                    CampaignStatus.COMPLETED,
+                    CampaignStatus.ERROR,
+                ]:
+                    self.logger.warning(
+                        f"Cannot retry campaign {campaign_id} with status {campaign.status}"
+                    )
                     return False
-                
+
                 # Reset campaign status and counters
                 campaign.status = CampaignStatus.DRAFT
                 campaign.sent_count = 0
@@ -275,23 +295,23 @@ class CampaignManager(QObject):
                 campaign.progress_percentage = 0.0
                 campaign.last_activity = datetime.now()
                 session.commit()
-                
+
                 # Start the campaign
                 return self.start_campaign(campaign_id)
-                
+
         except Exception as e:
             self.logger.error(f"Error retrying campaign {campaign_id}: {e}")
             self.campaign_error.emit(campaign_id, str(e))
             return False
-    
+
     def get_campaign_status(self, campaign_id: int) -> str:
         """Get current campaign status."""
         return self._campaign_status.get(campaign_id, "unknown")
-    
+
     def is_campaign_running(self, campaign_id: int) -> bool:
         """Check if campaign is currently running."""
         return campaign_id in self._running_campaigns
-    
+
     def can_retry_campaign(self, campaign_id: int) -> bool:
         """Check if campaign can be retried (has failed messages or recipients changed)."""
         try:
@@ -299,27 +319,27 @@ class CampaignManager(QObject):
                 campaign = session.get(Campaign, campaign_id)
                 if not campaign:
                     return False
-                
+
                 # Can retry if campaign status is FAILED or INCOMPLETED
                 if campaign.status in [CampaignStatus.FAILED, CampaignStatus.INCOMPLETED]:
                     return True
-                
+
                 # Can retry if campaign is not running and has failed messages
                 if campaign.failed_count > 0:
                     return True
-                
+
                 # Can retry if recipients have changed
                 current_hash = self._calculate_recipient_hash(campaign)
                 stored_hash = self._campaign_recipient_hashes.get(campaign_id)
                 if current_hash != stored_hash:
                     return True
-                
+
                 return False
-                
+
         except Exception as e:
             self.logger.error(f"Error checking retry eligibility: {e}")
             return False
-    
+
     def duplicate_campaign(self, campaign_id: int) -> Optional[int]:
         """Duplicate a completed campaign as a new draft campaign."""
         try:
@@ -329,10 +349,10 @@ class CampaignManager(QObject):
                 if not original_campaign:
                     self.logger.error(f"Campaign {campaign_id} not found")
                     return None
-                
+
                 # Allow duplicating any campaign (DRAFT, COMPLETED, etc.)
                 # This is useful for creating variations of existing campaigns
-                
+
                 # Create new campaign with same settings but reset status and counts
                 new_campaign = Campaign(
                     name=f"{original_campaign.name} (Copy)",
@@ -376,88 +396,88 @@ class CampaignManager(QObject):
                     last_activity=None,
                     is_active=True,
                     tags=original_campaign.tags,
-                    notes=f"Duplicated from campaign '{original_campaign.name}' (ID: {original_campaign.id})"
+                    notes=f"Duplicated from campaign '{original_campaign.name}' (ID: {original_campaign.id})",
                 )
-                
+
                 session.add(new_campaign)
                 session.commit()
                 session.refresh(new_campaign)
-                
-                self.logger.info(f"Duplicated campaign {campaign_id} as new campaign {new_campaign.id}")
+
+                self.logger.info(
+                    f"Duplicated campaign {campaign_id} as new campaign {new_campaign.id}"
+                )
                 return new_campaign.id
-                
+
         except Exception as e:
             self.logger.error(f"Error duplicating campaign {campaign_id}: {e}")
             return None
-    
+
     def _calculate_recipient_hash(self, campaign: Campaign) -> str:
         """Calculate hash of current recipient list for a campaign."""
         try:
             import hashlib
-            
+
             # Get current recipients
             recipients = self._get_campaign_recipients_sync(campaign)
-            
+
             # Create hash from recipient IDs
             recipient_ids = sorted([r.id for r in recipients])
             hash_input = f"{campaign.id}_{len(recipient_ids)}_{'_'.join(map(str, recipient_ids))}"
-            
+
             return hashlib.md5(hash_input.encode()).hexdigest()
-            
+
         except Exception as e:
             self.logger.error(f"Error calculating recipient hash: {e}")
             return ""
-    
+
     def _get_campaign_recipients_sync(self, campaign: Campaign) -> List[Recipient]:
         """Get recipients for a campaign synchronously."""
         try:
             with get_session() as session:
                 from sqlmodel import select
-                
+
                 # Get recipients based on campaign settings
                 if campaign.recipient_source == "manual":
                     # Get all active recipients
                     query = select(Recipient).where(
-                        Recipient.is_deleted == False,
-                        Recipient.status == "active"
+                        Recipient.is_deleted.is_(False), Recipient.status == "active"
                     )
                 else:
                     # For other sources, return empty for now
                     return []
-                
+
                 recipients = session.exec(query).all()
                 return list(recipients)
-                
+
         except Exception as e:
             self.logger.error(f"Error getting recipients: {e}")
             return []
-    
+
     async def _get_sent_recipients(self, campaign_id: int) -> set:
         """Get recipients that have already been sent to successfully."""
         try:
             with get_session() as session:
                 from sqlmodel import select
                 from ..models import SendLog, SendStatus
-                
+
                 # Get all successful send logs for this campaign
                 query = select(SendLog.recipient_id).where(
-                    SendLog.campaign_id == campaign_id,
-                    SendLog.status == SendStatus.SENT
+                    SendLog.campaign_id == campaign_id, SendLog.status == SendStatus.SENT
                 )
-                
+
                 sent_recipient_ids = session.exec(query).all()
                 return set(sent_recipient_ids)
-                
+
         except Exception as e:
             self.logger.error(f"Error getting sent recipients: {e}")
             return set()
-    
+
     def _run_campaign_thread(self, campaign_id: int):
         """Run campaign in a separate thread."""
         try:
             # Use asyncio.run() to create a completely isolated event loop
             asyncio.run(self._run_campaign_async(campaign_id))
-            
+
         except Exception as e:
             self.logger.error(f"Error in campaign thread {campaign_id}: {e}")
             self.campaign_error.emit(campaign_id, str(e))
@@ -469,7 +489,7 @@ class CampaignManager(QObject):
                 del self._campaign_tasks[campaign_id]
             if campaign_id in self._campaign_status:
                 del self._campaign_status[campaign_id]
-    
+
     async def _run_campaign_async(self, campaign_id: int):
         """Run campaign asynchronously."""
         self.logger.info(f"Campaign {campaign_id} execution started")
@@ -478,7 +498,7 @@ class CampaignManager(QObject):
                 campaign = session.get(Campaign, campaign_id)
                 if not campaign:
                     return
-                
+
                 # Get recipients
                 recipients = await self._get_campaign_recipients(campaign)
                 if not recipients:
@@ -488,11 +508,11 @@ class CampaignManager(QObject):
                     session.commit()
                     self.campaign_completed.emit(campaign_id)
                     return
-                
+
                 # Update total recipients
                 campaign.total_recipients = len(recipients)
                 session.commit()
-                
+
                 # Get available accounts
                 accounts = await self._get_available_accounts()
                 if not accounts:
@@ -501,122 +521,146 @@ class CampaignManager(QObject):
                     session.commit()
                     self.campaign_error.emit(campaign_id, "No available accounts")
                     return
-                
+
                 # For campaign execution, we'll create new clients in the thread
                 # This avoids the asyncio event loop conflict
                 ready_accounts = []
                 for account in accounts:
                     # Check if account is online (handle both string and enum)
-                    account_status = str(account.status).split('.')[-1] if hasattr(account.status, 'value') else str(account.status)
+                    account_status = (
+                        str(account.status).split(".")[-1]
+                        if hasattr(account.status, "value")
+                        else str(account.status)
+                    )
                     if account_status == "ONLINE":
                         ready_accounts.append(account)
                     else:
-                        self.logger.warning(f"Account {account.name} (ID: {account.id}) is not online (status: {account_status}) - skipping")
-                
+                        self.logger.warning(
+                            f"Account {account.name} (ID: {account.id}) is not online (status: {account_status}) - skipping"
+                        )
+
                 if not ready_accounts:
                     self.logger.error(f"No ready accounts for campaign {campaign_id}")
                     campaign.status = CampaignStatus.ERROR
                     campaign.end_time_actual = datetime.utcnow()
                     session.commit()
                     self.campaign_error.emit(campaign_id, "No ready accounts")
-                    
+
                     # Create error log
                     await self._create_error_log(campaign, "No ready accounts available")
                     return
-                
+
                 # Use only ready accounts
                 accounts = ready_accounts
-                
+
                 # Initialize sent recipients tracking for this campaign
                 if campaign_id not in self._sent_recipients:
                     self._sent_recipients[campaign_id] = set()
-                
+
                 # Get already sent recipients from database
                 already_sent = await self._get_sent_recipients(campaign_id)
                 self._sent_recipients[campaign_id].update(already_sent)
-                
+
                 # Process recipients
                 sent_count = campaign.sent_count  # Start with existing count
                 failed_count = campaign.failed_count  # Start with existing count
                 skipped_count = campaign.skipped_count  # Start with existing count
-                
+
                 for i, recipient in enumerate(recipients):
                     # Check if campaign should continue
                     with get_session() as check_session:
                         check_campaign = check_session.get(Campaign, campaign_id)
                         if check_campaign.status != CampaignStatus.RUNNING:
                             break
-                    
+
                     # Skip if already sent successfully
                     if recipient.id in self._sent_recipients[campaign_id]:
-                        self.logger.debug(f"Skipping already sent recipient {recipient.get_display_name()}")
+                        self.logger.debug(
+                            f"Skipping already sent recipient {recipient.get_display_name()}"
+                        )
                         continue
-                    
+
                     try:
                         # Select account
                         account = self._select_account(accounts, campaign)
                         if not account:
                             skipped_count += 1
                             continue
-                        
+
                         # Prepare message
                         message_text = self._prepare_message(campaign, recipient)
-                        
+
                         # Skip if message was filtered out by plugins
                         if message_text is None:
                             skipped_count += 1
-                            self.logger.debug(f"Message filtered out by plugin for recipient {recipient.get_display_name()}")
+                            self.logger.debug(
+                                f"Message filtered out by plugin for recipient {recipient.get_display_name()}"
+                            )
                             continue
-                        
+
                         media_path = campaign.get_effective_media_path(recipient.id)
-                        
+
                         # Send message
-                        result = await self._send_message(account, recipient, message_text, media_path, campaign)
-                        
+                        result = await self._send_message(
+                            account, recipient, message_text, media_path, campaign
+                        )
+
                         # Update counts and tracking
                         if result["success"]:
                             sent_count += 1
                             self._sent_recipients[campaign_id].add(recipient.id)
                             self.logger.info(f"Sent message to {recipient.get_display_name()}")
-                            
+
                             # Track analytics
-                            self._track_analytics_event("message_sent", {
-                                "campaign_id": campaign.id,
-                                "campaign_name": campaign.name,
-                                "recipient_id": recipient.id,
-                                "account_id": account.id,
-                                "success": True
-                            })
+                            self._track_analytics_event(
+                                "message_sent",
+                                {
+                                    "campaign_id": campaign.id,
+                                    "campaign_name": campaign.name,
+                                    "recipient_id": recipient.id,
+                                    "account_id": account.id,
+                                    "success": True,
+                                },
+                            )
                         else:
                             failed_count += 1
-                            self.logger.warning(f"Failed to send message to {recipient.get_display_name()}: {result.get('error', 'Unknown error')}")
-                            
+                            self.logger.warning(
+                                f"Failed to send message to {recipient.get_display_name()}: {result.get('error', 'Unknown error')}"
+                            )
+
                             # Track analytics
-                            self._track_analytics_event("message_failed", {
-                                "campaign_id": campaign.id,
-                                "campaign_name": campaign.name,
-                                "recipient_id": recipient.id,
-                                "account_id": account.id,
-                                "error": result.get("error", "Unknown error"),
-                                "success": False
-                            })
-                        
+                            self._track_analytics_event(
+                                "message_failed",
+                                {
+                                    "campaign_id": campaign.id,
+                                    "campaign_name": campaign.name,
+                                    "recipient_id": recipient.id,
+                                    "account_id": account.id,
+                                    "error": result.get("error", "Unknown error"),
+                                    "success": False,
+                                },
+                            )
+
                         # Create send log
                         await self._create_send_log(campaign, account, recipient, result)
-                        self.logger.debug(f"Created send log for campaign {campaign_id}, account {account.id}, recipient {recipient.id}")
-                        
+                        self.logger.debug(
+                            f"Created send log for campaign {campaign_id}, account {account.id}, recipient {recipient.id}"
+                        )
+
                         # Update campaign progress
                         progress = ((i + 1) / len(recipients)) * 100
-                        await self._update_campaign_progress(campaign_id, sent_count, failed_count, skipped_count, progress)
-                        
+                        await self._update_campaign_progress(
+                            campaign_id, sent_count, failed_count, skipped_count, progress
+                        )
+
                         # Rate limiting
                         if i < len(recipients) - 1:  # Don't sleep after last message
                             await asyncio.sleep(60 / campaign.messages_per_minute)
-                        
+
                     except Exception as e:
                         self.logger.error(f"Error processing recipient {recipient.id}: {e}")
                         failed_count += 1
-                
+
                 # Mark campaign as completed
                 with get_session() as final_session:
                     final_campaign = final_session.get(Campaign, campaign_id)
@@ -631,7 +675,7 @@ class CampaignManager(QObject):
                         else:
                             # All messages sent successfully
                             final_campaign.status = CampaignStatus.COMPLETED
-                        
+
                         final_campaign.end_time_actual = datetime.utcnow()
                         final_campaign.sent_count = sent_count
                         final_campaign.failed_count = failed_count
@@ -639,70 +683,71 @@ class CampaignManager(QObject):
                         final_campaign.progress_percentage = 100.0
                         final_campaign.last_activity = datetime.utcnow()
                         final_session.commit()
-                        
-                        self.logger.info(f"Completed campaign {campaign_id}: {sent_count} sent, {failed_count} failed, {skipped_count} skipped")
+
+                        self.logger.info(
+                            f"Completed campaign {campaign_id}: {sent_count} sent, {failed_count} failed, {skipped_count} skipped"
+                        )
                         self.campaign_completed.emit(campaign_id)
-                
+
         except Exception as e:
             self.logger.error(f"Error running campaign {campaign_id}: {e}")
             self.campaign_error.emit(campaign_id, str(e))
-    
+
     async def _get_campaign_recipients(self, campaign: Campaign) -> List[Recipient]:
         """Get recipients for a campaign."""
         try:
             with get_session() as session:
                 from sqlmodel import select
-                
+
                 # Get recipients based on campaign settings
                 if campaign.recipient_source == "manual":
                     # Get all active recipients
                     query = select(Recipient).where(
-                        Recipient.is_deleted == False,
-                        Recipient.status == "active"
+                        Recipient.is_deleted.is_(False), Recipient.status == "active"
                     )
                 else:
                     # For other sources, return empty for now
                     return []
-                
+
                 recipients = session.exec(query).all()
                 return list(recipients)
-                
+
         except Exception as e:
             self.logger.error(f"Error getting recipients: {e}")
             return []
-    
+
     async def _get_available_accounts(self) -> List[Account]:
         """Get available accounts for sending."""
         try:
             with get_session() as session:
                 from sqlmodel import select
-                
+
                 query = select(Account).where(
-                    Account.is_deleted == False,
+                    Account.is_deleted.is_(False),
                     Account.status == "ONLINE",
-                    Account.is_active == True
+                    Account.is_active.is_(True),
                 )
-                
+
                 accounts = session.exec(query).all()
                 return list(accounts)
-                
+
         except Exception as e:
             self.logger.error(f"Error getting accounts: {e}")
             return []
-    
+
     def _select_account(self, accounts: List[Account], campaign: Campaign) -> Optional[Account]:
         """Select an account for sending."""
         if not accounts:
             return None
-        
+
         # Simple round-robin selection for now
         # Could be enhanced with weighted selection, random selection, etc.
         return accounts[0]  # For now, just return the first available account
-    
+
     def _prepare_message(self, campaign: Campaign, recipient: Recipient) -> Optional[str]:
         """Prepare message text for sending, including plugin filtering."""
         message_text = campaign.get_effective_message_text(recipient.id)
-        
+
         # Apply spintax if enabled
         if campaign.use_spintax and message_text:
             try:
@@ -711,33 +756,33 @@ class CampaignManager(QObject):
                 self.logger.debug(f"Spintax processed: '{message_text}'")
             except Exception as e:
                 self.logger.warning(f"Error processing spintax: {e}")
-        
+
         # Apply basic personalization
         message_text = message_text.replace("{name}", recipient.get_display_name())
         message_text = message_text.replace("{username}", recipient.username or "")
-        
+
         # Apply plugin filters
         message_text = self._apply_message_filters(message_text, recipient)
-        
+
         return message_text
-    
+
     def _apply_message_filters(self, message_text: str, recipient: Recipient) -> Optional[str]:
         """
         Apply message filter plugins to the message.
-        
+
         Args:
             message_text: Message text to filter
             recipient: Recipient object
-            
+
         Returns:
             Filtered message text, or None if filtered out
         """
         if not message_text:
             return message_text
-        
+
         # Get enabled filter plugins
         enabled_plugins = self.plugin_manager.list_enabled_plugins()
-        
+
         recipient_data = {
             "id": recipient.id,
             "first_name": recipient.first_name,
@@ -746,11 +791,13 @@ class CampaignManager(QObject):
             "phone_number": recipient.phone_number,
             "type": recipient.type.value if recipient.type else None,
         }
-        
+
         filtered_message = message_text
-        
+
         for plugin_info in enabled_plugins:
-            plugin = self.plugin_manager.get_plugin(f"{plugin_info.metadata.name}@{plugin_info.metadata.version}")
+            plugin = self.plugin_manager.get_plugin(
+                f"{plugin_info.metadata.name}@{plugin_info.metadata.version}"
+            )
             if plugin and isinstance(plugin, MessageFilterPlugin):
                 try:
                     filtered_message = plugin.filter_message(filtered_message, recipient_data)
@@ -759,28 +806,37 @@ class CampaignManager(QObject):
                         return None
                 except Exception as e:
                     self.logger.error(f"Error in filter plugin {plugin_info.metadata.name}: {e}")
-        
+
         return filtered_message
-    
+
     def _track_analytics_event(self, event_name: str, data: Dict[str, Any]):
         """
         Track analytics event through enabled analytics plugins.
-        
+
         Args:
             event_name: Name of the event
             data: Event data dictionary
         """
         enabled_plugins = self.plugin_manager.list_enabled_plugins()
-        
+
         for plugin_info in enabled_plugins:
-            plugin = self.plugin_manager.get_plugin(f"{plugin_info.metadata.name}@{plugin_info.metadata.version}")
+            plugin = self.plugin_manager.get_plugin(
+                f"{plugin_info.metadata.name}@{plugin_info.metadata.version}"
+            )
             if plugin and isinstance(plugin, AnalyticsPlugin):
                 try:
                     plugin.track_event(event_name, data)
                 except Exception as e:
                     self.logger.error(f"Error in analytics plugin {plugin_info.metadata.name}: {e}")
-    
-    async def _send_message(self, account: Account, recipient: Recipient, message_text: str, media_path: Optional[str], campaign: Optional[Campaign] = None) -> Dict[str, Any]:
+
+    async def _send_message(
+        self,
+        account: Account,
+        recipient: Recipient,
+        message_text: str,
+        media_path: Optional[str],
+        campaign: Optional[Campaign] = None,
+    ) -> Dict[str, Any]:
         """Send a message using a fresh client to avoid event loop conflicts."""
         try:
             self.logger.debug(f"Creating fresh client for account {account.id}")
@@ -789,93 +845,89 @@ class CampaignManager(QObject):
             from telethon.errors import SessionPasswordNeededError
             from ..core.message_forwarder import MessageForwarder
             import os
-            
+
             # Check if forwarding is enabled
             if campaign and campaign.forward_enabled and campaign.forward_from_message_id:
                 # Forward message instead of sending new one
                 forwarder = MessageForwarder()
-                
+
                 # Get proxy configuration from account
                 proxy = account.get_telethon_proxy()
                 if proxy:
-                    self.logger.debug(f"Using proxy for forwarding: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}")
-                
+                    self.logger.debug(
+                        f"Using proxy for forwarding: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}"
+                    )
+
                 client = TelegramClient(
-                    account.session_path,
-                    account.api_id,
-                    account.api_hash,
-                    proxy=proxy
+                    account.session_path, account.api_id, account.api_hash, proxy=proxy
                 )
-                
+
                 try:
                     await client.start(
-                        phone=account.phone_number,
-                        password=account.session_password
+                        phone=account.phone_number, password=account.session_password
                     )
-                    
+
                     if not client.is_connected():
                         await client.disconnect()
                         return {"success": False, "error": "Account not connected"}
-                    
+
                     # Get source chat identifier
-                    from_chat = campaign.forward_from_chat_username or str(campaign.forward_from_chat_id)
+                    from_chat = campaign.forward_from_chat_username or str(
+                        campaign.forward_from_chat_id
+                    )
                     to_chat = recipient.get_identifier()
-                    
+
                     # Forward the message
                     result = await forwarder.forward_message(
                         client,
                         from_chat,
                         campaign.forward_from_message_id,
                         to_chat,
-                        recipient.thread_id
+                        recipient.thread_id,
                     )
-                    
+
                     await client.disconnect()
                     return result
-                    
+
                 except Exception as e:
                     if client:
                         await client.disconnect()
                     return {"success": False, "error": f"Failed to forward message: {e}"}
-            
+
             # Regular message sending
             # Create a completely fresh Telegram client
             # Get proxy configuration from account
             proxy = account.get_telethon_proxy()
             if proxy:
-                self.logger.debug(f"Using proxy for sending: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}")
-            
+                self.logger.debug(
+                    f"Using proxy for sending: {proxy['proxy_type']}://{proxy['addr']}:{proxy['port']}"
+                )
+
             client = TelegramClient(
-                account.session_path,
-                account.api_id,
-                account.api_hash,
-                proxy=proxy
+                account.session_path, account.api_id, account.api_hash, proxy=proxy
             )
-            
+
             # Connect the client
             try:
-                await client.start(
-                    phone=account.phone_number,
-                    password=account.session_password
-                )
+                await client.start(phone=account.phone_number, password=account.session_password)
             except SessionPasswordNeededError:
                 await client.disconnect()
                 return {"success": False, "error": "Session password needed"}
             except Exception as e:
                 await client.disconnect()
                 return {"success": False, "error": f"Failed to start client: {e}"}
-            
+
             if not client.is_connected():
                 await client.disconnect()
                 return {"success": False, "error": "Account not connected"}
-            
+
             # Get entity
             try:
                 entity = await client.get_entity(recipient.get_identifier())
             except Exception as e:
                 await client.disconnect()
                 return {"success": False, "error": f"Failed to get entity: {e}"}
-            
+
             # Send message (with thread support for groups)
             try:
                 send_kwargs = {}
@@ -883,43 +935,35 @@ class CampaignManager(QObject):
                     # For groups with threads, we need to send to the thread
                     # Note: Telethon's send_message supports reply_to for threads
                     send_kwargs["reply_to"] = recipient.thread_id
-                
+
                 if media_path and os.path.exists(media_path):
                     # Send with media
                     sent_message = await client.send_file(
-                        entity,
-                        media_path,
-                        caption=message_text,
-                        **send_kwargs
+                        entity, media_path, caption=message_text, **send_kwargs
                     )
-                elif media_path and (media_path.startswith('http://') or media_path.startswith('https://')):
+                elif media_path and (
+                    media_path.startswith("http://") or media_path.startswith("https://")
+                ):
                     # Send URL as media
                     sent_message = await client.send_file(
-                        entity,
-                        media_path,
-                        caption=message_text,
-                        **send_kwargs
+                        entity, media_path, caption=message_text, **send_kwargs
                     )
                 else:
                     # Send text only
-                    sent_message = await client.send_message(
-                        entity,
-                        message_text,
-                        **send_kwargs
-                    )
-                
+                    sent_message = await client.send_message(entity, message_text, **send_kwargs)
+
                 await client.disconnect()
                 self.logger.debug(f"Successfully sent message to {recipient.get_display_name()}")
                 return {"success": True, "message_id": sent_message.id}
-                
+
             except Exception as e:
                 await client.disconnect()
                 return {"success": False, "error": f"Failed to send message: {e}"}
-            
+
         except Exception as e:
             self.logger.error(f"Error sending message: {e}")
             return {"success": False, "error": str(e)}
-    
+
     async def _create_error_log(self, campaign: Campaign, error_message: str):
         """Create an error log entry for campaign failures."""
         try:
@@ -935,19 +979,23 @@ class CampaignManager(QObject):
                     status=SendStatus.FAILED,
                     error_message=error_message,
                     sent_at=datetime.utcnow(),
-                    is_warmup=False
+                    is_warmup=False,
                 )
-                
+
                 session.add(send_log)
                 session.commit()
-                
+
         except Exception as e:
             self.logger.error(f"Error creating error log: {e}")
-    
-    async def _create_send_log(self, campaign: Campaign, account: Account, recipient: Recipient, result: Dict[str, Any]):
+
+    async def _create_send_log(
+        self, campaign: Campaign, account: Account, recipient: Recipient, result: Dict[str, Any]
+    ):
         """Create a send log entry."""
         try:
-            self.logger.debug(f"Creating send log for campaign {campaign.id}, account {account.id}, recipient {recipient.id}, success: {result['success']}")
+            self.logger.debug(
+                f"Creating send log for campaign {campaign.id}, account {account.id}, recipient {recipient.id}, success: {result['success']}"
+            )
             with get_session() as session:
                 send_log = SendLog(
                     campaign_id=campaign.id,
@@ -957,14 +1005,18 @@ class CampaignManager(QObject):
                     status=SendStatus.SENT if result["success"] else SendStatus.FAILED,
                     error_message=result.get("error"),
                     sent_at=datetime.utcnow() if result["success"] else None,
-                    duration_ms=int(result.get("duration", 0) * 1000) if result.get("duration") else None
+                    duration_ms=(
+                        int(result.get("duration", 0) * 1000) if result.get("duration") else None
+                    ),
                 )
                 session.add(send_log)
                 session.commit()
         except Exception as e:
             self.logger.error(f"Error creating send log: {e}")
-    
-    async def _update_campaign_progress(self, campaign_id: int, sent: int, failed: int, skipped: int, progress: float):
+
+    async def _update_campaign_progress(
+        self, campaign_id: int, sent: int, failed: int, skipped: int, progress: float
+    ):
         """Update campaign progress."""
         try:
             with get_session() as session:
@@ -976,78 +1028,81 @@ class CampaignManager(QObject):
                     campaign.progress_percentage = progress
                     campaign.last_activity = datetime.utcnow()
                     session.commit()
-                    
+
                     # Emit progress update signal
                     progress_data = {
                         "sent": sent,
                         "failed": failed,
                         "skipped": skipped,
-                        "progress": progress
+                        "progress": progress,
                     }
                     self.campaign_progress_updated.emit(campaign_id, progress_data)
         except Exception as e:
             self.logger.error(f"Error updating campaign progress: {e}")
-    
+
     def _update_campaign_status(self):
         """Update campaign status from database."""
         try:
             with get_session() as session:
                 from sqlmodel import select
-                
+
                 # Get all running campaigns from database
                 query = select(Campaign).where(
-                    Campaign.status == CampaignStatus.RUNNING,
-                    Campaign.is_deleted == False
+                    Campaign.status == CampaignStatus.RUNNING, Campaign.is_deleted.is_(False)
                 )
                 running_campaigns = session.exec(query).all()
-                
+
                 # Check if any running campaigns are no longer in our tracking
                 for campaign in running_campaigns:
                     if campaign.id not in self._running_campaigns:
                         # Campaign was started externally or restarted
                         self._campaign_status[campaign.id] = "running"
                         self.campaign_started.emit(campaign.id)
-                
+
         except Exception as e:
             self.logger.error(f"Error updating campaign status: {e}")
-    
+
     def _check_scheduled_campaigns(self):
         """Check for campaigns that should be started based on their start time."""
         try:
             with get_session() as session:
                 from sqlmodel import select
                 from datetime import datetime
-                import pytz
-                
+
                 # Get campaigns that are scheduled and should start now
                 now = datetime.utcnow()
                 query = select(Campaign).where(
                     Campaign.status == CampaignStatus.SCHEDULED,
-                    Campaign.is_deleted == False,
+                    Campaign.is_deleted.is_(False),
                     Campaign.start_time <= now,
-                    Campaign.is_active == True
+                    Campaign.is_active.is_(True),
                 )
-                
+
                 scheduled_campaigns = session.exec(query).all()
-                
+
                 if scheduled_campaigns:
-                    self.logger.info(f"Found {len(scheduled_campaigns)} scheduled campaigns to start")
-                
+                    self.logger.info(
+                        f"Found {len(scheduled_campaigns)} scheduled campaigns to start"
+                    )
+
                 for campaign in scheduled_campaigns:
-                    self.logger.info(f"Starting scheduled campaign {campaign.id}: {campaign.name} (scheduled for {campaign.start_time})")
+                    self.logger.info(
+                        f"Starting scheduled campaign {campaign.id}: {campaign.name} (scheduled for {campaign.start_time})"
+                    )
                     # Start the campaign
                     success = self.start_campaign(campaign.id)
                     if success:
                         self.logger.info(f"Successfully started scheduled campaign {campaign.id}")
                     else:
                         self.logger.warning(f"Failed to start scheduled campaign {campaign.id}")
-                
+
         except Exception as e:
             self.logger.error(f"Error checking scheduled campaigns: {e}")
 
 
 # Global campaign manager instance
 _campaign_manager = None
+
 
 def get_campaign_manager() -> CampaignManager:
     """Get the global campaign manager instance."""

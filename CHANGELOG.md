@@ -5,6 +5,22 @@ All notable changes to the Telegram Multi-Account Message Sender project will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.9] - 2026-03-12
+
+### Fixed
+- **Spintax Determinism**: Fixed seeded spintax processing to use instance-local RNG so identical seeds produce reproducible output.
+- **Spintax Validation**: Fixed validation to correctly flag empty variants and nested spintax as invalid.
+- **Async Test Execution**: Fixed async unit-test execution by adding `pytest-asyncio` to development dependencies.
+- **UI Translation Key**: Fixed missing translation-key usage by replacing `common.info` calls with `common.information` in core widgets.
+
+### Changed
+- **Warmup Manager Typing**: Improved worker tracking type safety by using `QThread`-typed worker references in `WarmupManager`.
+- **Lint Baseline Cleanup**: Reduced lint backlog by removing unused imports/variables, eliminating bare `except`, and normalizing SQLAlchemy boolean filters to `.is_(...)`.
+
+### Quality
+- **Verification Pass**: Re-ran lint, type-check, unit tests, and live app startup smoke checks on Linux.
+- **Live Preview Stability**: Confirmed app boot path initializes database, plugins, translations, and main window without startup regression.
+
 ## [1.2.8] - 2025-12-07
 
 ### Added

@@ -2,8 +2,8 @@
 Database service with SQLite initialization and session management.
 """
 
-import asyncio
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, AsyncGenerator, Any, Dict
 from contextlib import asynccontextmanager
@@ -16,37 +16,34 @@ from sqlalchemy.pool import StaticPool
 from .settings import get_settings
 from .logger import get_logger
 from .performance import get_performance_monitor
-from ..models import (
-    BaseModel, Account, Campaign, Recipient, SendLog
-)
 
 
 class DatabaseService:
     """Database service for managing SQLite database operations."""
-    
+
     def __init__(self):
         self.settings = get_settings()
         self.logger = get_logger()
         self.engine: Optional[Engine] = None
         self._initialized = False
-    
+
     def initialize(self) -> None:
         """Initialize database connection and create tables."""
         if self._initialized:
             return
-        
+
         try:
             # Ensure app data directory exists
             app_data_dir = Path(self.settings.app_data_dir)
             app_data_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Create database engine
             database_url = self.settings.database_url
             if database_url.startswith("sqlite:///"):
                 # SQLite specific configuration
                 db_path = self.settings.get_database_path()
                 db_path.parent.mkdir(parents=True, exist_ok=True)
-                
+
                 self.engine = create_engine(
                     database_url,
                     poolclass=StaticPool,
@@ -63,25 +60,25 @@ class DatabaseService:
                     echo=self.settings.debug,
                     pool_pre_ping=True,
                 )
-            
+
             # Add event listeners
             self._setup_event_listeners()
-            
+
             # Create all tables
             self.create_tables()
-            
+
             self._initialized = True
             self.logger.info(f"Database initialized: {database_url}")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to initialize database: {e}")
             raise
-    
+
     def _setup_event_listeners(self):
         """Set up database event listeners."""
         if not self.engine:
             return
-        
+
         @event.listens_for(self.engine, "connect")
         def set_sqlite_pragma(dbapi_connection, connection_record):
             """Set SQLite pragmas for better performance and compatibility."""
@@ -104,66 +101,69 @@ class DatabaseService:
                 # Enable mmap for faster reads
                 cursor.execute("PRAGMA mmap_size=268435456")  # 256MB
                 cursor.close()
-        
+
         # Setup performance monitoring at engine level
         try:
+
             @event.listens_for(self.engine, "before_cursor_execute")
-            def receive_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            def receive_before_cursor_execute(
+                conn, cursor, statement, parameters, context, executemany
+            ):
                 context._query_start_time = time.time()
-            
+
             @event.listens_for(self.engine, "after_cursor_execute")
-            def receive_after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-                if hasattr(context, '_query_start_time'):
+            def receive_after_cursor_execute(
+                conn, cursor, statement, parameters, context, executemany
+            ):
+                if hasattr(context, "_query_start_time"):
                     total = time.time() - context._query_start_time
                     monitor = get_performance_monitor()
                     # Extract query name from statement
                     query_name = statement[:50] if statement else "unknown"
                     monitor.record_query_time(query_name, total)
+
         except Exception as e:
             self.logger.warning(f"Could not setup performance monitoring: {e}")
-    
+
     def create_tables(self) -> None:
         """Create all database tables."""
         if not self.engine:
             raise RuntimeError("Database engine not initialized")
-        
+
         try:
             # Import all models to ensure they are registered with SQLModel
-            from ..models import (
-                Account, Campaign, Recipient, SendLog, MessageTemplate,
-                CampaignTemplate, RecipientGroup, RecipientGroupMember
-            )
-            from ..models.recipient import RecipientList, RecipientListRecipient
+            pass
+
             SQLModel.metadata.create_all(self.engine)
             self.logger.info("Database tables created successfully")
         except Exception as e:
             self.logger.error(f"Failed to create database tables: {e}")
             raise
-    
+
     def drop_tables(self) -> None:
         """Drop all database tables (use with caution)."""
         if not self.engine:
             raise RuntimeError("Database engine not initialized")
-        
+
         try:
             SQLModel.metadata.drop_all(self.engine)
             self.logger.warning("All database tables dropped")
         except Exception as e:
             self.logger.error(f"Failed to drop database tables: {e}")
             raise
-    
+
     def get_session(self) -> Session:
         """Get a new database session with query optimization."""
         if not self.engine:
             raise RuntimeError("Database engine not initialized")
-        
+
         session = Session(self.engine)
-        
+
         # Note: Query performance monitoring is handled at the engine level
         # to avoid event registration issues with SQLModel sessions
-        
+
         return session
-    
+
     @asynccontextmanager
     async def get_async_session(self) -> AsyncGenerator[Session, None]:
         """Get an async database session."""
@@ -172,7 +172,7 @@ class DatabaseService:
             yield session
         finally:
             session.close()
-    
+
     def close(self) -> None:
         """Close database connection."""
         if self.engine:
@@ -180,13 +180,13 @@ class DatabaseService:
             self.engine = None
             self._initialized = False
             self.logger.info("Database connection closed")
-    
+
     def health_check(self) -> Dict[str, Any]:
         """Check database health."""
         try:
             with self.get_session() as session:
                 # Simple query to test connection
-                result = session.exec(select(1)).first()
+                session.exec(select(1)).first()
                 return {
                     "status": "healthy",
                     "connected": True,
@@ -199,17 +199,17 @@ class DatabaseService:
                 "error": str(e),
                 "engine": str(self.engine.url) if self.engine else None,
             }
-    
+
     def get_table_info(self) -> Dict[str, Any]:
         """Get information about database tables."""
         if not self.engine:
             return {}
-        
+
         try:
             with self.get_session() as session:
                 # Get table names
                 tables = SQLModel.metadata.tables.keys()
-                
+
                 # Get row counts for each table
                 table_counts = {}
                 for table_name in tables:
@@ -219,55 +219,60 @@ class DatabaseService:
                         table_counts[table_name] = len(count_result)
                     except Exception as e:
                         table_counts[table_name] = f"Error: {e}"
-                
+
                 return {
                     "tables": list(tables),
                     "table_counts": table_counts,
                 }
         except Exception as e:
             return {"error": str(e)}
-    
+
     def backup_database(self, backup_path: Optional[Path] = None) -> Path:
         """Create a backup of the database."""
         if not self.engine:
             raise RuntimeError("Database engine not initialized")
-        
+
         if not self.settings.database_url.startswith("sqlite:///"):
             raise NotImplementedError("Backup only supported for SQLite databases")
-        
+
         if backup_path is None:
-            backup_path = Path(self.settings.app_data_dir) / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
-        
+            backup_path = (
+                Path(self.settings.app_data_dir)
+                / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+            )
+
         # For SQLite, we can simply copy the file
         import shutil
+
         db_path = self.settings.get_database_path()
         shutil.copy2(db_path, backup_path)
-        
+
         self.logger.info(f"Database backed up to: {backup_path}")
         return backup_path
-    
+
     def restore_database(self, backup_path: Path) -> None:
         """Restore database from backup."""
         if not self.engine:
             raise RuntimeError("Database engine not initialized")
-        
+
         if not self.settings.database_url.startswith("sqlite:///"):
             raise NotImplementedError("Restore only supported for SQLite databases")
-        
+
         if not backup_path.exists():
             raise FileNotFoundError(f"Backup file not found: {backup_path}")
-        
+
         # Close current connection
         self.close()
-        
+
         # Copy backup to current database location
         import shutil
+
         db_path = self.settings.get_database_path()
         shutil.copy2(backup_path, db_path)
-        
+
         # Reinitialize
         self.initialize()
-        
+
         self.logger.info(f"Database restored from: {backup_path}")
 
 

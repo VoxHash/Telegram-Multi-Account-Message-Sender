@@ -18,7 +18,7 @@ from .plugin_widget import PluginWidget, PluginListWidget
 
 __all__ = [
     "AccountWidget",
-    "AccountListWidget", 
+    "AccountListWidget",
     "CampaignWidget",
     "CampaignListWidget",
     "TemplateWidget",

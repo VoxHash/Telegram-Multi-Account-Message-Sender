@@ -498,10 +498,8 @@ class TestingWidget(QWidget):
             message_text = self.message_edit.toPlainText().strip()
 
             self.logger.debug(
-                "Account ID: %s, Recipient: %s, Message: %s...",
-                account_id,
-                recipient_identifier,
-                message_text[:50],
+                f"Account ID: {account_id}, Recipient: {recipient_identifier}, "
+                f"Message: {message_text[:50]}..."
             )
             self.logger.debug(f"Account combo current index: {self.account_combo.currentIndex()}")
             self.logger.debug(f"Account combo count: {self.account_combo.count()}")

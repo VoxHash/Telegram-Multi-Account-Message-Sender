@@ -5,6 +5,11 @@ All notable changes to the Telegram Multi-Account Message Sender project will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Test Message Logging**: Fixed send test message crash caused by passing printf-style arguments to `AppLogger.debug()`, which only accepts a single message string.
+
 ## [1.2.9] - 2026-03-12
 
 ### Fixed

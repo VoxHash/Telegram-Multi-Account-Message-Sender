@@ -1,6 +1,6 @@
 [project]
 name = "telegram-multi-account-sender"
-version = "1.2.9"
+version = "1.2.10"
 description = "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"
 readme = "README.md"
 license = {text = "Eclipse Public License 2.0"}

@@ -724,9 +724,15 @@ class SessionImportWorker(QThread):
             asyncio.set_event_loop(loop)
 
             try:
-                # Create client with session file
+                # Telethon expects session path without the .session extension
+                session_path = Path(self.session_file_path)
+                session_name = str(
+                    session_path.with_suffix("")
+                    if session_path.suffix.lower() == ".session"
+                    else session_path
+                )
                 client = TelegramClient(
-                    self.session_file_path, settings.telegram_api_id, settings.telegram_api_hash
+                    session_name, settings.telegram_api_id, settings.telegram_api_hash
                 )
 
                 # Connect and get account info

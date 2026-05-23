@@ -364,9 +364,11 @@ class TelegramSelectorDialog(QDialog):
             # Add thread items if available
             if chat.get("has_threads") and chat.get("threads"):
                 for thread in chat.get("threads", []):
+                    thread_id = thread.get("id")
+                    thread_title = thread.get("title") or f"Thread {thread_id}"
                     thread_item = QTreeWidgetItem(
                         [
-                            f"  └─ {thread.get('title', f'Thread {thread.get('id')}')}",
+                            f"  └─ {thread_title}",
                             _("recipients.thread"),
                             "",
                             "",

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.11] - 2026-05-23
+
+### Fixed
+- **Python 3.11 Compatibility**: Fixed invalid nested f-string in `telegram_selector.py` that prevented the GUI from starting on Python 3.10–3.11.
+- **Windows Executable**: Release builds now fail if the Windows `.exe` is missing, avoiding broken installers.
+- **Session File Import**: Session import now passes the correct Telethon session path (without the `.session` extension).
+
+### Changed
+- **CI**: Added `compileall` and GUI import smoke checks so syntax and import errors are caught before release.
+
 ## [1.2.10] - 2026-05-18
 
 ### Fixed

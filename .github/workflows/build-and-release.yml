@@ -35,10 +35,10 @@ jobs:
         pip install pyinstaller
     
     - name: Build Windows executable
-      continue-on-error: true
       run: |
         # Use spec file for more reliable builds
         pyinstaller main.spec || pyinstaller --onefile --noconsole --name telegram-multi-account-sender --icon=assets/icons/favicon.ico --additional-hooks-dir=hooks --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic --hidden-import=app.gui.widgets.telegram_selector main.py
+        test -f dist/telegram-multi-account-sender.exe
 
     - name: Set version for Windows build
       id: set_version_windows

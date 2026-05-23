@@ -33,6 +33,15 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
 
+    - name: Compile all application modules
+      run: python -m compileall -q app
+
+    - name: Verify GUI modules import
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+      env:
+        QT_QPA_PLATFORM: offscreen
+      run: python -c "from app.gui.widgets.telegram_selector import TelegramSelectorDialog"
+
     - name: Lint with flake8
       continue-on-error: true
       run: |

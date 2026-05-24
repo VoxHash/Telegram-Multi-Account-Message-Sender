@@ -85,6 +85,8 @@ pip install telegram-multi-account-sender
 git clone https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender.git
 cd Telegram-Multi-Account-Message-Sender
 pip install -r requirements.txt
+pip install -r requirements-dev.txt  # optional, for development
+pip install -r requirements-cloud.txt  # optional, for Google Drive / OneDrive backup
 python main.py
 ```
 

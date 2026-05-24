@@ -1,0 +1,10 @@
+# Optional cloud backup dependencies (Google Drive, OneDrive)
+# Keep in sync with pyproject.toml [project.optional-dependencies.cloud]
+# Install: pip install -r requirements.txt -r requirements-cloud.txt
+# Or: pip install '.[cloud]'
+
+google-api-python-client>=2.100.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+msal>=1.28.0
+requests>=2.31.0

@@ -10,10 +10,16 @@ from pathlib import Path
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
-# Read requirements
-requirements = []
-with open("requirements.txt", "r", encoding="utf-8") as f:
-    requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+def _read_requirements(filename: str) -> list[str]:
+    path = this_directory / filename
+    with open(path, "r", encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
+
+requirements = _read_requirements("requirements.txt")
+cloud_requirements = _read_requirements("requirements-cloud.txt")
+dev_requirements = _read_requirements("requirements-dev.txt")
+docs_requirements = _read_requirements("requirements-docs.txt")
 
 # Read version
 version = "1.2.13"
@@ -57,30 +63,9 @@ setup(
     python_requires=">=3.10",
     install_requires=requirements,
     extras_require={
-        "dev": [
-            "pytest>=7.0.0",
-            "pytest-cov>=4.0.0",
-            "pytest-qt>=4.0.0",
-            "black>=23.0.0",
-            "isort>=5.12.0",
-            "flake8>=6.0.0",
-            "mypy>=1.0.0",
-            "pre-commit>=3.0.0",
-            "twine>=4.0.0",
-            "build>=0.10.0",
-        ],
-        "docs": [
-            "sphinx>=6.0.0",
-            "sphinx-rtd-theme>=1.2.0",
-            "myst-parser>=1.0.0",
-        ],
-        "cloud": [
-            "google-api-python-client>=2.100.0",
-            "google-auth-oauthlib>=1.1.0",
-            "google-auth-httplib2>=0.1.1",
-            "msal>=1.28.0",
-            "requests>=2.31.0",
-        ],
+        "dev": dev_requirements,
+        "docs": docs_requirements,
+        "cloud": cloud_requirements,
     },
     entry_points={
         "console_scripts": [

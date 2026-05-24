@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation**: `docs/cloud-storage-mvp.md` and configuration guides for Google Drive and OneDrive OAuth setup.
 
 ### Changed
+- **Requirements**: Added `requirements-cloud.txt` and `requirements-docs.txt`; synced `requirements.txt` / `requirements-dev.txt` with `pyproject.toml`; removed unused `openpyxl`, `aiofiles`, and `asyncio-throttle` entries; `setup.py` extras now load from requirement files.
 - **CI**: Pytest failures now fail the pipeline (removed `continue-on-error` on the test step).
 - **UI Memory**: Table reloads call `clearContents()` before repopulating; live log viewer capped at 5000 lines; CSV import preview limited to 100 rows.
 - **Test Isolation**: `temp_db` fixture uses in-memory SQLite per test to avoid cross-test pollution.

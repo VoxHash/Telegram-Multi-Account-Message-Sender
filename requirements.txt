@@ -1,5 +1,5 @@
 # Core dependencies for Telegram Multi-Account Message Sender
-# This file should be kept in sync with pyproject.toml dependencies
+# Keep in sync with pyproject.toml [project.dependencies]
 
 # GUI Framework
 PyQt5>=5.15.0
@@ -19,7 +19,6 @@ pydantic-settings>=2.0.0
 
 # Data Processing
 pandas>=2.0.0
-openpyxl>=3.1.0
 
 # Utilities
 rich>=13.0.0
@@ -38,7 +37,3 @@ schedule>=1.2.0
 # Media & QR Code
 pillow>=9.0.0
 qrcode>=7.3.0
-
-# Async & File Operations
-aiofiles>=23.0.0
-asyncio-throttle>=1.0.0

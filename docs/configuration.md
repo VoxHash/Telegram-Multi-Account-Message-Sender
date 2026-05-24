@@ -49,6 +49,8 @@ Install cloud dependencies:
 
 ```bash
 pip install '.[cloud]'
+# or
+pip install -r requirements-cloud.txt
 ```
 
 1. Create an OAuth 2.0 **Desktop** client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials).

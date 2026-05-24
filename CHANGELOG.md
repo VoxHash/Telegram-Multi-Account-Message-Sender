@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Cloud Backup (Google Drive)**: Encrypted `.tmas-backup.zip` packages with manifest verification; OAuth desktop flow; upload, list, download, and delete via Google Drive API; Settings → Cloud Backup tab with backup now and restore (pre-restore local DB snapshot).
+- **Cloud Backup (OneDrive)**: Microsoft Graph provider with MSAL OAuth; same backup/restore flow as Google Drive; provider selector in Settings → Cloud Backup.
+- **Cloud Backup Package**: `BackupPackageBuilder` and `CloudProvider` abstraction; optional AES-256-GCM password encryption before upload; `[cloud]` optional extra (`google-api-python-client`, `msal`, `requests`).
+- **Recipient Pagination**: Database-backed paging and search on the Recipients table (50/100/200/500 per page) to reduce memory use with large lists.
+- **Media Cache**: Disk cache for HTTP(S) campaign media under `app_data/media_cache` with LRU eviction; Telethon sends reuse cached files.
+- **Database Performance Indexes**: SQLite indexes on `send_logs.sent_at`, `status`, and `(account_id, sent_at)` for health and analytics queries; applied on startup for existing databases.
+- **Tests**: Unit tests for account health, analytics, campaign manager, backup package, Google Drive, OneDrive, cloud backup service, DB indexes, and media cache.
+- **Documentation**: `docs/cloud-storage-mvp.md` and configuration guides for Google Drive and OneDrive OAuth setup.
+
+### Changed
+- **CI**: Pytest failures now fail the pipeline (removed `continue-on-error` on the test step).
+- **UI Memory**: Table reloads call `clearContents()` before repopulating; live log viewer capped at 5000 lines; CSV import preview limited to 100 rows.
+- **Test Isolation**: `temp_db` fixture uses in-memory SQLite per test to avoid cross-test pollution.
+
+### Fixed
+- **Backup Package Tests**: Tamper test corrupts manifest checksum inside the zip (stable on macOS CI).
+- **Google Drive Tests**: Credential validation runs after mocked Google dependencies are loaded.
+
 ## [1.2.13] - 2026-05-24
 
 ### Fixed

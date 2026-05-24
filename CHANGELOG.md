@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.12] - 2026-05-24
+
+### Fixed
+- **PyPI Dependencies**: Added `pandas` to `pyproject.toml` so `pip install telegram-multi-account-sender` launches the GUI without extra manual installs.
+- **Frozen Build Translations**: Fixed PyInstaller bundles and runtime resolution for locale JSON files (UI no longer shows raw `tabs.*` keys).
+
+### Added
+- **CI**: `pip install .` smoke test imports `MainWindow` to catch undeclared PyPI dependencies.
+- **Container Distribution**: Publish Docker image to GHCR on release tags (`ghcr.io/voxhash/telegram-multi-account-message-sender`).
+
+### Changed
+- **Release Build**: Track `main.spec` in git and bundle each translation file explicitly for one-file executables.
+
 ## [1.2.11] - 2026-05-23
 
 ### Fixed

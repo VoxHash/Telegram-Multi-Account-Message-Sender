@@ -18,6 +18,7 @@ env:
 permissions:
   contents: read
   packages: write
+  administration: read
 
 jobs:
   build-and-push:
@@ -58,6 +59,22 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Set container package visibility to public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PACKAGE_NAME="$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')"
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/orgs/${{ github.repository_owner }}/packages/container/${PACKAGE_NAME}" \
+            -f visibility='public' \
+            || gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/user/packages/container/${PACKAGE_NAME}" \
+            -f visibility='public'
 
       - name: Publish job summary
         run: |

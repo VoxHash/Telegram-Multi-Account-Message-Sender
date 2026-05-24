@@ -25,7 +25,7 @@
 | CS-2 | Restore backup from cloud into local app data | Yes |
 | CS-3 | List remote backups with date/size | Yes |
 | CS-4 | Automatic scheduled cloud backup | No (v1.3.x) |
-| CS-5 | OneDrive / Dropbox providers | No (post-MVP) |
+| CS-5 | OneDrive / Dropbox providers | OneDrive yes (MVP-4); Dropbox post-MVP |
 
 ## Architecture
 
@@ -100,7 +100,7 @@ Encryption: use existing `app/utils/crypto.py` patterns; user-provided backup pa
 | **MVP-1** | `CloudProvider` + backup package builder + unit tests | 1 PR |
 | **MVP-2** | Google Drive auth + upload/list/download | 1 PR |
 | **MVP-3** | Settings UI + restore flow + docs | 1 PR |
-| **MVP-4** | OneDrive provider | Future |
+| **MVP-4** | OneDrive provider | Shipped |
 | **MVP-5** | Dropbox provider | Future |
 
 ## Testing strategy

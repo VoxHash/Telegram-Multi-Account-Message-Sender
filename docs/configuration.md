@@ -40,6 +40,8 @@ You can configure the application using environment variables. See `example_file
 - `THEME`: Application theme
 - `GOOGLE_DRIVE_CLIENT_ID`: OAuth client ID for Google Drive cloud backups
 - `GOOGLE_DRIVE_CLIENT_SECRET`: OAuth client secret for Google Drive cloud backups
+- `ONEDRIVE_CLIENT_ID`: Azure application (client) ID for OneDrive cloud backups
+- `ONEDRIVE_TENANT_ID`: Azure tenant ID (`common` for personal Microsoft accounts)
 
 ### Google Drive Cloud Backup (optional)
 
@@ -59,6 +61,21 @@ GOOGLE_DRIVE_CLIENT_SECRET=your-client-secret
 
 3. In the app, open **Settings → Cloud Backup** and click **Connect Google Drive**.
 4. Complete the browser OAuth flow; tokens are stored encrypted under `app_data/cloud/`.
+
+### OneDrive Cloud Backup (optional)
+
+Uses the same `pip install '.[cloud]'` extra (includes `msal` and `requests`).
+
+1. Register a **Mobile and desktop applications** app in [Azure Portal](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade).
+2. Add redirect URI `http://localhost` and enable delegated permission `Files.ReadWrite.AppFolder`.
+3. Add to `.env`:
+
+```env
+ONEDRIVE_CLIENT_ID=your-azure-application-client-id
+ONEDRIVE_TENANT_ID=common
+```
+
+4. In the app, open **Settings → Cloud Backup**, choose **OneDrive**, and click **Connect OneDrive**.
 
 ## Account Configuration
 

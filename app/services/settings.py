@@ -127,6 +127,10 @@ class Settings(BaseSettings):
     google_drive_client_id: Optional[str] = None
     google_drive_client_secret: Optional[str] = None
 
+    # Cloud backup (OneDrive)
+    onedrive_client_id: Optional[str] = None
+    onedrive_tenant_id: str = "common"
+
     # Optional: Additional settings
     custom_settings: Dict[str, Any] = Field(default_factory=dict)
 

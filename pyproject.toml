@@ -55,6 +55,7 @@ dependencies = [
     "sqlalchemy>=1.4.0",
     "alembic>=1.8.0",
     "aiosqlite>=0.17.0",
+    "pandas>=2.0.0",
 ]
 
 [project.optional-dependencies]

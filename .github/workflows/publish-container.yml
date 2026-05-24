@@ -18,7 +18,6 @@ env:
 permissions:
   contents: read
   packages: write
-  administration: read
 
 jobs:
   build-and-push:

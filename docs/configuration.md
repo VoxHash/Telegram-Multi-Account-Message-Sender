@@ -38,6 +38,27 @@ You can configure the application using environment variables. See `example_file
 - `DATABASE_URL`: Database connection string
 - `LOG_LEVEL`: Logging level
 - `THEME`: Application theme
+- `GOOGLE_DRIVE_CLIENT_ID`: OAuth client ID for Google Drive cloud backups
+- `GOOGLE_DRIVE_CLIENT_SECRET`: OAuth client secret for Google Drive cloud backups
+
+### Google Drive Cloud Backup (optional)
+
+Install cloud dependencies:
+
+```bash
+pip install '.[cloud]'
+```
+
+1. Create an OAuth 2.0 **Desktop** client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Add the client ID and secret to `.env`:
+
+```env
+GOOGLE_DRIVE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_DRIVE_CLIENT_SECRET=your-client-secret
+```
+
+3. In the app, open **Settings → Cloud Backup** and click **Connect Google Drive**.
+4. Complete the browser OAuth flow; tokens are stored encrypted under `app_data/cloud/`.
 
 ## Account Configuration
 

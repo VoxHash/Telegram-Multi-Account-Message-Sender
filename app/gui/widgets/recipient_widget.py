@@ -23,6 +23,8 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QFileDialog,
 )
+from sqlalchemy import func, or_
+from sqlmodel import select
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont, QColor
 
@@ -721,10 +723,16 @@ class RecipientListWidget(QWidget):
     recipient_selected = pyqtSignal(int)
     recipient_updated = pyqtSignal(int)
 
+    DEFAULT_PAGE_SIZE = 100
+    PAGE_SIZE_OPTIONS = [50, 100, 200, 500]
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
+        self._current_page = 0
+        self._page_size = self.DEFAULT_PAGE_SIZE
+        self._total_count = 0
 
         # Connect language change signal
         self.translation_manager.language_changed.connect(self.on_language_changed)
@@ -788,7 +796,7 @@ class RecipientListWidget(QWidget):
         self.search_edit.setPlaceholderText(
             "Search recipients by name, username, email, phone, tags, or notes..."
         )
-        self.search_edit.textChanged.connect(self.filter_recipients)
+        self.search_edit.textChanged.connect(self._on_search_changed)
         search_layout.addWidget(self.search_edit)
 
         layout.addLayout(search_layout)
@@ -857,117 +865,206 @@ class RecipientListWidget(QWidget):
 
         layout.addWidget(self.recipients_table)
 
+        # Pagination controls
+        pagination_layout = QHBoxLayout()
+        self.prev_page_button = QPushButton("Previous")
+        self.prev_page_button.clicked.connect(self._go_to_previous_page)
+        pagination_layout.addWidget(self.prev_page_button)
+
+        self.page_info_label = QLabel("Page 1 of 1")
+        pagination_layout.addWidget(self.page_info_label)
+
+        self.next_page_button = QPushButton("Next")
+        self.next_page_button.clicked.connect(self._go_to_next_page)
+        pagination_layout.addWidget(self.next_page_button)
+
+        pagination_layout.addStretch()
+
+        page_size_label = QLabel("Per page:")
+        pagination_layout.addWidget(page_size_label)
+
+        self.page_size_combo = QComboBox()
+        for size in self.PAGE_SIZE_OPTIONS:
+            self.page_size_combo.addItem(str(size), size)
+        default_index = self.PAGE_SIZE_OPTIONS.index(self.DEFAULT_PAGE_SIZE)
+        self.page_size_combo.setCurrentIndex(default_index)
+        self.page_size_combo.currentIndexChanged.connect(self._on_page_size_changed)
+        pagination_layout.addWidget(self.page_size_combo)
+
+        layout.addLayout(pagination_layout)
+
         # Status bar
         self.status_label = QLabel("Ready")
         layout.addWidget(self.status_label)
 
-    def load_recipients(self):
-        """Load recipients from database."""
-        try:
-            session = get_session()
-            try:
-                from ...models import Recipient
-                from sqlmodel import select
+    def _apply_search_filters(self, query, search_text: str):
+        """Apply search filters to a recipient query."""
+        if not search_text.strip():
+            return query
 
-                recipients = session.exec(
-                    select(Recipient).where(Recipient.is_deleted.is_(False))
-                ).all()
-            finally:
-                session.close()
+        term = f"%{search_text.strip()}%"
+        return query.where(
+            or_(
+                Recipient.first_name.like(term),
+                Recipient.last_name.like(term),
+                Recipient.display_name.like(term),
+                Recipient.username.like(term),
+                Recipient.phone_number.like(term),
+                Recipient.email.like(term),
+                Recipient.group_title.like(term),
+                Recipient.group_username.like(term),
+                Recipient.notes.like(term),
+            )
+        )
+
+    def _count_recipients(self, search_text: str) -> int:
+        """Count recipients matching current filters."""
+        session = get_session()
+        try:
+            query = select(func.count(Recipient.id)).where(Recipient.is_deleted.is_(False))
+            query = self._apply_search_filters(query, search_text)
+            return session.exec(query).one() or 0
+        finally:
+            session.close()
+
+    def _fetch_recipients_page(self, search_text: str, offset: int, limit: int):
+        """Fetch one page of recipients from the database."""
+        session = get_session()
+        try:
+            query = select(Recipient).where(Recipient.is_deleted.is_(False))
+            query = self._apply_search_filters(query, search_text)
+            query = query.order_by(Recipient.id).offset(offset).limit(limit)
+            return list(session.exec(query).all())
+        finally:
+            session.close()
+
+    def _populate_recipient_row(self, row: int, recipient: Recipient) -> None:
+        """Populate a table row with recipient data."""
+        if recipient.recipient_type.value == "GROUP":
+            type_text = "👥 Group"
+        elif recipient.recipient_type.value == "CHANNEL":
+            type_text = "📢 Channel"
+        else:
+            type_text = "👤 User"
+
+        type_item = QTableWidgetItem(type_text)
+        type_item.setFlags(type_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+        type_item.setTextAlignment(Qt.AlignCenter)
+        self.recipients_table.setItem(row, 0, type_item)
+
+        display_name_item = QTableWidgetItem(recipient.get_display_name())
+        display_name_item.setFlags(
+            display_name_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+        )
+        display_name_item.setData(Qt.UserRole, recipient.id)
+        self.recipients_table.setItem(row, 1, display_name_item)
+
+        if recipient.recipient_type.value in ["GROUP", "CHANNEL"]:
+            username = f"@{recipient.group_username}" if recipient.group_username else ""
+        else:
+            username = f"@{recipient.username}" if recipient.username else ""
+        username_item = QTableWidgetItem(username)
+        username_item.setFlags(username_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+        self.recipients_table.setItem(row, 2, username_item)
+
+        if recipient.recipient_type.value in ["GROUP", "CHANNEL"]:
+            id_text = str(recipient.group_id) if recipient.group_id else ""
+        else:
+            id_text = str(recipient.user_id) if recipient.user_id else ""
+        id_item = QTableWidgetItem(id_text)
+        id_item.setFlags(id_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+        id_item.setTextAlignment(Qt.AlignCenter)
+        self.recipients_table.setItem(row, 3, id_item)
+
+        phone_text = recipient.phone_number if recipient.recipient_type.value == "USER" else ""
+        phone_item = QTableWidgetItem(phone_text or "")
+        phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+        phone_item.setTextAlignment(Qt.AlignCenter)
+        self.recipients_table.setItem(row, 4, phone_item)
+
+        source_item = QTableWidgetItem(recipient.source.value.title())
+        source_item.setFlags(source_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+        source_item.setTextAlignment(Qt.AlignCenter)
+        self.recipients_table.setItem(row, 5, source_item)
+
+        status_item = QTableWidgetItem(recipient.status.value.title())
+        status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+
+        if recipient.status == RecipientStatus.ACTIVE:
+            status_item.setBackground(QColor(34, 197, 94))
+            status_item.setForeground(Qt.white)
+        elif recipient.status == RecipientStatus.BLOCKED:
+            status_item.setBackground(QColor(239, 68, 68))
+            status_item.setForeground(Qt.white)
+        elif recipient.status == RecipientStatus.INACTIVE:
+            status_item.setBackground(QColor(107, 114, 128))
+            status_item.setForeground(Qt.white)
+
+        status_item.setTextAlignment(Qt.AlignCenter)
+        self.recipients_table.setItem(row, 6, status_item)
+
+        messages = (
+            f"{recipient.total_messages_sent}/"
+            f"{recipient.total_messages_sent + recipient.total_messages_failed}"
+        )
+        messages_item = QTableWidgetItem(messages)
+        messages_item.setFlags(messages_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+        messages_item.setTextAlignment(Qt.AlignCenter)
+        self.recipients_table.setItem(row, 7, messages_item)
+
+    def _update_pagination_controls(self) -> None:
+        """Update pagination labels and button states."""
+        total_pages = max(1, (self._total_count + self._page_size - 1) // self._page_size)
+        if self._current_page >= total_pages:
+            self._current_page = max(0, total_pages - 1)
+
+        self.page_info_label.setText(f"Page {self._current_page + 1} of {total_pages}")
+        self.prev_page_button.setEnabled(self._current_page > 0)
+        self.next_page_button.setEnabled((self._current_page + 1) * self._page_size < self._total_count)
+
+    def _on_search_changed(self) -> None:
+        """Reload from page 1 when search text changes."""
+        self._current_page = 0
+        self.load_recipients()
+
+    def _on_page_size_changed(self) -> None:
+        """Reload when page size changes."""
+        self._page_size = int(self.page_size_combo.currentData())
+        self._current_page = 0
+        self.load_recipients()
+
+    def _go_to_previous_page(self) -> None:
+        if self._current_page > 0:
+            self._current_page -= 1
+            self.load_recipients()
+
+    def _go_to_next_page(self) -> None:
+        if (self._current_page + 1) * self._page_size < self._total_count:
+            self._current_page += 1
+            self.load_recipients()
+
+    def load_recipients(self):
+        """Load a paginated page of recipients from the database."""
+        try:
+            search_text = self.search_edit.text()
+            self._total_count = self._count_recipients(search_text)
+            self._update_pagination_controls()
+
+            offset = self._current_page * self._page_size
+            recipients = self._fetch_recipients_page(search_text, offset, self._page_size)
 
             self.recipients_table.setRowCount(len(recipients))
-
             for row, recipient in enumerate(recipients):
-                # Type - Disabled text field
-                if recipient.recipient_type.value == "GROUP":
-                    type_text = "👥 Group"
-                elif recipient.recipient_type.value == "CHANNEL":
-                    type_text = "📢 Channel"
-                else:
-                    type_text = "👤 User"
+                self._populate_recipient_row(row, recipient)
 
-                type_item = QTableWidgetItem(type_text)
-                type_item.setFlags(type_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                type_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 0, type_item)
-
-                # Display name - Disabled text field
-                display_name_item = QTableWidgetItem(recipient.get_display_name())
-                display_name_item.setFlags(
-                    display_name_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+            start = self._total_count if self._total_count == 0 else offset + 1
+            end = min(offset + len(recipients), self._total_count)
+            if self._total_count == 0:
+                self.status_label.setText("No recipients found")
+            else:
+                self.status_label.setText(
+                    f"Showing {start}-{end} of {self._total_count} recipients"
                 )
-                # Store recipient ID in the display name item for selection handling
-                display_name_item.setData(Qt.UserRole, recipient.id)
-                self.recipients_table.setItem(row, 1, display_name_item)
-
-                # Username/Group - Disabled text field
-                if recipient.recipient_type.value in ["GROUP", "CHANNEL"]:
-                    username = f"@{recipient.group_username}" if recipient.group_username else ""
-                else:
-                    username = f"@{recipient.username}" if recipient.username else ""
-                username_item = QTableWidgetItem(username)
-                username_item.setFlags(
-                    username_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
-                )
-                self.recipients_table.setItem(row, 2, username_item)
-
-                # ID - Disabled text field
-                if recipient.recipient_type.value in ["GROUP", "CHANNEL"]:
-                    id_text = str(recipient.group_id) if recipient.group_id else ""
-                else:
-                    id_text = str(recipient.user_id) if recipient.user_id else ""
-                id_item = QTableWidgetItem(id_text)
-                id_item.setFlags(id_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                id_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 3, id_item)
-
-                # Phone - Disabled text field (only for users)
-                phone_text = (
-                    recipient.phone_number if recipient.recipient_type.value == "USER" else ""
-                )
-                phone_item = QTableWidgetItem(phone_text or "")
-                phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                phone_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 4, phone_item)
-
-                # Source - Disabled text field
-                source_item = QTableWidgetItem(recipient.source.value.title())
-                source_item.setFlags(source_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                source_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 5, source_item)
-
-                # Status - Enhanced button-like appearance
-                status_item = QTableWidgetItem(recipient.status.value.title())
-                status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-
-                # Set status-specific styling with button-like appearance
-                if recipient.status == RecipientStatus.ACTIVE:
-                    status_item.setBackground(QColor(34, 197, 94))  # Green
-                    status_item.setForeground(Qt.white)
-                elif recipient.status == RecipientStatus.BLOCKED:
-                    status_item.setBackground(QColor(239, 68, 68))  # Red
-                    status_item.setForeground(Qt.white)
-                elif recipient.status == RecipientStatus.INACTIVE:
-                    status_item.setBackground(QColor(107, 114, 128))  # Gray
-                    status_item.setForeground(Qt.white)
-
-                # Center align status text
-                status_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 6, status_item)
-
-                # Messages - Disabled text field
-                messages = f"{recipient.total_messages_sent}/{recipient.total_messages_sent + recipient.total_messages_failed}"
-                messages_item = QTableWidgetItem(messages)
-                messages_item.setFlags(
-                    messages_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
-                )
-                messages_item.setTextAlignment(Qt.AlignCenter)
-                self.recipients_table.setItem(row, 7, messages_item)
-
-            self.status_label.setText(f"Loaded {len(recipients)} recipients")
-
-            # Apply search filter if there's search text
-            self.filter_recipients()
 
         except Exception as e:
             self.logger.error(f"Error loading recipients: {e}")
@@ -1158,63 +1255,8 @@ class RecipientListWidget(QWidget):
             QMessageBox.critical(self, "Export Error", f"Failed to export recipients: {e}")
 
     def filter_recipients(self):
-        """Filter recipients based on search text."""
-        search_text = self.search_edit.text().lower()
-
-        if not search_text:
-            # Show all rows if no search text
-            for row in range(self.recipients_table.rowCount()):
-                self.recipients_table.setRowHidden(row, False)
-            return
-
-        # Filter rows based on search text
-        for row in range(self.recipients_table.rowCount()):
-            should_show = False
-
-            # Check all columns except the last one (Actions column)
-            for col in range(self.recipients_table.columnCount() - 1):
-                item = self.recipients_table.item(row, col)
-                if item and search_text in item.text().lower():
-                    should_show = True
-                    break
-
-            # Also check tags and notes (stored in UserRole data)
-            if not should_show:
-                # Check if search text matches tags or notes
-                display_name_item = self.recipients_table.item(row, 0)
-                if display_name_item:
-                    recipient_id = display_name_item.data(Qt.UserRole)
-                    if recipient_id:
-                        # Get recipient data to check tags and notes
-                        session = get_session()
-                        try:
-                            from ...models import Recipient
-                            from sqlmodel import select
-
-                            recipient = session.exec(
-                                select(Recipient).where(Recipient.id == recipient_id)
-                            ).first()
-
-                            if recipient:
-                                # Check tags
-                                tags_text = ", ".join(recipient.get_tags_list()).lower()
-                                if search_text in tags_text:
-                                    should_show = True
-
-                                # Check notes
-                                if not should_show and recipient.notes:
-                                    if search_text in recipient.notes.lower():
-                                        should_show = True
-
-                                # Check email
-                                if not should_show and recipient.email:
-                                    if search_text in recipient.email.lower():
-                                        should_show = True
-
-                        finally:
-                            session.close()
-
-            self.recipients_table.setRowHidden(row, not should_show)
+        """Reload recipients using database-backed search filters."""
+        self._on_search_changed()
 
     def on_language_changed(self, language: str):
         """Handle language change."""

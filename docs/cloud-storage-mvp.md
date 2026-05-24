@@ -123,4 +123,4 @@ Encryption: use existing `app/utils/crypto.py` patterns; user-provided backup pa
 
 ---
 
-**Next action:** Implement **MVP-3** (Settings UI + restore flow + docs) after MVP-2 merges.
+**Next action:** MVP-3 (Settings UI + restore flow + docs) delivered in PR after MVP-2. Future: MVP-4 OneDrive provider.

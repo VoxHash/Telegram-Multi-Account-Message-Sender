@@ -23,6 +23,8 @@ COPY . .
 # Runtime stage
 FROM python:3.11-slim
 
+LABEL org.opencontainers.image.description="Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"
+
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libgl1 \

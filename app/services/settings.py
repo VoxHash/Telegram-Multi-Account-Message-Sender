@@ -123,6 +123,10 @@ class Settings(BaseSettings):
     # Optional: Sentry
     sentry_dsn: Optional[str] = None
 
+    # Cloud backup (Google Drive)
+    google_drive_client_id: Optional[str] = None
+    google_drive_client_secret: Optional[str] = None
+
     # Optional: Additional settings
     custom_settings: Dict[str, Any] = Field(default_factory=dict)
 

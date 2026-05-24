@@ -116,7 +116,12 @@ class BackupPackageBuilder:
 
         zip_bytes = self._read_package_bytes(package_path, password)
 
-        with zipfile.ZipFile(BytesIO(zip_bytes), "r") as archive:
+        try:
+            archive = zipfile.ZipFile(BytesIO(zip_bytes), "r")
+        except zipfile.BadZipFile as exc:
+            raise BackupPackageError("Invalid or corrupted backup package") from exc
+
+        with archive:
             if MANIFEST_FILENAME not in archive.namelist():
                 raise BackupPackageError("Manifest missing from backup package")
 

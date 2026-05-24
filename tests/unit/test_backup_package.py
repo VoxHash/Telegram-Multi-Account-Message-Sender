@@ -96,10 +96,18 @@ class TestBackupPackageBuilder:
         package = tmp_path / "backup.tmas-backup.zip"
         builder.build(package, include_settings=False)
 
-        raw = bytearray(package.read_bytes())
-        raw[-10] ^= 0xFF
         tampered = tmp_path / "tampered.tmas-backup.zip"
-        tampered.write_bytes(raw)
+        buffer = BytesIO()
+        with zipfile.ZipFile(package, "r") as source:
+            manifest = json.loads(source.read(MANIFEST_FILENAME).decode("utf-8"))
+            manifest["files"][DATABASE_FILENAME]["sha256"] = "0" * 64
+            with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as dest:
+                for name in source.namelist():
+                    data = source.read(name)
+                    if name == MANIFEST_FILENAME:
+                        data = json.dumps(manifest, indent=2).encode("utf-8")
+                    dest.writestr(name, data)
+        tampered.write_bytes(buffer.getvalue())
 
         with pytest.raises(BackupPackageError):
             builder.verify(tampered)

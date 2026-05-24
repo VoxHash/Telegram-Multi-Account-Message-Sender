@@ -14,8 +14,8 @@ This document outlines performance, accessibility, and quality targets for Teleg
 ### Optimization Goals
 - [x] Implement lazy loading for large recipient lists (recipient table pagination)
 - [x] Add database indexing for frequently queried fields (`send_logs` sent_at, status, account+sent_at)
-- [ ] Optimize image/media loading and caching
-- [ ] Reduce memory footprint of UI components
+- [x] Optimize image/media loading and caching (`app/utils/media_cache.py`, Telethon resolve)
+- [x] Reduce memory footprint of UI components (table reload helpers, log view line cap, CSV preview cap)
 - [x] Implement connection pooling for database operations (SQLite `StaticPool` + WAL; composite indexes for hot queries)
 
 ## ♿ Accessibility (a11y) Targets

@@ -24,6 +24,8 @@ from PyQt5.QtGui import QFont, QTextCursor, QColor
 
 from ...services import get_logger, get_settings
 from ...services.translation import _, get_translation_manager
+from app.gui.utils.table_memory import prepare_table_reload
+from app.gui.utils.text_memory import append_log_with_limit, load_log_tail
 from ...models import SendStatus
 from datetime import datetime
 
@@ -119,7 +121,7 @@ class LogViewer(QWidget):
             if self.log_file_path.exists():
                 with open(self.log_file_path, "r", encoding="utf-8") as f:
                     content = f.read()
-                    self.log_text.setPlainText(content)
+                    self.log_text.setPlainText(load_log_tail(content))
                     self.last_position = len(content)
 
                     # Scroll to bottom
@@ -150,8 +152,7 @@ class LogViewer(QWidget):
                         new_content = "\n".join(filtered_lines)
 
                     if new_content.strip():
-                        # Append new content
-                        self.log_text.append(new_content)
+                        append_log_with_limit(self.log_text, new_content)
                         self.last_position = f.tell()
 
                         # Auto-scroll if enabled
@@ -178,8 +179,7 @@ class LogViewer(QWidget):
                 content = f.read()
 
             if level == _("logs.all"):
-                # Show all logs
-                self.log_text.setPlainText(content)
+                self.log_text.setPlainText(load_log_tail(content))
             else:
                 # Filter by level - map UI level names to log level names
                 level_mapping = {
@@ -195,7 +195,7 @@ class LogViewer(QWidget):
                 for line in content.split("\n"):
                     if log_level in line:
                         filtered_lines.append(line)
-                self.log_text.setPlainText("\n".join(filtered_lines))
+                self.log_text.setPlainText(load_log_tail("\n".join(filtered_lines)))
 
             # Auto-scroll to bottom if enabled
             if self.auto_scroll_check.isChecked():
@@ -675,7 +675,7 @@ class SendLogWidget(QWidget):
                 else:
                     self.logger.debug("Campaign combo already loaded, skipping update")
 
-                # Process logs within session context
+                prepare_table_reload(self.logs_table)
                 self.logs_table.setRowCount(len(logs))
 
                 for row, log in enumerate(logs):

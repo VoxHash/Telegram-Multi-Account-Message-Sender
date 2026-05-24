@@ -19,22 +19,23 @@ def event_loop():
 
 
 @pytest.fixture
-def temp_db():
-    """Create a temporary database for testing."""
-    # Use in-memory SQLite for testing
-    import os
+def temp_db(monkeypatch):
+    """Create an isolated in-memory database for testing."""
+    from app.services import close_database, db as db_module
+    from app.services.settings import reload_settings
 
-    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-
-    # Initialize database
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+    close_database()
+    db_module.db_service._initialized = False
+    db_module.db_service.engine = None
+    db_module.db_service.settings = reload_settings()
     initialize_database()
 
     yield
 
-    # Cleanup
-    from app.services import close_database
-
     close_database()
+    db_module.db_service._initialized = False
+    db_module.db_service.engine = None
 
 
 @pytest.fixture

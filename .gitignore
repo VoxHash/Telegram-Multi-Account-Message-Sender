@@ -36,6 +36,7 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
+!main.spec
 *.exe
 *.dmg
 *.pkg

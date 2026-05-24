@@ -3,11 +3,21 @@ Translation management for multi-language support.
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Dict, Optional
 from PyQt5.QtCore import QObject, pyqtSignal
 
 from .settings import Language, get_settings
+
+
+def get_translations_dir() -> Path:
+    """Resolve translation files directory (source tree and PyInstaller bundle)."""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        bundle_dir = Path(sys._MEIPASS) / "app" / "translations"
+        if bundle_dir.is_dir():
+            return bundle_dir
+    return Path(__file__).parent.parent / "translations"
 
 
 class TranslationManager(QObject):
@@ -25,7 +35,7 @@ class TranslationManager(QObject):
 
     def load_translations(self):
         """Load all translation files."""
-        translations_dir = Path(__file__).parent.parent / "translations"
+        translations_dir = get_translations_dir()
 
         for language in Language:
             lang_code = language.value

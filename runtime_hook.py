@@ -12,6 +12,12 @@ if hasattr(sys, '_MEIPASS'):
     app_path = os.path.join(sys._MEIPASS, 'app')
     if app_path not in sys.path:
         sys.path.insert(0, app_path)
+
+    translations_path = os.path.join(sys._MEIPASS, 'app', 'translations')
+    if not os.path.isdir(translations_path):
+        raise RuntimeError(
+            f"Translation files missing from application bundle: {translations_path}"
+        )
     
     # Try to import the module explicitly
     try:

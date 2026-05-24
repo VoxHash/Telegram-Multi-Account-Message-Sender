@@ -5,7 +5,7 @@
 ## 🎯 Vision Statement
 Transform Telegram Multi-Account Message Sender into the ultimate Telegram automation platform with advanced features, cross-platform support, and professional integration, while maintaining its safety-first design philosophy.
 
-## 📊 Current Status (v1.2.9)
+## 📊 Current Status (v1.2.13)
 
 ### ✅ Completed Features
 - **Multi-Account Management**: Full account lifecycle management
@@ -34,13 +34,22 @@ Transform Telegram Multi-Account Message Sender into the ultimate Telegram autom
 - **Thread Support**: Full support for Telegram group threads
 - **Message Forwarding**: Complete message forwarding functionality for campaigns
 - **Plugin System**: Complete plugin architecture with API, management system, UI, and example plugins
+- **Container Distribution (GHCR)**: Docker images published on release tags (`ghcr.io/voxhash/telegram-multi-account-message-sender`)
+- **PyPI Install Reliability**: Declared runtime dependencies (including `pandas`) for standalone `pip install` GUI launches
+- **Frozen Build Quality**: PyInstaller bundles translation files; release CI validates imports and Windows executable artifacts
+- **GHCR Package Metadata**: OCI image description on multi-arch manifests (Dockerfile `LABEL` + publish workflow annotations)
 
 ### 🔄 In Progress
 - **Performance Optimization**: Ongoing database and UI optimizations
 - **Code Quality**: Continuous testing and refactoring improvements
 - **Community Growth**: Building sponsor community and contributor base
 
-### 🆕 Latest Release Highlights (v1.2.9 - 2026-03-12)
+### 🆕 Latest Release Highlights (v1.2.13 - 2026-05-24)
+- **GHCR Description Metadata**: Container package page shows project description via OCI annotations on published multi-arch images.
+- **Distribution Patch (v1.2.12)**: PyPI `pandas` dependency, PyInstaller translation bundling, CI `pip install` smoke test, and GHCR publish workflow.
+- **Stability Fixes (v1.2.10–v1.2.11)**: Python 3.11 `telegram_selector` syntax fix, session import path fix, test-message logging crash fix, and stricter release build checks.
+
+### 📦 Previous Release Highlights (v1.2.9 - 2026-03-12)
 - **Spintax Reliability**: Seeded spintax output is now reproducible and validation correctly flags empty/nested patterns.
 - **Testing Stability**: Async test execution is now fully supported via `pytest-asyncio`.
 - **UI Localization Fixes**: Corrected translation-key usage in core dialogs (`common.information`).
@@ -359,13 +368,14 @@ Transform Telegram Multi-Account Message Sender into the ultimate Telegram autom
 
 ## 💖 Community Milestones
 
-### 🎉 Recent Achievements (v1.2.4 - v1.2.9)
+### 🎉 Recent Achievements (v1.2.4 - v1.2.13)
 - **First Monthly Sponsor**: [@dodierandal-arch](https://github.com/dodierandal-arch) - $100/month (Premium Sponsor) 🎉
 - **Complete Documentation Suite**: API docs, FAQ, and troubleshooting guides
-- **CI/CD Excellence**: Robust automated pipelines for testing, building, and releasing
+- **CI/CD Excellence**: Robust automated pipelines for testing, building, releasing, and GHCR container publish
 - **Documentation Standardization**: Professional documentation kit with consistent structure
 - **Development Environment**: DevContainer and Docker support for seamless development
 - **Quality Hardening (v1.2.9)**: Spintax reliability fixes, async test stability, and core UI localization corrections
+- **Distribution Milestone (v1.2.12–v1.2.13)**: PyPI install parity, frozen-build translations, public GHCR images, and OCI package metadata
 
 ### 🌟 Community Growth
 The project has reached an important milestone with our first monthly sponsor! This support enables us to:

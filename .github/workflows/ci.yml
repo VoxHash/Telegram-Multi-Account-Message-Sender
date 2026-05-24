@@ -7,7 +7,31 @@ on:
     branches: [ main, dev ]
 
 jobs:
+  pip-install-smoke:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install package from source (pip install .)
+      run: |
+        python -m pip install --upgrade pip build
+        pip install .
+
+    - name: Verify GUI imports with declared dependencies only
+      env:
+        QT_QPA_PLATFORM: offscreen
+      run: |
+        python -c "from app.gui.main import MainWindow; print('MainWindow import OK:', MainWindow)"
+
   test:
+    needs: pip-install-smoke
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

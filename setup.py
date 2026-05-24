@@ -78,6 +78,8 @@ setup(
             "google-api-python-client>=2.100.0",
             "google-auth-oauthlib>=1.1.0",
             "google-auth-httplib2>=0.1.1",
+            "msal>=1.28.0",
+            "requests>=2.31.0",
         ],
     },
     entry_points={

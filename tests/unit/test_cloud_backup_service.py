@@ -15,6 +15,7 @@ from app.services.cloud.provider_base import RemoteBackupItem
 @pytest.fixture
 def mock_provider():
     provider = MagicMock()
+    provider.provider_name = "Google Drive"
     provider.is_authenticated.return_value = True
     provider.upload.return_value = "remote-123"
     provider.list_backups.return_value = [
@@ -38,13 +39,13 @@ def mock_builder():
 class TestCloudBackupService:
     def test_backup_requires_connection(self, mock_provider, mock_builder):
         mock_provider.is_authenticated.return_value = False
-        service = CloudBackupService(provider=mock_provider, package_builder=mock_builder)
+        service = CloudBackupService(google_provider=mock_provider, package_builder=mock_builder)
 
         with pytest.raises(CloudBackupServiceError, match="Connect to Google Drive"):
             service.backup_to_google_drive()
 
     def test_backup_uploads_package(self, mock_provider, mock_builder, tmp_path):
-        service = CloudBackupService(provider=mock_provider, package_builder=mock_builder)
+        service = CloudBackupService(google_provider=mock_provider, package_builder=mock_builder)
 
         with patch(
             "app.services.cloud.cloud_backup_service.BackupPackageBuilder.generate_filename",
@@ -59,7 +60,7 @@ class TestCloudBackupService:
     def test_restore_creates_pre_restore_snapshot(
         self, mock_provider, mock_builder, tmp_path, monkeypatch
     ):
-        service = CloudBackupService(provider=mock_provider, package_builder=mock_builder)
+        service = CloudBackupService(google_provider=mock_provider, package_builder=mock_builder)
 
         package_path = tmp_path / "package.tmas-backup.zip"
         package_path.write_bytes(b"zip")
@@ -75,7 +76,7 @@ class TestCloudBackupService:
             "app.services.cloud.cloud_backup_service.get_settings",
             lambda: MagicMock(app_data_dir=str(app_data)),
         )
-        service = CloudBackupService(provider=mock_provider, package_builder=mock_builder)
+        service = CloudBackupService(google_provider=mock_provider, package_builder=mock_builder)
 
         def _fake_backup_database(backup_path):
             path = Path(backup_path)

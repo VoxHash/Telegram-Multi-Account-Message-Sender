@@ -1,12 +1,12 @@
 """
-Cloud backup settings widget (Google Drive).
+Cloud backup settings widget (Google Drive and OneDrive).
 """
 
-from pathlib import Path
 from typing import List, Optional
 
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import (
+    QComboBox,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -24,39 +24,62 @@ from ...services.cloud import CloudBackupService, RemoteBackupItem
 from ...services.cloud.cloud_backup_service import CloudBackupServiceError
 from ...services.translation import _
 
+PROVIDER_GOOGLE = "google_drive"
+PROVIDER_ONEDRIVE = "onedrive"
+
 
 class CloudBackupWorker(QThread):
     """Run cloud backup operations off the UI thread."""
 
     finished = pyqtSignal(bool, str, object)
 
-    def __init__(self, operation: str, **kwargs):
+    def __init__(self, operation: str, provider: str = PROVIDER_GOOGLE, **kwargs):
         super().__init__()
         self.operation = operation
+        self.provider = provider
         self.kwargs = kwargs
 
     def run(self):
         service = CloudBackupService()
         try:
             if self.operation == "connect":
-                service.connect_google_drive()
-                self.finished.emit(True, _("settings.cloud_connect_success"), None)
+                if self.provider == PROVIDER_ONEDRIVE:
+                    service.connect_onedrive()
+                    message = _("settings.cloud_connect_onedrive_success")
+                else:
+                    service.connect_google_drive()
+                    message = _("settings.cloud_connect_success")
+                self.finished.emit(True, message, None)
             elif self.operation == "disconnect":
-                service.disconnect_google_drive()
-                self.finished.emit(True, _("settings.cloud_disconnect_success"), None)
+                if self.provider == PROVIDER_ONEDRIVE:
+                    service.disconnect_onedrive()
+                    message = _("settings.cloud_disconnect_onedrive_success")
+                else:
+                    service.disconnect_google_drive()
+                    message = _("settings.cloud_disconnect_success")
+                self.finished.emit(True, message, None)
             elif self.operation == "backup":
-                remote_id = service.backup_to_google_drive(
-                    password=self.kwargs.get("password") or None
-                )
-                self.finished.emit(True, _("settings.cloud_backup_success"), remote_id)
+                password = self.kwargs.get("password") or None
+                if self.provider == PROVIDER_ONEDRIVE:
+                    remote_id = service.backup_to_onedrive(password=password)
+                    message = _("settings.cloud_backup_onedrive_success")
+                else:
+                    remote_id = service.backup_to_google_drive(password=password)
+                    message = _("settings.cloud_backup_success")
+                self.finished.emit(True, message, remote_id)
             elif self.operation == "list":
-                backups = service.list_google_drive_backups()
+                if self.provider == PROVIDER_ONEDRIVE:
+                    backups = service.list_onedrive_backups()
+                else:
+                    backups = service.list_google_drive_backups()
                 self.finished.emit(True, _("settings.cloud_list_success"), backups)
             elif self.operation == "restore":
-                pre_restore = service.restore_from_google_drive(
-                    self.kwargs["remote_id"],
-                    password=self.kwargs.get("password") or None,
-                )
+                password = self.kwargs.get("password") or None
+                remote_id = self.kwargs["remote_id"]
+                if self.provider == PROVIDER_ONEDRIVE:
+                    pre_restore = service.restore_from_onedrive(remote_id, password=password)
+                else:
+                    pre_restore = service.restore_from_google_drive(remote_id, password=password)
                 self.finished.emit(
                     True,
                     _("settings.cloud_restore_success").format(path=str(pre_restore)),
@@ -71,7 +94,7 @@ class CloudBackupWorker(QThread):
 
 
 class CloudBackupWidget(QWidget):
-    """Settings tab for Google Drive cloud backup and restore."""
+    """Settings tab for cloud backup and restore."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -85,6 +108,15 @@ class CloudBackupWidget(QWidget):
     def setup_ui(self):
         layout = QVBoxLayout(self)
 
+        provider_layout = QHBoxLayout()
+        provider_layout.addWidget(QLabel(_("settings.cloud_provider_label")))
+        self.provider_combo = QComboBox()
+        self.provider_combo.addItem(_("settings.cloud_provider_google"), PROVIDER_GOOGLE)
+        self.provider_combo.addItem(_("settings.cloud_provider_onedrive"), PROVIDER_ONEDRIVE)
+        self.provider_combo.currentIndexChanged.connect(self.refresh_connection_status)
+        provider_layout.addWidget(self.provider_combo)
+        layout.addLayout(provider_layout)
+
         status_group = QGroupBox(_("settings.cloud_backup"))
         status_layout = QVBoxLayout(status_group)
         self.status_label = QLabel()
@@ -93,11 +125,11 @@ class CloudBackupWidget(QWidget):
 
         connect_layout = QHBoxLayout()
         self.connect_button = QPushButton(_("settings.cloud_connect_drive"))
-        self.connect_button.clicked.connect(self.connect_google_drive)
+        self.connect_button.clicked.connect(self.connect_provider)
         connect_layout.addWidget(self.connect_button)
 
         self.disconnect_button = QPushButton(_("settings.cloud_disconnect"))
-        self.disconnect_button.clicked.connect(self.disconnect_google_drive)
+        self.disconnect_button.clicked.connect(self.disconnect_provider)
         connect_layout.addWidget(self.disconnect_button)
         status_layout.addLayout(connect_layout)
         layout.addWidget(status_group)
@@ -140,13 +172,27 @@ class CloudBackupWidget(QWidget):
 
         layout.addStretch()
 
+    def _selected_provider(self) -> str:
+        return self.provider_combo.currentData()
+
     def refresh_connection_status(self):
-        connected = self.service.is_google_drive_connected()
-        if connected:
-            self.status_label.setText(_("settings.cloud_status_connected"))
+        if self._selected_provider() == PROVIDER_ONEDRIVE:
+            connected = self.service.is_onedrive_connected()
+            if connected:
+                self.status_label.setText(_("settings.cloud_status_onedrive_connected"))
+            else:
+                self.status_label.setText(_("settings.cloud_status_onedrive_disconnected"))
+            self.connect_button.setText(_("settings.cloud_connect_onedrive"))
         else:
-            self.status_label.setText(_("settings.cloud_status_disconnected"))
+            connected = self.service.is_google_drive_connected()
+            if connected:
+                self.status_label.setText(_("settings.cloud_status_connected"))
+            else:
+                self.status_label.setText(_("settings.cloud_status_disconnected"))
+            self.connect_button.setText(_("settings.cloud_connect_drive"))
+
         self._set_actions_enabled(connected)
+        self.backups_list.clear()
 
     def _set_actions_enabled(self, connected: bool):
         self.disconnect_button.setEnabled(connected)
@@ -169,12 +215,13 @@ class CloudBackupWidget(QWidget):
             return
 
         self._set_busy(True)
-        self._worker = CloudBackupWorker(operation, **kwargs)
+        self._worker = CloudBackupWorker(operation, provider=self._selected_provider(), **kwargs)
         self._worker.finished.connect(self._on_worker_finished)
         self._worker.start()
 
     def _set_busy(self, busy: bool):
         for widget in (
+            self.provider_combo,
             self.connect_button,
             self.disconnect_button,
             self.backup_button,
@@ -198,10 +245,10 @@ class CloudBackupWidget(QWidget):
         else:
             QMessageBox.critical(self, _("common.error"), message)
 
-    def connect_google_drive(self):
+    def connect_provider(self):
         self._start_worker("connect")
 
-    def disconnect_google_drive(self):
+    def disconnect_provider(self):
         self._start_worker("disconnect")
 
     def backup_now(self):

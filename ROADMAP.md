@@ -140,9 +140,9 @@ Transform Telegram Multi-Account Message Sender into the ultimate Telegram autom
   - **Priority**: Medium | **Effort**: High
 
 #### ☁️ Cloud Integration
-- [ ] **Cloud Storage Support** *(Google Drive shipped — MVP-1–3)*
+- [ ] **Cloud Storage Support** *(Google Drive + OneDrive — MVP-1–4)*
   - Google Drive integration ✅
-  - OneDrive integration
+  - OneDrive integration ✅
   - Dropbox integration
   - Custom cloud providers
   - **Priority**: High | **Effort**: High

@@ -10,8 +10,9 @@ from .backup_package import (
 )
 from .cloud_backup_service import CloudBackupService, CloudBackupServiceError
 from .google_drive import GoogleDriveError, GoogleDriveProvider
+from .onedrive import OneDriveError, OneDriveProvider
 from .provider_base import CloudProvider, RemoteBackupItem
-from .token_store import DriveTokenStore
+from .token_store import DriveTokenStore, OneDriveTokenStore
 
 __all__ = [
     "BACKUP_FILE_EXTENSION",
@@ -24,5 +25,8 @@ __all__ = [
     "DriveTokenStore",
     "GoogleDriveError",
     "GoogleDriveProvider",
+    "OneDriveError",
+    "OneDriveProvider",
+    "OneDriveTokenStore",
     "RemoteBackupItem",
 ]

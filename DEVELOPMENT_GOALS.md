@@ -12,11 +12,11 @@ This document outlines performance, accessibility, and quality targets for Teleg
 - **Campaign Execution**: Process 100 messages/minute per account
 
 ### Optimization Goals
-- [ ] Implement lazy loading for large recipient lists
-- [ ] Add database indexing for frequently queried fields
+- [x] Implement lazy loading for large recipient lists (recipient table pagination)
+- [x] Add database indexing for frequently queried fields (`send_logs` sent_at, status, account+sent_at)
 - [ ] Optimize image/media loading and caching
 - [ ] Reduce memory footprint of UI components
-- [ ] Implement connection pooling for database operations
+- [x] Implement connection pooling for database operations (SQLite `StaticPool` + WAL; composite indexes for hot queries)
 
 ## ♿ Accessibility (a11y) Targets
 

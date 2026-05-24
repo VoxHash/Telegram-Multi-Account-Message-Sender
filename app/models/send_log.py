@@ -43,7 +43,7 @@ class SendLog(BaseModel, JSONFieldMixin, table=True):
     is_warmup: bool = Field(default=False)
     recipient_type: Optional[str] = Field(default=None)
     recipient_identifier: Optional[str] = Field(default=None)
-    sent_at: Optional[datetime] = Field(default=None)
+    sent_at: Optional[datetime] = Field(default=None, index=True)
 
     # Message details
     message_text: str
@@ -52,7 +52,7 @@ class SendLog(BaseModel, JSONFieldMixin, table=True):
     caption: Optional[str] = Field(default=None)
 
     # Status and timing
-    status: SendStatus = Field(default=SendStatus.PENDING)
+    status: SendStatus = Field(default=SendStatus.PENDING, index=True)
     error_message: Optional[str] = Field(default=None)
     error_code: Optional[str] = Field(default=None)
 

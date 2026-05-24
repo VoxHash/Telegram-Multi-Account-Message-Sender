@@ -38,10 +38,11 @@ Transform Telegram Multi-Account Message Sender into the ultimate Telegram autom
 - **PyPI Install Reliability**: Declared runtime dependencies (including `pandas`) for standalone `pip install` GUI launches
 - **Frozen Build Quality**: PyInstaller bundles translation files; release CI validates imports and Windows executable artifacts
 - **GHCR Package Metadata**: OCI image description on multi-arch manifests (Dockerfile `LABEL` + publish workflow annotations)
+- **Google Drive Cloud Backup**: Backup package, OAuth provider, Settings UI, and restore flow with pre-restore snapshots
 
 ### 🔄 In Progress
-- **Cloud Storage Support (MVP-1)**: Backup package builder + `CloudProvider` abstraction (`app/services/cloud/`)
-- **Performance Optimization**: Recipient table pagination shipped; further DB/UI optimizations ongoing
+- **Cloud Storage Support**: Google Drive complete; OneDrive/Dropbox and cloud sync features planned
+- **Performance Optimization**: Recipient pagination and `send_logs` query indexes; media/UI optimizations ongoing
 - **Code Quality**: Continuous testing and refactoring improvements
 - **Community Growth**: Building sponsor community and contributor base
 
@@ -139,8 +140,8 @@ Transform Telegram Multi-Account Message Sender into the ultimate Telegram autom
   - **Priority**: Medium | **Effort**: High
 
 #### ☁️ Cloud Integration
-- [ ] **Cloud Storage Support** *(MVP-1 in progress — package builder + provider interface)*
-  - Google Drive integration
+- [ ] **Cloud Storage Support** *(Google Drive shipped — MVP-1–3)*
+  - Google Drive integration ✅
   - OneDrive integration
   - Dropbox integration
   - Custom cloud providers

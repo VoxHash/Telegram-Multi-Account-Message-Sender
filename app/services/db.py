@@ -9,7 +9,7 @@ from typing import Optional, AsyncGenerator, Any, Dict
 from contextlib import asynccontextmanager
 
 from sqlmodel import SQLModel, create_engine, Session, select
-from sqlalchemy import event
+from sqlalchemy import event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.pool import StaticPool
 
@@ -135,10 +135,33 @@ class DatabaseService:
             pass
 
             SQLModel.metadata.create_all(self.engine)
+            self.ensure_performance_indexes()
             self.logger.info("Database tables created successfully")
         except Exception as e:
             self.logger.error(f"Failed to create database tables: {e}")
             raise
+
+    def ensure_performance_indexes(self) -> None:
+        """Create indexes used by health checks and log queries on existing databases."""
+        if not self.engine or not self.settings.database_url.startswith("sqlite:///"):
+            return
+
+        index_statements = [
+            "CREATE INDEX IF NOT EXISTS ix_send_logs_sent_at ON send_logs (sent_at)",
+            "CREATE INDEX IF NOT EXISTS ix_send_logs_status ON send_logs (status)",
+            (
+                "CREATE INDEX IF NOT EXISTS ix_send_logs_account_sent_at "
+                "ON send_logs (account_id, sent_at)"
+            ),
+        ]
+
+        try:
+            with self.engine.begin() as connection:
+                for statement in index_statements:
+                    connection.execute(text(statement))
+            self.logger.info("Database performance indexes ensured")
+        except Exception as e:
+            self.logger.warning(f"Could not ensure performance indexes: {e}")
 
     def drop_tables(self) -> None:
         """Drop all database tables (use with caution)."""

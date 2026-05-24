@@ -123,4 +123,4 @@ Encryption: use existing `app/utils/crypto.py` patterns; user-provided backup pa
 
 ---
 
-**Next action:** Implement **MVP-1** (`backup_package.py` + tests) on branch `feat/cloud-backup-package` after `feat/roadmap-next-steps` merges.
+**Next action:** Implement **MVP-2** (Google Drive auth + upload/list/download) after MVP-1 merges.

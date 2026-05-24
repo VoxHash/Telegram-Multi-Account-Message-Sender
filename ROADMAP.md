@@ -40,7 +40,8 @@ Transform Telegram Multi-Account Message Sender into the ultimate Telegram autom
 - **GHCR Package Metadata**: OCI image description on multi-arch manifests (Dockerfile `LABEL` + publish workflow annotations)
 
 ### 🔄 In Progress
-- **Performance Optimization**: Ongoing database and UI optimizations
+- **Cloud Storage Support (MVP-1)**: Backup package builder + `CloudProvider` abstraction (`app/services/cloud/`)
+- **Performance Optimization**: Recipient table pagination shipped; further DB/UI optimizations ongoing
 - **Code Quality**: Continuous testing and refactoring improvements
 - **Community Growth**: Building sponsor community and contributor base
 
@@ -138,7 +139,7 @@ Transform Telegram Multi-Account Message Sender into the ultimate Telegram autom
   - **Priority**: Medium | **Effort**: High
 
 #### ☁️ Cloud Integration
-- [ ] **Cloud Storage Support**
+- [ ] **Cloud Storage Support** *(MVP-1 in progress — package builder + provider interface)*
   - Google Drive integration
   - OneDrive integration
   - Dropbox integration

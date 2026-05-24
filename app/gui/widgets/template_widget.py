@@ -29,6 +29,7 @@ from ...models import MessageTemplate
 from ...services import get_logger
 from ...services.db import get_session
 from ...services.translation import _, get_translation_manager
+from app.gui.utils.table_memory import prepare_table_reload
 from ...core import SpintaxProcessor
 
 
@@ -631,6 +632,7 @@ class TemplateListWidget(QWidget):
             finally:
                 session.close()
 
+            prepare_table_reload(self.templates_table)
             self.templates_table.setRowCount(len(templates))
 
             for row, template in enumerate(templates):

@@ -3,7 +3,6 @@ Telegram client management using Telethon.
 """
 
 import asyncio
-import os
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
@@ -16,6 +15,7 @@ from telethon.errors import (
 
 from ..services.logger import get_logger
 from ..models import Account, AccountStatus
+from ..utils.media_cache import MediaCacheError, get_media_cache
 
 
 class TelegramClientWrapper:
@@ -145,16 +145,17 @@ class TelegramClientWrapper:
 
             # Send message
             if media_path:
-                # Check if it's a URL or file path
-                if media_path.startswith(("http://", "https://")):
-                    # It's a URL - send as URL
-                    message = await self.client.send_file(entity, media_path, caption=text)
-                elif os.path.exists(media_path):
-                    # It's a local file path
-                    message = await self.client.send_file(entity, media_path, caption=text)
+                try:
+                    resolved_media = get_media_cache().resolve(media_path)
+                except MediaCacheError as exc:
+                    self.logger.warning(str(exc))
+                    resolved_media = None
+
+                if resolved_media:
+                    message = await self.client.send_file(
+                        entity, resolved_media, caption=text
+                    )
                 else:
-                    # Invalid media path
-                    self.logger.warning(f"Media path does not exist: {media_path}")
                     message = await self.client.send_message(entity, text)
             else:
                 message = await self.client.send_message(entity, text)

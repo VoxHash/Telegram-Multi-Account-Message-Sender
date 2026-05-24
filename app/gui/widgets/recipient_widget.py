@@ -33,7 +33,10 @@ from ...services import get_logger
 from ...services.db import get_session
 from ...services.translation import _, get_translation_manager
 from app.gui.widgets.telegram_selector import TelegramSelectorDialog
+from app.gui.utils.table_memory import prepare_table_reload
 import pandas as pd
+
+CSV_PREVIEW_MAX_ROWS = 100
 
 
 class RecipientDialog(QDialog):
@@ -614,14 +617,16 @@ class CSVImportDialog(QDialog):
             df = pd.read_csv(file_path, nrows=10)
 
             # Setup preview table
-            self.preview_table.setRowCount(len(df))
+            preview_rows = min(len(df), CSV_PREVIEW_MAX_ROWS)
+            prepare_table_reload(self.preview_table)
+            self.preview_table.setRowCount(preview_rows)
             self.preview_table.setColumnCount(len(df.columns))
             self.preview_table.setHorizontalHeaderLabels(df.columns.tolist())
 
-            # Fill preview table
-            for i, row in df.iterrows():
+            for row_index in range(preview_rows):
+                row = df.iloc[row_index]
                 for j, value in enumerate(row):
-                    self.preview_table.setItem(i, j, QTableWidgetItem(str(value)))
+                    self.preview_table.setItem(row_index, j, QTableWidgetItem(str(value)))
 
             # Resize columns
             self.preview_table.resizeColumnsToContents()
@@ -1053,6 +1058,7 @@ class RecipientListWidget(QWidget):
             offset = self._current_page * self._page_size
             recipients = self._fetch_recipients_page(search_text, offset, self._page_size)
 
+            prepare_table_reload(self.recipients_table)
             self.recipients_table.setRowCount(len(recipients))
             for row, recipient in enumerate(recipients):
                 self._populate_recipient_row(row, recipient)

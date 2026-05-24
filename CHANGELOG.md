@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.13] - 2026-05-24
+
+### Fixed
+- **GHCR Image Metadata**: Added OCI `org.opencontainers.image.description` via Dockerfile `LABEL` and publish workflow annotations so the container package page shows the project description on multi-arch manifests.
+
 ## [1.2.12] - 2026-05-24
 
 ### Fixed

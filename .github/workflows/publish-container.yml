@@ -60,19 +60,20 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Set container package visibility to public
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PACKAGE_NAME="$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')"
           gh api \
-            --method PATCH \
+            --method PUT \
             -H "Accept: application/vnd.github+json" \
-            "/orgs/${{ github.repository_owner }}/packages/container/${PACKAGE_NAME}" \
+            "/user/packages/container/${PACKAGE_NAME}/visibility" \
             -f visibility='public' \
             || gh api \
-            --method PATCH \
+            --method PUT \
             -H "Accept: application/vnd.github+json" \
-            "/user/packages/container/${PACKAGE_NAME}" \
+            "/orgs/${{ github.repository_owner }}/packages/container/${PACKAGE_NAME}/visibility" \
             -f visibility='public'
 
       - name: Publish job summary

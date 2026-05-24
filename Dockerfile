@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Telegram Multi-Account Message Sender
 
 # Build stage
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -25,7 +25,7 @@ FROM python:3.11-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     libxext6 \
     libxrender1 \

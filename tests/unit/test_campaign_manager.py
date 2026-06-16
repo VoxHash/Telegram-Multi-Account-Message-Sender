@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from app.core.plugin import MessageFilterPlugin, PluginMetadata, PluginType
 from app.models import (
     Campaign,
     CampaignStatus,
@@ -139,3 +140,37 @@ class TestCampaignManager:
         campaign = _create_campaign(total_recipients=0, status=CampaignStatus.DRAFT)
 
         assert campaign_manager.start_campaign(campaign.id) is False
+
+    def test_apply_message_filters_uses_recipient_type(self, campaign_manager):
+        recipient = _create_recipient(username="self_account")
+        captured_recipient_data = {}
+
+        class CapturingFilterPlugin(MessageFilterPlugin):
+            @property
+            def metadata(self) -> PluginMetadata:
+                return PluginMetadata(
+                    name="Capturing Filter",
+                    version="1.0.0",
+                    description="Captures recipient payload in tests",
+                    author="tests",
+                    plugin_type=PluginType.FILTER,
+                )
+
+            def filter_message(self, message, recipient_data):
+                captured_recipient_data.update(recipient_data)
+                return message
+
+        plugin = CapturingFilterPlugin(api=MagicMock())
+        plugin_info = MagicMock()
+        plugin_info.metadata.name = "Capturing Filter"
+        plugin_info.metadata.version = "1.0.0"
+
+        campaign_manager.plugin_manager.list_enabled_plugins = MagicMock(
+            return_value=[plugin_info]
+        )
+        campaign_manager.plugin_manager.get_plugin = MagicMock(return_value=plugin)
+
+        filtered_message = campaign_manager._apply_message_filters("Hello", recipient)
+
+        assert filtered_message == "Hello"
+        assert captured_recipient_data["type"] == RecipientType.USER.value

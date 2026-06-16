@@ -789,7 +789,7 @@ class CampaignManager(QObject):
             "last_name": recipient.last_name,
             "username": recipient.username,
             "phone_number": recipient.phone_number,
-            "type": recipient.type.value if recipient.type else None,
+            "type": recipient.recipient_type.value if recipient.recipient_type else None,
         }
 
         filtered_message = message_text

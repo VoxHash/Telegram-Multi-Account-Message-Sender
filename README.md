@@ -1,15 +1,15 @@
 # Telegram Multi-Account Message Sender
 
-[![CI/CD Pipeline](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/actions/workflows/ci.yml/badge.svg)](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/actions/workflows/ci.yml)
-[![License: EPL-2.0](https://img.shields.io/badge/License-EPL--2.0-blue.svg)](https://opensource.org/licenses/EPL-2.0)
-[![Made with ❤️ by VoxHash](https://img.shields.io/badge/Made%20with%20❤️%20by-VoxHash%20Technologies-red.svg)](https://voxhash.dev)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-green.svg)](https://www.riverbankcomputing.com/software/pyqt/)
-[![Telethon](https://img.shields.io/badge/Telethon-1.24+-orange.svg)](https://github.com/LonamiWebs/Telethon)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Imports: isort](https://img.shields.io/badge/%20imports-isort-1674b1.svg)](https://github.com/pycqa/isort)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/VoxHash?label=Sponsors&logo=github&color=ea4aaa)](https://github.com/sponsors/VoxHash)
+[CI/CD Pipeline](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/actions/workflows/ci.yml)
+[License: EPL-2.0](https://opensource.org/licenses/EPL-2.0)
+[Made with ❤️ by VoxHash](https://voxhash.dev)
+[Docker](https://www.docker.com/)
+[Python 3.10+](https://www.python.org/downloads/)
+[PyQt5](https://www.riverbankcomputing.com/software/pyqt/)
+[Telethon](https://github.com/LonamiWebs/Telethon)
+[Code style: black](https://github.com/psf/black)
+[Imports: isort](https://github.com/pycqa/isort)
+[GitHub Sponsors](https://github.com/sponsors/VoxHash)
 
 A professional-grade desktop application for managing and sending messages across multiple Telegram accounts with advanced features like scheduling, spintax, media support, and compliance controls.
 
@@ -26,36 +26,36 @@ A professional-grade desktop application for managing and sending messages acros
 - **Multi-tenant Telegram campaign automation** — connect accounts, recipients, and paced sends from one secure web app
 - **Team collaboration built in** — owner, admin, and operator roles with per-org encryption at rest
 - **Hosted delivery workers** — background Telethon send jobs, scheduling, pause/resume, and delivery analytics without managing Fly.io or VPS
-- **Enterprise-ready integrations** — API keys, HMAC webhooks, and dual billing (LicenseChain Pay + Stripe)
+- **Enterprise-ready integrations** — API keys, HMAC webhooks, and dual billing (LicenseChain Pay)
 - **Self-serve growth tools** — recipient segments, campaign templates, usage alerts, and guided onboarding
 - **Production SLA path** — live at [sendgram.pro](https://www.sendgram.pro) with CI/CD, Supabase Postgres, and platform admin controls
 
 > **Prefer the desktop app?** Keep using TMMS locally. **Need a team, API, or always-on delivery?** SendGram is the upgrade path.
 
-<table>
-<tr>
-<td width="50%">
+
+|     |
+| --- |
+|     |
+
 
 **Start free — no credit card required**
 
 [→ Launch SendGram](https://www.sendgram.pro)
 
-</td>
-<td width="50%">
+
 
 **Compare plans & features**
 
 [→ View pricing](https://www.sendgram.pro/#pricing)
 
-</td>
-</tr>
-</table>
+
 
 ---
 
 ## ✨ Features
 
 ### 🚀 Core Functionality
+
 - **Multi-Account Management**: Manage multiple Telegram accounts simultaneously with proxy support
 - **Account Import Methods**: Add accounts via phone number or by importing Telethon session files
 - **Proxy Support**: Full proxy support (HTTP, HTTPS, SOCKS4, SOCKS5) with connection testing
@@ -66,12 +66,14 @@ A professional-grade desktop application for managing and sending messages acros
 - **Comprehensive Logging**: Track all activities with detailed logs
 
 ### 🎨 User Interface
+
 - **Modern UI**: Clean, intuitive interface with multiple themes
 - **Multi-Language Support**: Available in 13 languages (English, French, Spanish, Chinese, Japanese, German, Russian, Estonian, Portuguese, Korean, Catalan, Basque, Galician)
 - **Responsive Design**: Adapts to different screen sizes
 - **Dark/Light Themes**: Multiple theme options including Dracula theme
 
 ### 🔧 Advanced Features
+
 - **Spintax Support**: Create message variations using spintax syntax with real-time processing
 - **A/B Testing**: Test different message variants with statistical analysis
 - **Scheduling**: Schedule campaigns for specific times with timezone support
@@ -82,6 +84,7 @@ A professional-grade desktop application for managing and sending messages acros
 - **Windows Integration**: Start with Windows option for seamless user experience
 
 ### 🛡️ Safety & Compliance
+
 - **Account Warmup**: Gradual account warming to avoid spam detection
 - **Rate Limiting**: Built-in rate limiting to prevent account bans
 - **Error Handling**: Comprehensive error handling and recovery
@@ -91,24 +94,29 @@ A professional-grade desktop application for managing and sending messages acros
 ## 🖼️ Screenshots
 
 ### Main Interface - Campaigns Tab
-![Campaign Management](screenshots/campaigns.png)
+
+Campaign Management
 *Comprehensive campaign management with scheduling, status tracking, and bulk operations*
 
 ### Template System
-![Template System](screenshots/templates.png)
+
+Template System
 *Advanced template management with spintax support and A/B testing capabilities*
 
 ### Settings & Configuration
-![Settings](screenshots/settings.png)
+
+Settings
 *Complete settings management with multi-language support, themes, and safety controls*
 
 ### Message Testing
-![Testing Interface](screenshots/testing.png)
+
+Testing Interface
 *Message testing functionality with real-time preview and validation*
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.10 or higher
 - PyQt5
 - Telegram API credentials (API ID and API Hash)
@@ -116,11 +124,13 @@ A professional-grade desktop application for managing and sending messages acros
 ### Installation
 
 #### Option 1: Using pip (Recommended)
+
 ```bash
 pip install telegram-multi-account-sender
 ```
 
 #### Option 2: From source
+
 ```bash
 git clone https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender.git
 cd Telegram-Multi-Account-Message-Sender
@@ -129,6 +139,7 @@ python main.py
 ```
 
 #### Option 3: Using Docker
+
 ```bash
 # Build the Docker image
 docker build -t telegram-sender .
@@ -141,37 +152,35 @@ docker run -it --rm \
 ```
 
 #### Option 4: Using installers
+
 Download the appropriate installer from the [Releases](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/releases) page.
 
 ### Configuration
 
 1. **Get Telegram API Credentials**:
-   - Go to [my.telegram.org](https://my.telegram.org)
-   - Log in with your phone number
-   - Go to "API development tools"
-   - Create a new application
-   - Copy the API ID and API Hash
-
+  - Go to [my.telegram.org](https://my.telegram.org)
+  - Log in with your phone number
+  - Go to "API development tools"
+  - Create a new application
+  - Copy the API ID and API Hash
 2. **Set Up Environment Variables**:
-   ```bash
+  ```bash
    # Copy the example environment file
    cp example_files/env_template.txt .env
-   
+
    # Edit .env and add your credentials
    # ⚠️ SENSITIVE: TELEGRAM_API_ID and TELEGRAM_API_HASH must be kept secret
-   ```
-
+  ```
 3. **Configure Application**:
-   - Open the Settings tab
-   - Enter your API credentials (or they'll be loaded from .env)
-   - Set your preferred theme and language
-   - Save your settings
-
+  - Open the Settings tab
+  - Enter your API credentials (or they'll be loaded from .env)
+  - Set your preferred theme and language
+  - Save your settings
 4. **Add Your First Account**:
-   - Go to the Accounts tab
-   - Click "Add Account"
-   - Enter your phone number
-   - Follow the authorization process
+  - Go to the Accounts tab
+  - Click "Add Account"
+  - Enter your phone number
+  - Follow the authorization process
 
 ## 📖 Documentation
 
@@ -212,6 +221,7 @@ Download the appropriate installer from the [Releases](https://github.com/VoxHas
 ## 📋 Requirements
 
 ### Minimum Requirements
+
 - Python 3.10+
 - 4GB RAM
 - 1GB free disk space
@@ -219,6 +229,7 @@ Download the appropriate installer from the [Releases](https://github.com/VoxHas
 - Windows 10, macOS 10.15, or Linux (Ubuntu 18.04+)
 
 ### Recommended Requirements
+
 - Python 3.11+
 - 8GB RAM
 - 5GB free disk space
@@ -248,6 +259,7 @@ Hello {John|Jane|Alex}, welcome to {our|my} {amazing|fantastic|great} service!
 ```
 
 This will generate variations like:
+
 - "Hello John, welcome to our amazing service!"
 - "Hello Jane, welcome to my fantastic service!"
 - "Hello Alex, welcome to our great service!"
@@ -265,32 +277,28 @@ This will generate variations like:
 ### Setting Up Development Environment
 
 1. **Clone the Repository**:
-   ```bash
+  ```bash
    git clone https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender.git
    cd Telegram-Multi-Account-Message-Sender
-   ```
-
+  ```
 2. **Create Virtual Environment**:
-   ```bash
+  ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
+  ```
 3. **Install Dependencies**:
-   ```bash
+  ```bash
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
-   ```
-
+  ```
 4. **Set Up Pre-commit Hooks**:
-   ```bash
+  ```bash
    pre-commit install
-   ```
-
+  ```
 5. **Run Tests**:
-   ```bash
+  ```bash
    pytest
-   ```
+  ```
 
 ### Code Style
 
@@ -354,7 +362,7 @@ This application is for educational and legitimate business purposes only. Users
 - **Documentation**: [GitHub Wiki](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/wiki)
 - **Issues**: [GitHub Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
-- **Email**: contact@voxhash.dev
+- **Email**: [contact@voxhash.dev](mailto:contact@voxhash.dev)
 
 ## 🗺️ Roadmap
 
@@ -409,7 +417,7 @@ See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
 
 ## 🌟 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=VoxHash/Telegram-Multi-Account-Message-Sender&type=Date)](https://star-history.com/#VoxHash/Telegram-Multi-Account-Message-Sender&Date)
+[Star History Chart](https://star-history.com/#VoxHash/Telegram-Multi-Account-Message-Sender&Date)
 
 ---
 

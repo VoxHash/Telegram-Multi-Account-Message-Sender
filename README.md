@@ -13,6 +13,46 @@
 
 A professional-grade desktop application for managing and sending messages across multiple Telegram accounts with advanced features like scheduling, spintax, media support, and compliance controls.
 
+---
+
+## ☁️ SendGram — Hosted Telegram Campaign SaaS
+
+**Run multi-account Telegram outreach in the cloud — no desktop install, no server maintenance.**
+
+[SendGram](https://www.sendgram.pro) is the managed SaaS edition built on the same pacing discipline and campaign workflow as this project. Teams that outgrow a single desktop get multi-tenant hosting, role-based access, and production-grade delivery infrastructure.
+
+### Why teams choose SendGram over self-hosting
+
+- **Multi-tenant Telegram campaign automation** — connect accounts, recipients, and paced sends from one secure web app
+- **Team collaboration built in** — owner, admin, and operator roles with per-org encryption at rest
+- **Hosted delivery workers** — background Telethon send jobs, scheduling, pause/resume, and delivery analytics without managing Fly.io or VPS
+- **Enterprise-ready integrations** — API keys, HMAC webhooks, and dual billing (LicenseChain Pay + Stripe)
+- **Self-serve growth tools** — recipient segments, campaign templates, usage alerts, and guided onboarding
+- **Production SLA path** — live at [sendgram.pro](https://www.sendgram.pro) with CI/CD, Supabase Postgres, and platform admin controls
+
+> **Prefer the desktop app?** Keep using TMMS locally. **Need a team, API, or always-on delivery?** SendGram is the upgrade path.
+
+<table>
+<tr>
+<td width="50%">
+
+**Start free — no credit card required**
+
+[→ Launch SendGram](https://www.sendgram.pro)
+
+</td>
+<td width="50%">
+
+**Compare plans & features**
+
+[→ View pricing](https://www.sendgram.pro/#pricing)
+
+</td>
+</tr>
+</table>
+
+---
+
 ## ✨ Features
 
 ### 🚀 Core Functionality
@@ -359,6 +399,7 @@ See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
 
 ## 🔗 Links
 
+- **SendGram (hosted SaaS)**: [sendgram.pro](https://www.sendgram.pro) — managed cloud edition for teams
 - **Repository**: [GitHub](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender)
 - **Documentation**: [GitHub Wiki](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/wiki)
 - **Issues**: [GitHub Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)

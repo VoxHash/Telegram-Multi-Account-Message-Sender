@@ -185,6 +185,8 @@ Download the appropriate installer from the [Releases](https://github.com/VoxHas
 ## 📖 Documentation
 
 - **[Documentation Index](docs/index.md)**: Complete documentation overview
+- **[Getting Started](docs/getting-started.md)**: Orientation and required secrets
+- **[Installation](docs/installation.md)**: pip, source, Docker, and frozen builds
 - **[Quick Start Guide](docs/quick-start.md)**: Get up and running in minutes
 - **[Usage Guide](docs/usage.md)**: Comprehensive user guide
 - **[API Documentation](docs/api.md)**: Complete API reference
@@ -192,8 +194,7 @@ Download the appropriate installer from the [Releases](https://github.com/VoxHas
 - **[Troubleshooting](docs/troubleshooting.md)**: Common issues and solutions
 - **[FAQ](docs/faq.md)**: Frequently asked questions
 - **[Contributing](CONTRIBUTING.md)**: How to contribute to the project
-- **[Roadmap](ROADMAP.md)**: Future development plans including AI features
-- **[Development Goals](DEVELOPMENT_GOALS.md)**: Performance and accessibility targets
+- **[Roadmap](ROADMAP.md)**: Future development plans
 
 ## 🌍 Supported Languages
 

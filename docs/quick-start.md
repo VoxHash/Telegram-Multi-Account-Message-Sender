@@ -109,6 +109,8 @@ This will generate variations like:
 
 ## Next Steps
 
+- Read the [Getting Started](getting-started.md) guide for required secrets and learning path
+- Follow [Installation](installation.md) for pip, Docker, and frozen builds
 - Read the [Usage Guide](usage.md) for comprehensive usage instructions
 - Check out [Examples](examples/example-01.md) for practical examples
 - Review the [Configuration Guide](configuration.md) for advanced settings

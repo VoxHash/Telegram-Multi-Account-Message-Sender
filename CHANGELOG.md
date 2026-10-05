@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.14] - 2026-10-05
+
+### Added
+- **Documentation Kit**: Added `docs/getting-started.md` and `docs/installation.md` (install paths, secrets, PyInstaller/Docker verification).
+- **SendGram Upgrade Path**: Documented hosted SaaS alternative in README for teams that need multi-tenant cloud delivery.
+
+### Changed
+- **README**: Shield badges for CI, license, stack, and sponsors; clearer documentation navigation.
+- **ROADMAP**: Aligned remaining Phase 2+ items with current v1.2.14 distribution and docs state.
+- **Repository Hygiene**: Tightened `.gitignore` for Cursor/IDE artifacts; removed stray markdown outside the documentation kit.
+
+### Removed
+- **Stray Docs**: Removed `DEVELOPMENT_GOALS.md`, `GITHUB_TOPICS.md`, and `docs/build-instructions.md` (content folded into installation docs).
+
 ## [1.2.13] - 2026-05-24
 
 ### Fixed

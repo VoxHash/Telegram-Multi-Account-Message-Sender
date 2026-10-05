@@ -3,8 +3,10 @@
 Welcome to the Telegram Multi-Account Message Sender documentation!
 
 ## Quick Start
-- **[Quick Start Guide](quick-start.md)**: Get up and running quickly with installation and setup
-- **[Configuration](configuration.md)**: Application configuration guide
+- **[Getting Started](getting-started.md)**: Orientation, secrets, and learning path
+- **[Installation](installation.md)**: pip, source, Docker, installers, and PyInstaller builds
+- **[Quick Start Guide](quick-start.md)**: Configure and launch in minutes
+- **[Configuration](configuration.md)**: Environment variables and application settings
 
 ## User Guides
 - **[Usage Guide](usage.md)**: How to use the application

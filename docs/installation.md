@@ -15,15 +15,18 @@ Headless or minimal Linux images need Qt/X11 libraries for PyQt5 (exact package 
 
 ## Option 1: pip (recommended)
 
+Install from [PyPI](https://pypi.org/project/telegram-multi-account-sender/):
+
 ```bash
 pip install telegram-multi-account-sender
-python -m app.cli
 ```
 
-Or:
+Launch:
 
 ```bash
 telegram-sender
+# or
+python -m app.cli
 ```
 
 ## Option 2: From source

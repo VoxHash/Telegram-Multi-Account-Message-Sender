@@ -11,8 +11,12 @@ Get up and running with Telegram Multi-Account Message Sender in minutes!
 ## Installation
 
 ### Option 1: Using pip (Recommended)
+
+Package: [`telegram-multi-account-sender` on PyPI](https://pypi.org/project/telegram-multi-account-sender/)
+
 ```bash
 pip install telegram-multi-account-sender
+telegram-sender
 ```
 
 ### Option 2: From source

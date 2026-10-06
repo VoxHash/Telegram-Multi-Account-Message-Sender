@@ -1,6 +1,8 @@
 # Telegram Multi-Account Message Sender
 
 [![CI/CD Pipeline](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/actions/workflows/ci.yml/badge.svg)](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/telegram-multi-account-sender.svg)](https://pypi.org/project/telegram-multi-account-sender/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/telegram-multi-account-sender.svg)](https://pypi.org/project/telegram-multi-account-sender/)
 [![License: EPL-2.0](https://img.shields.io/badge/License-EPL--2.0-blue.svg)](https://opensource.org/licenses/EPL-2.0)
 [![Made with ❤️ by VoxHash](https://img.shields.io/badge/Made%20with%20❤️%20by-VoxHash%20Technologies-red.svg)](https://voxhash.dev)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
@@ -12,6 +14,14 @@
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/VoxHash?label=Sponsors&logo=github&color=ea4aaa)](https://github.com/sponsors/VoxHash)
 
 A professional-grade desktop application for managing and sending messages across multiple Telegram accounts with advanced features like scheduling, spintax, media support, and compliance controls.
+
+### Install
+
+```bash
+pip install telegram-multi-account-sender
+```
+
+Then launch with `telegram-sender` or `python -m app.cli`. Full setup: [docs/quick-start.md](docs/quick-start.md) · [docs/installation.md](docs/installation.md) · [PyPI](https://pypi.org/project/telegram-multi-account-sender/).
 
 ---
 

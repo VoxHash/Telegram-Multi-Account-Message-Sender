@@ -64,22 +64,37 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Set container package visibility to public
-        continue-on-error: true
+      - name: Ensure container package is public
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           PACKAGE_NAME="$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')"
-          gh api \
-            --method PUT \
+          OWNER='${{ github.repository_owner }}'
+          visibility="$(gh api "/users/${OWNER}/packages/container/${PACKAGE_NAME}" --jq '.visibility')"
+          echo "Package visibility: ${visibility}"
+          if [ "${visibility}" = "public" ]; then
+            echo "Already public."
+            exit 0
+          fi
+          # User-owned packages: PATCH /users/... ; org-owned: PATCH /orgs/...
+          # (PUT .../visibility is not a valid Packages REST endpoint.)
+          if gh api --method PATCH \
             -H "Accept: application/vnd.github+json" \
-            "/user/packages/container/${PACKAGE_NAME}/visibility" \
-            -f visibility='public' \
-            || gh api \
-            --method PUT \
+            "/users/${OWNER}/packages/container/${PACKAGE_NAME}" \
+            -f visibility=public; then
+            echo "Set to public."
+            exit 0
+          fi
+          if gh api --method PATCH \
             -H "Accept: application/vnd.github+json" \
-            "/orgs/${{ github.repository_owner }}/packages/container/${PACKAGE_NAME}/visibility" \
-            -f visibility='public'
+            "/orgs/${OWNER}/packages/container/${PACKAGE_NAME}" \
+            -f visibility=public; then
+            echo "Set to public."
+            exit 0
+          fi
+          echo "::error::Package visibility is '${visibility}' and could not be changed via API"
+          exit 1
 
       - name: Publish job summary
         run: |

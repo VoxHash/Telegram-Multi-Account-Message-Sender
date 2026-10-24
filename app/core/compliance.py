@@ -6,8 +6,8 @@ from typing import Dict, List, Any
 from datetime import datetime
 from dataclasses import dataclass
 
-from ..services import get_logger
 from ..models import Account, Campaign
+from ..services.logger import get_logger
 
 
 @dataclass

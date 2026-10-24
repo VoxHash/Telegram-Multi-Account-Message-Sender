@@ -9,7 +9,8 @@ from typing import Dict, List, Optional, Any
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 
 from ..models import Campaign, CampaignStatus, Account, Recipient, SendLog, SendStatus
-from ..services import get_logger, get_session
+from ..services.db import get_session
+from ..services.logger import get_logger
 from ..services.plugin_manager import get_plugin_manager
 from ..core.engine import MessageEngine, CampaignRunner
 from ..core.telethon_client import TelegramClientManager
@@ -849,7 +850,9 @@ class CampaignManager(QObject):
             "last_name": recipient.last_name,
             "username": recipient.username,
             "phone_number": recipient.phone_number,
-            "type": recipient.type.value if recipient.type else None,
+            "type": (
+                recipient.recipient_type.value if recipient.recipient_type else None
+            ),
         }
 
         filtered_message = message_text

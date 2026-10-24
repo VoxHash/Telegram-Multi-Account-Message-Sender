@@ -7,7 +7,8 @@ from typing import Dict, List, Any, Optional
 from enum import Enum
 
 from ..models import Account, AccountStatus, SendLog, SendStatus
-from ..services import get_logger, get_session
+from ..services.db import get_session
+from ..services.logger import get_logger
 from sqlmodel import select, func
 
 

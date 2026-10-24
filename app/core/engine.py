@@ -6,8 +6,8 @@ import asyncio
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
-from ..services import get_logger
 from ..models import Campaign, Account, Recipient
+from ..services.logger import get_logger
 from .telethon_client import TelegramClientManager
 from .throttler import Throttler
 from .spintax import SpintaxProcessor

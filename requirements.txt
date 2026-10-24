@@ -14,7 +14,7 @@ alembic>=1.8.0
 aiosqlite>=0.17.0
 
 # Data Validation & Settings
-pydantic>=1.10.0
+pydantic>=2.0.0
 pydantic-settings>=2.0.0
 
 # Data Processing

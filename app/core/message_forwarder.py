@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional
 from telethon import TelegramClient
 from telethon.errors import MessageIdInvalidError, ChannelPrivateError
 
-from ..services import get_logger
+from ..services.logger import get_logger
 
 
 class MessageForwarder:

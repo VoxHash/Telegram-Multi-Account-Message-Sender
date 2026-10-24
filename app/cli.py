@@ -31,7 +31,7 @@ def main():
     # Create QApplication
     app = QApplication(sys.argv)
     app.setApplicationName("Telegram Multi-Account Message Sender")
-    app.setApplicationVersion("1.2.17")
+    app.setApplicationVersion("1.2.18")
 
     # Create and show main window
     main_window = MainWindow()

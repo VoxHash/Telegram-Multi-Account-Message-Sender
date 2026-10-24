@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.17)
+## Current Status (v1.2.18)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -21,16 +21,20 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Optional Rust native accelerator (`tmms_native`) with prebuilt `tmms_native-linux-x86_64` on Releases
 - Encrypted Google Drive cloud backup / restore MVP (Settings → Cloud Backup)
 - Account health dashboard polish (scores, summary cards, actionable warnings)
+- Broader unit coverage (campaign filters, settings validators, CLI, import smoke)
+- Pydantic v2 field validators on Settings
+- Circular-import hardening for `app.core` / `app.services` lazy exports
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Offline-friendly restore messaging and additional cloud providers
 
-### Latest release (v1.2.17 — 2026-10-24)
-- Account health dashboard: clearer scores, status signals, summary metrics, empty/error states, and actionable recommendations
+### Latest release (v1.2.18 — 2026-10-24)
+- Quality milestone: expanded unit tests, Pydantic v2 Settings validators, and core/services circular-import hardening
 
 ### Previous highlights
+- **v1.2.17**: Account health dashboard polish (scores, summary cards, actionable warnings)
 - **v1.2.16**: Cloud backup MVP (Google Drive encrypted export/restore)
 - **v1.2.15**: Rust native accelerator + prebuilt Linux x86_64 binary on Releases
 - **v1.2.14**: Documentation kit completion, SendGram upgrade path, repo hygiene
@@ -46,9 +50,9 @@ Realistic, shippable work — not a full platform rewrite.
 
 | Priority | Item | Outcome |
 | --- | --- | --- |
-| Medium | Expand unit/integration tests | Cover campaign filter payloads, settings, and CLI entrypoints |
-| Medium | Pydantic v2 field validators | Remove V1 `@validator` deprecation warnings |
-| Medium | Circular-import hardening for `app.core` package exports | Safer `from app.core...` imports outside the GUI boot path |
+| Done (v1.2.18) | Expand unit/integration tests | Cover campaign filter payloads, settings validators, CLI entrypoints, import smoke |
+| Done (v1.2.18) | Pydantic v2 field validators | Remove V1 `@validator` deprecation warnings |
+| Done (v1.2.18) | Circular-import hardening for `app.core` package exports | Safer `from app.core...` imports outside the GUI boot path |
 | Low | Plugin marketplace / registry | Discover third-party plugins (after API stability) |
 | Done (v1.2.17) | Account health dashboard polish | Clear health scores, summary cards, and actionable warnings in the UI |
 | Done (v1.2.16) | Cloud backup MVP (encrypted export/restore) | Safe backup of app data to a user-owned Google Drive folder |
@@ -79,10 +83,10 @@ Realistic, shippable work — not a full platform rewrite.
 ## Technical debt (tracked)
 
 ### Code quality
-- [ ] Broader pytest coverage beyond spintax/throttler
+- [x] Broader pytest coverage beyond spintax/throttler (campaign filters, settings, CLI, import smoke; more integration coverage still welcome)
 - [ ] Coverage reporting in CI summary
 - [ ] Type hints on remaining untyped modules
-- [ ] Resolve known `app.core` ↔ `app.services` import cycle for package-level imports
+- [x] Resolve known `app.core` ↔ `app.services` import cycle for package-level imports
 
 ### Documentation
 - [x] API, FAQ, troubleshooting, installation, getting-started

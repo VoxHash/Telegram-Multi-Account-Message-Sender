@@ -7,8 +7,8 @@ from datetime import datetime
 from dataclasses import dataclass
 from collections import defaultdict
 
-from ..services import get_logger
 from ..models import Campaign, Account, SendLog
+from ..services.logger import get_logger
 
 
 @dataclass

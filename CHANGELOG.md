@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.18] - 2026-10-24
+
+### Changed
+- **Pydantic v2 validators**: Migrated remaining Settings `@validator` / V1 patterns to `field_validator` + `SettingsConfigDict`; require `pydantic>=2.0.0`.
+- **Circular-import hardening**: Lazy `app.core` / `app.services` package exports so `from app.core.spintax import …` (and related submodule imports) no longer trip the core↔services cycle; core modules import `logger`/`db` directly.
+
+### Added
+- **Unit tests**: Campaign filter payloads / message prep, Campaign lifecycle helpers, Settings validators, CLI entrypoint wiring, and import smoke coverage for core/services.
+- **Filter payload fix**: Campaign message filters now pass `recipient_type` correctly in the recipient payload dict.
+
+### Fixed
+- Package-level imports of lightweight core modules no longer fail with partially-initialized circular import errors outside the GUI boot path.
+
 ## [1.2.17] - 2026-10-24
 
 ### Changed

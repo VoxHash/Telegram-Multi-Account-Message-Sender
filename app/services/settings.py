@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from enum import Enum
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.2.17"
+    app_version: str = "1.2.18"
     app_env: AppEnvironment = "development"
     debug: bool = False
     start_with_windows: bool = False
@@ -135,20 +135,23 @@ class Settings(BaseSettings):
     # Optional: Additional settings
     custom_settings: Dict[str, Any] = Field(default_factory=dict)
 
-    @validator("app_data_dir", "sessions_dir", "logs_dir", "content_dir")
-    def create_directories(cls, v):
+    @field_validator("app_data_dir", "sessions_dir", "logs_dir", "content_dir")
+    @classmethod
+    def create_directories(cls, v: str) -> str:
         """Ensure directories exist."""
         Path(v).mkdir(parents=True, exist_ok=True)
         return v
 
-    @validator("database_url")
-    def validate_database_url(cls, v):
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
         """Validate database URL."""
         if not v.startswith(("sqlite:///", "postgresql://", "mysql://")):
             raise ValueError("Database URL must start with sqlite:///, postgresql://, or mysql://")
         return v
 
-    @validator("telegram_api_id", pre=True)
+    @field_validator("telegram_api_id", mode="before")
+    @classmethod
     def validate_api_id(cls, v):
         """Validate Telegram API ID."""
         if v is None or v == "":
@@ -161,7 +164,8 @@ class Settings(BaseSettings):
         except (ValueError, TypeError):
             raise ValueError("Telegram API ID must be a positive integer")
 
-    @validator("telegram_api_hash", pre=True)
+    @field_validator("telegram_api_hash", mode="before")
+    @classmethod
     def validate_api_hash(cls, v):
         """Validate Telegram API hash."""
         if v is None or v == "":
@@ -170,28 +174,32 @@ class Settings(BaseSettings):
             raise ValueError("Telegram API hash must be a 32-character string")
         return v
 
-    @validator("log_level")
+    @field_validator("log_level", mode="before")
+    @classmethod
     def validate_log_level(cls, v):
         """Validate log level."""
         if isinstance(v, str):
             return LogLevel(v.upper())
         return v
 
-    @validator("theme")
+    @field_validator("theme", mode="before")
+    @classmethod
     def validate_theme(cls, v):
         """Validate theme."""
         if isinstance(v, str):
             return Theme(v.lower())
         return v
 
-    @validator("app_env")
+    @field_validator("app_env", mode="before")
+    @classmethod
     def validate_app_env(cls, v):
         """Validate application environment."""
         if isinstance(v, str):
             return AppEnvironment(v.lower())
         return v
 
-    @validator("language", pre=True)
+    @field_validator("language", mode="before")
+    @classmethod
     def validate_language(cls, v):
         """Validate language setting."""
         if v is None or v == "":

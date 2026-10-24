@@ -8,8 +8,9 @@ from typing import List, Optional, Dict, Any
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer, QThread
 
 from ..models import Account, SendLog, SendStatus
-from ..services import get_logger, get_session
 from ..core.telethon_client import TelegramClientManager
+from ..services.db import get_session
+from ..services.logger import get_logger
 
 
 class WarmupManager(QObject):

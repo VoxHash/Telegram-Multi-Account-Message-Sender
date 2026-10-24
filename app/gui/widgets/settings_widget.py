@@ -169,6 +169,12 @@ class SettingsWidget(QWidget):
         self.web_companion_enabled_check.setChecked(bool(self.settings.web_companion_enabled))
         web_layout.addRow(self.web_companion_enabled_check)
 
+        self.web_companion_auto_start_check = QCheckBox(_("settings.web_companion_auto_start"))
+        self.web_companion_auto_start_check.setChecked(
+            bool(self.settings.web_companion_auto_start)
+        )
+        web_layout.addRow(self.web_companion_auto_start_check)
+
         self.web_companion_host_edit = QLineEdit()
         self.web_companion_host_edit.setText(self.settings.web_companion_host or "127.0.0.1")
         self.web_companion_host_edit.setPlaceholderText("127.0.0.1")
@@ -185,6 +191,10 @@ class SettingsWidget(QWidget):
         self.web_companion_token_edit.setPlaceholderText(_("settings.web_companion_token_placeholder"))
         web_layout.addRow(f"{_('settings.web_companion_token')}:", self.web_companion_token_edit)
 
+        self.web_companion_status_label = QLabel(_("settings.web_companion_status_stopped"))
+        self.web_companion_status_label.setStyleSheet("color: #888888;")
+        web_layout.addRow(f"{_('settings.web_companion_status')}:", self.web_companion_status_label)
+
         web_btn_row = QHBoxLayout()
         self.web_companion_open_btn = QPushButton(_("settings.web_companion_open"))
         self.web_companion_open_btn.clicked.connect(self.open_web_companion)
@@ -199,6 +209,7 @@ class SettingsWidget(QWidget):
         web_help.setWordWrap(True)
         web_help.setStyleSheet("color: #888888; font-style: italic;")
         web_layout.addRow(web_help)
+        self.refresh_web_companion_status()
 
         general_layout.addWidget(web_group)
 
@@ -522,6 +533,9 @@ class SettingsWidget(QWidget):
 
             # Optional read-only web companion
             self.settings.web_companion_enabled = self.web_companion_enabled_check.isChecked()
+            self.settings.web_companion_auto_start = (
+                self.web_companion_auto_start_check.isChecked()
+            )
             self.settings.web_companion_host = (
                 self.web_companion_host_edit.text().strip() or "127.0.0.1"
             )
@@ -645,6 +659,7 @@ PLUGIN_REGISTRY_URL={self.settings.plugin_registry_url or ''}
 
 # Optional read-only web companion (stdlib; bind 127.0.0.1 by default)
 WEB_COMPANION_ENABLED={str(self.settings.web_companion_enabled).lower()}
+WEB_COMPANION_AUTO_START={str(self.settings.web_companion_auto_start).lower()}
 WEB_COMPANION_HOST={self.settings.web_companion_host or '127.0.0.1'}
 WEB_COMPANION_PORT={int(self.settings.web_companion_port or 8765)}
 WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
@@ -655,6 +670,28 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
 
         except Exception as e:
             self.logger.error(f"Error saving to .env file: {e}")
+
+    def refresh_web_companion_status(self):
+        """Update the companion running/stopped status line in Settings."""
+        if not hasattr(self, "web_companion_status_label"):
+            return
+        try:
+            from ...services.web_companion import get_runtime_server
+
+            server = get_runtime_server()
+            if server is not None and server.is_running:
+                display = server.base_url.split("?", 1)[0]
+                self.web_companion_status_label.setText(
+                    _("settings.web_companion_status_running").format(url=display)
+                )
+            else:
+                self.web_companion_status_label.setText(
+                    _("settings.web_companion_status_stopped")
+                )
+        except Exception:
+            self.web_companion_status_label.setText(
+                _("settings.web_companion_status_stopped")
+            )
 
     def generate_web_companion_token(self):
         """Fill the companion token field with a fresh URL-safe secret."""
@@ -676,6 +713,9 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         try:
             # Apply current form values so Open uses what the user sees.
             self.settings.web_companion_enabled = True
+            self.settings.web_companion_auto_start = (
+                self.web_companion_auto_start_check.isChecked()
+            )
             self.settings.web_companion_host = (
                 self.web_companion_host_edit.text().strip() or "127.0.0.1"
             )
@@ -685,12 +725,15 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
             )
             self.web_companion_enabled_check.setChecked(True)
 
-            server = start_companion_from_settings(self.settings, background=True)
+            server = start_companion_from_settings(
+                self.settings, background=True, gui_owned=True
+            )
             url = server.base_url or companion_url_from_settings(self.settings)
             webbrowser.open(url)
             # Avoid echoing the raw token into the status bar.
             display = url.split("?", 1)[0]
             self.status_label.setText(_("settings.web_companion_opened").format(url=display))
+            self.refresh_web_companion_status()
             self.logger.info(f"Web companion opened at {display}")
         except Exception as e:
             self.logger.error(f"Failed to open web companion: {e}")
@@ -738,9 +781,13 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
 
             # Optional read-only web companion
             self.web_companion_enabled_check.setChecked(bool(self.settings.web_companion_enabled))
+            self.web_companion_auto_start_check.setChecked(
+                bool(self.settings.web_companion_auto_start)
+            )
             self.web_companion_host_edit.setText(self.settings.web_companion_host or "127.0.0.1")
             self.web_companion_port_spin.setValue(int(self.settings.web_companion_port or 8765))
             self.web_companion_token_edit.setText(self.settings.web_companion_token or "")
+            self.refresh_web_companion_status()
 
             # Database settings
             self.db_url_edit.setText(self.settings.database_url)

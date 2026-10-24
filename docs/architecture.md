@@ -107,7 +107,7 @@ Optional local monitor in `app/services/web_companion.py` (stdlib `http.server` 
 | Snapshot builders | Account health, campaign status, activity, analytics overview, live chart series from the SQLite DB |
 | HTML dashboard | Summary cards + SVG live charts (hourly activity, status/health donuts, campaign bars); 15s refresh |
 | `WebCompanionHandler` | GET/HEAD/OPTIONS only; mutating methods → `405`; optional Bearer / `X-TMAS-Token` / `?token=` auth |
-| CLI / Settings | `telegram-sender web-monitor [--token …]` or **Settings → Start & Open in Browser** |
+| CLI / Settings | `telegram-sender web-monitor [--token …]` or **Settings → Start & Open in Browser**; optional `WEB_COMPANION_AUTO_START` / Auto-start with GUI (background; stop on app exit) |
 
 Default bind is `127.0.0.1:8765`. Non-loopback binds require `WEB_COMPANION_TOKEN`. Prefer a TLS reverse proxy in front of localhost. Desktop remains the control surface.
 

@@ -424,6 +424,7 @@ settings = Settings()
 - `ai_model: str`: Model id (default `gpt-4o-mini`)
 - `plugin_registry_url: str`: HTTPS catalog URL for the plugin marketplace (default: official GitHub registry)
 - `web_companion_enabled: bool`: Preference for the optional read-only web monitor (default `False`)
+- `web_companion_auto_start: bool`: When `True`, desktop GUI launch starts the companion in the background (default `False`; env `WEB_COMPANION_AUTO_START`)
 - `web_companion_host: str`: Bind host (default `127.0.0.1`)
 - `web_companion_port: int`: Bind port (default `8765`)
 - `web_companion_token: Optional[str]`: Bearer token (optional on loopback; required for non-localhost binds)
@@ -448,9 +449,16 @@ settings = reload_settings()
 Optional local HTTP monitor (`app.services.web_companion`) using stdlib `http.server` only. No write/control endpoints.
 
 ```python
-from app.services.web_companion import WebCompanionServer, start_companion_from_settings
+from app.services.web_companion import (
+    WebCompanionServer,
+    maybe_autostart_companion_from_settings,
+    start_companion_from_settings,
+    stop_companion,
+)
 
-server = start_companion_from_settings()  # background thread
+server = start_companion_from_settings(gui_owned=True)  # background thread
+# GUI launch path: maybe_autostart_companion_from_settings() when WEB_COMPANION_AUTO_START
+# App exit: stop_companion(only_if_gui_owned=True)
 # or: WebCompanionServer(host="127.0.0.1", port=8765, auth_token="…").start(background=False)
 ```
 

@@ -68,9 +68,10 @@ Sideloading with **Load Plugin** remains available for local `.py` files that ar
 Monitor account health, campaign status, and recent activity in a browser without giving the companion send/control powers.
 
 1. Open **Settings → General → Web Companion**, keep host `127.0.0.1`, optionally set/generate an auth token, then click **Start & Open in Browser**.
-2. Or run headless: `telegram-sender web-monitor` (add `--token` for non-localhost; see [CLI Reference](cli.md) and [Configuration](configuration.md)).
-3. Dashboard: `http://127.0.0.1:8765/` (append `?token=` when auth is enabled). Live SVG charts auto-refresh every 15s. JSON: `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`, `/api/charts`.
-4. Mutating HTTP methods (`POST`/`PUT`/`PATCH`/`DELETE`) return **405**. Non-localhost binds require a token; prefer localhost behind Caddy/nginx with TLS.
+2. Optional: enable **Auto-start with GUI** (or `WEB_COMPANION_AUTO_START=true`) so launching the desktop app starts the companion in the background — no browser popup; check the Status line in Settings. Closing the app stops a GUI-started companion.
+3. Or run headless: `telegram-sender web-monitor` (add `--token` for non-localhost; see [CLI Reference](cli.md) and [Configuration](configuration.md)).
+4. Dashboard: `http://127.0.0.1:8765/` (append `?token=` when auth is enabled). Live SVG charts auto-refresh every 15s. JSON: `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`, `/api/charts`.
+5. Mutating HTTP methods (`POST`/`PUT`/`PATCH`/`DELETE`) return **405**. Non-localhost binds require a token; prefer localhost behind Caddy/nginx with TLS.
 
 ## AI Copy Tools (optional)
 

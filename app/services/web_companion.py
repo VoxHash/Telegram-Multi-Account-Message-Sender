@@ -998,6 +998,7 @@ class WebCompanionServer:
 
 
 _runtime_server: Optional[WebCompanionServer] = None
+_runtime_gui_owned: bool = False
 _runtime_lock = threading.Lock()
 
 
@@ -1006,16 +1007,24 @@ def get_runtime_server() -> Optional[WebCompanionServer]:
     return _runtime_server
 
 
+def is_companion_gui_owned() -> bool:
+    """True when the desktop GUI started (and still owns) the process-wide companion."""
+    return _runtime_gui_owned
+
+
 def start_companion_from_settings(
     settings: Optional[Settings] = None,
     *,
     background: bool = True,
+    gui_owned: bool = False,
 ) -> WebCompanionServer:
     """Start (or return) the singleton companion using Settings host/port/token."""
-    global _runtime_server
+    global _runtime_server, _runtime_gui_owned
     cfg = settings or get_settings()
     with _runtime_lock:
         if _runtime_server is not None and _runtime_server.is_running:
+            if gui_owned:
+                _runtime_gui_owned = True
             return _runtime_server
         server = WebCompanionServer(
             host=cfg.web_companion_host or DEFAULT_HOST,
@@ -1025,16 +1034,51 @@ def start_companion_from_settings(
         )
         server.start(background=background)
         _runtime_server = server
+        if gui_owned:
+            _runtime_gui_owned = True
         return server
 
 
-def stop_companion() -> None:
-    """Stop the process-wide companion if running."""
-    global _runtime_server
+def stop_companion(*, only_if_gui_owned: bool = False) -> bool:
+    """
+    Stop the process-wide companion if running.
+
+    When ``only_if_gui_owned`` is True, stop only if the desktop GUI started it
+    (auto-start or Settings → Start & Open). Returns True when a server was stopped.
+    """
+    global _runtime_server, _runtime_gui_owned
     with _runtime_lock:
+        if only_if_gui_owned and not _runtime_gui_owned:
+            return False
+        stopped = False
         if _runtime_server is not None:
             _runtime_server.stop()
             _runtime_server = None
+            stopped = True
+        _runtime_gui_owned = False
+        return stopped
+
+
+def maybe_autostart_companion_from_settings(
+    settings: Optional[Settings] = None,
+) -> Optional[WebCompanionServer]:
+    """
+    Start the companion in the background when ``web_companion_auto_start`` is set.
+
+    Does not open a browser. Marks the server as GUI-owned so app exit can stop it.
+    Returns the server on success, or ``None`` when auto-start is disabled / failed.
+    """
+    cfg = settings or get_settings()
+    if not bool(cfg.web_companion_auto_start):
+        return None
+    try:
+        server = start_companion_from_settings(cfg, background=True, gui_owned=True)
+        listen = server.base_url.split("?", 1)[0]
+        get_logger().info(f"Web companion auto-started at {listen} (background, no browser)")
+        return server
+    except Exception as exc:
+        get_logger().error(f"Web companion auto-start failed: {exc}")
+        return None
 
 
 def companion_url_from_settings(settings: Optional[Settings] = None) -> str:

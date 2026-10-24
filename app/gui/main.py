@@ -63,6 +63,9 @@ class MainWindow(QMainWindow):
         if self._pending_backup_path is not None:
             QTimer.singleShot(0, self._handle_pending_backup)
 
+        # Optional web companion auto-start (background; no forced browser open)
+        QTimer.singleShot(0, self._maybe_autostart_web_companion)
+
         self.logger.info("Main window initialized")
 
     def setup_ui(self):
@@ -399,7 +402,27 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Error refreshing widgets: {e}")
 
+    def _maybe_autostart_web_companion(self):
+        """Start the read-only web companion in the background when Settings/env request it."""
+        try:
+            from ..services.web_companion import maybe_autostart_companion_from_settings
+
+            server = maybe_autostart_companion_from_settings(self.settings)
+            if server is not None and hasattr(self, "settings_widget"):
+                refresh = getattr(self.settings_widget, "refresh_web_companion_status", None)
+                if callable(refresh):
+                    refresh()
+        except Exception as e:
+            self.logger.error(f"Web companion auto-start error: {e}")
+
     def closeEvent(self, event):
         """Handle window close event."""
         self.logger.info("Application closing")
+        try:
+            from ..services.web_companion import stop_companion
+
+            # Only stop if this GUI process started the companion (auto-start or Settings open).
+            stop_companion(only_if_gui_owned=True)
+        except Exception as e:
+            self.logger.error(f"Error stopping web companion on exit: {e}")
         event.accept()

@@ -48,7 +48,9 @@ __all__ = [
     # Optional read-only web companion
     "WebCompanionServer",
     "start_companion_from_settings",
+    "maybe_autostart_companion_from_settings",
     "stop_companion",
+    "is_companion_gui_owned",
     "run_web_monitor_cli",
 ]
 
@@ -82,7 +84,12 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "PluginRegistryService": (".plugin_registry", "PluginRegistryService"),
     "WebCompanionServer": (".web_companion", "WebCompanionServer"),
     "start_companion_from_settings": (".web_companion", "start_companion_from_settings"),
+    "maybe_autostart_companion_from_settings": (
+        ".web_companion",
+        "maybe_autostart_companion_from_settings",
+    ),
     "stop_companion": (".web_companion", "stop_companion"),
+    "is_companion_gui_owned": (".web_companion", "is_companion_gui_owned"),
     "run_web_monitor_cli": (".web_companion", "run_web_monitor_cli"),
 }
 

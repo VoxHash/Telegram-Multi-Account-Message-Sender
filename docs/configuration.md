@@ -47,6 +47,7 @@ You can configure the application using environment variables. See `example_file
 - `AI_MODEL`: Model id (default `gpt-4o-mini`)
 - `PLUGIN_REGISTRY_URL`: HTTPS URL of the curated plugin catalog JSON (default: official GitHub `registry/catalog.json`)
 - `WEB_COMPANION_ENABLED`: Start preference for the optional read-only web monitor (`true`/`false`, default `false`)
+- `WEB_COMPANION_AUTO_START`: When `true`, starting the desktop GUI also starts the companion in the background (no browser open; default `false`)
 - `WEB_COMPANION_HOST`: Bind address (default `127.0.0.1`)
 - `WEB_COMPANION_PORT`: Port (default `8765`)
 - `WEB_COMPANION_TOKEN`: Bearer token for companion auth (optional on loopback; **required** for non-localhost binds)
@@ -57,12 +58,13 @@ Lightweight local HTTP monitor built with the Python standard library (no FastAP
 
 ```env
 WEB_COMPANION_ENABLED=false
+WEB_COMPANION_AUTO_START=false
 WEB_COMPANION_HOST=127.0.0.1
 WEB_COMPANION_PORT=8765
 # WEB_COMPANION_TOKEN=  # optional on localhost; required when binding beyond loopback
 ```
 
-1. From the GUI: **Settings → General → Web Companion → Start & Open in Browser** (optional **Generate token**).
+1. From the GUI: **Settings → General → Web Companion → Start & Open in Browser** (optional **Generate token**). Enable **Auto-start with GUI** (or set `WEB_COMPANION_AUTO_START=true`) to start the monitor in the background on app launch — Settings shows Running/Stopped; the browser is not opened automatically. A GUI-started companion stops when the app exits.
 2. From the CLI (blocks until Ctrl+C): `telegram-sender web-monitor` or `python -m app.cli web-monitor [--token …]`.
 3. Open `http://127.0.0.1:8765/` for the dashboard (live charts), `/api/overview` for JSON, or `/api/charts` for chart series only.
 

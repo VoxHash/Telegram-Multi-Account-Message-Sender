@@ -26,10 +26,15 @@ from app.services.web_companion import (
     aggregate_status_breakdown,
     extract_request_token,
     generate_companion_token,
+    get_runtime_server,
+    is_companion_gui_owned,
     is_loopback_host,
     make_snapshot_builders,
+    maybe_autostart_companion_from_settings,
     parse_web_monitor_argv,
     require_token_for_bind,
+    start_companion_from_settings,
+    stop_companion,
     tokens_match,
 )
 
@@ -307,55 +312,54 @@ class TestWebCompanionAuth:
             server.start(background=True)
 
 
+def _clear_companion_env(monkeypatch) -> None:
+    for key in (
+        "WEB_COMPANION_ENABLED",
+        "WEB_COMPANION_AUTO_START",
+        "WEB_COMPANION_HOST",
+        "WEB_COMPANION_PORT",
+        "WEB_COMPANION_TOKEN",
+        "APP_DATA_DIR",
+        "SESSIONS_DIR",
+        "LOGS_DIR",
+        "CONTENT_DIR",
+        "DATABASE_URL",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+
+def _settings_for(tmp_path, **kwargs) -> Settings:
+    return Settings(
+        app_data_dir=str(tmp_path / "d"),
+        sessions_dir=str(tmp_path / "s"),
+        logs_dir=str(tmp_path / "l"),
+        content_dir=str(tmp_path / "c"),
+        database_url=f"sqlite:///{tmp_path / 't.db'}",
+        **kwargs,
+    )
+
+
 class TestSettingsWebCompanion:
     def test_defaults_and_url(self, tmp_path, monkeypatch):
-        for key in (
-            "WEB_COMPANION_ENABLED",
-            "WEB_COMPANION_HOST",
-            "WEB_COMPANION_PORT",
-            "WEB_COMPANION_TOKEN",
-            "APP_DATA_DIR",
-            "SESSIONS_DIR",
-            "LOGS_DIR",
-            "CONTENT_DIR",
-            "DATABASE_URL",
-        ):
-            monkeypatch.delenv(key, raising=False)
-        s = Settings(
-            app_data_dir=str(tmp_path / "d"),
-            sessions_dir=str(tmp_path / "s"),
-            logs_dir=str(tmp_path / "l"),
-            content_dir=str(tmp_path / "c"),
-            database_url=f"sqlite:///{tmp_path / 't.db'}",
-        )
+        _clear_companion_env(monkeypatch)
+        s = _settings_for(tmp_path)
         assert s.web_companion_enabled is False
+        assert s.web_companion_auto_start is False
         assert s.web_companion_host == "127.0.0.1"
         assert s.web_companion_port == 8765
         assert s.web_companion_token is None
         assert s.is_web_companion_token_configured() is False
         assert s.get_web_companion_url() == "http://127.0.0.1:8765"
 
+    def test_auto_start_from_env(self, tmp_path, monkeypatch):
+        _clear_companion_env(monkeypatch)
+        monkeypatch.setenv("WEB_COMPANION_AUTO_START", "true")
+        s = _settings_for(tmp_path)
+        assert s.web_companion_auto_start is True
+
     def test_url_includes_token_query(self, tmp_path, monkeypatch):
-        for key in (
-            "WEB_COMPANION_ENABLED",
-            "WEB_COMPANION_HOST",
-            "WEB_COMPANION_PORT",
-            "WEB_COMPANION_TOKEN",
-            "APP_DATA_DIR",
-            "SESSIONS_DIR",
-            "LOGS_DIR",
-            "CONTENT_DIR",
-            "DATABASE_URL",
-        ):
-            monkeypatch.delenv(key, raising=False)
-        s = Settings(
-            app_data_dir=str(tmp_path / "d"),
-            sessions_dir=str(tmp_path / "s"),
-            logs_dir=str(tmp_path / "l"),
-            content_dir=str(tmp_path / "c"),
-            database_url=f"sqlite:///{tmp_path / 't.db'}",
-            web_companion_token="sec ret/token",
-        )
+        _clear_companion_env(monkeypatch)
+        s = _settings_for(tmp_path, web_companion_token="sec ret/token")
         assert s.is_web_companion_token_configured() is True
         url = s.get_web_companion_url()
         assert url.startswith("http://127.0.0.1:8765/?token=")
@@ -364,6 +368,62 @@ class TestSettingsWebCompanion:
     def test_make_snapshot_builders_keys(self):
         builders = make_snapshot_builders()
         assert set(builders.keys()) == READ_ONLY_API_PATHS
+
+
+class TestCompanionGuiAutostartLifecycle:
+    def teardown_method(self):
+        stop_companion()
+
+    def test_maybe_autostart_noop_when_disabled(self, tmp_path, monkeypatch):
+        _clear_companion_env(monkeypatch)
+        s = _settings_for(tmp_path, web_companion_auto_start=False)
+        assert maybe_autostart_companion_from_settings(s) is None
+        assert get_runtime_server() is None
+        assert is_companion_gui_owned() is False
+
+    def test_maybe_autostart_starts_and_marks_gui_owned(self, tmp_path, monkeypatch):
+        _clear_companion_env(monkeypatch)
+        import socket
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(("127.0.0.1", 0))
+            free_port = sock.getsockname()[1]
+        s = _settings_for(
+            tmp_path,
+            web_companion_auto_start=True,
+            web_companion_host="127.0.0.1",
+            web_companion_port=free_port,
+        )
+        server = maybe_autostart_companion_from_settings(s)
+        assert server is not None
+        assert server.is_running
+        assert is_companion_gui_owned() is True
+        assert get_runtime_server() is server
+
+        # only_if_gui_owned should stop it
+        assert stop_companion(only_if_gui_owned=True) is True
+        assert get_runtime_server() is None
+        assert is_companion_gui_owned() is False
+
+    def test_stop_only_if_gui_owned_skips_unowned(self, tmp_path, monkeypatch):
+        _clear_companion_env(monkeypatch)
+        import socket
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(("127.0.0.1", 0))
+            free_port = sock.getsockname()[1]
+        s = _settings_for(
+            tmp_path,
+            web_companion_host="127.0.0.1",
+            web_companion_port=free_port,
+        )
+        server = start_companion_from_settings(s, background=True, gui_owned=False)
+        assert server.is_running
+        assert is_companion_gui_owned() is False
+        assert stop_companion(only_if_gui_owned=True) is False
+        assert get_runtime_server() is server
+        assert stop_companion() is True
+        assert get_runtime_server() is None
 
 
 class TestChartAggregators:

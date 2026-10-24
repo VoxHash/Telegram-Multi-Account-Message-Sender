@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.27] - 2026-10-24
+
+### Added
+- **Optional GUI auto-start for web companion**: `WEB_COMPANION_AUTO_START` / Settings → **Auto-start with GUI** starts the read-only monitor in the background when the desktop app launches (no forced browser open). Status line in Settings shows Running/Stopped.
+- Companion started by the GUI (auto-start or **Start & Open**) is stopped cleanly on app exit.
+- **Unit tests** for auto-start flag/env, GUI ownership, and lifecycle stop-on-exit semantics.
+
+### Changed
+- Docs (configuration, usage, API, FAQ, README, env template) and ROADMAP mark Phase 3 web companion auto-start as shipped.
+
 ## [1.2.26] - 2026-10-24
 
 ### Added

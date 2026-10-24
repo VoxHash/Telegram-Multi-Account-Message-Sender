@@ -145,6 +145,9 @@ class Settings(BaseSettings):
 
     # Optional read-only web companion (stdlib http.server; desktop remains primary)
     web_companion_enabled: bool = False
+    # When True, starting the desktop GUI also starts the companion in the background
+    # (no forced browser open). Env: WEB_COMPANION_AUTO_START.
+    web_companion_auto_start: bool = False
     web_companion_host: str = "127.0.0.1"
     web_companion_port: int = 8765
     # Bearer token for companion auth. Optional on loopback; required for non-localhost binds.

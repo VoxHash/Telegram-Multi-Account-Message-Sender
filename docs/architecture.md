@@ -91,12 +91,13 @@ Optional encrypted backup/restore lives under `app/services/cloud/`:
 
 | Component | Role |
 | --- | --- |
-| `BackupPackageBuilder` | Builds/verifies `.tmas-backup.zip` (SQLite + safe settings export) |
+| `BackupPackageBuilder` | Builds/verifies `.tmas-backup.zip` (SQLite + safe settings; optional Telethon sessions) |
 | `GoogleDriveProvider` | OAuth desktop flow + Drive upload/list/download (`drive.file` scope) |
-| `CloudBackupService` | Orchestrates backup, list, and restore with a pre-restore local snapshot |
-| Settings UI | **Settings → Cloud Backup** (`cloud_backup_widget.py`) |
+| `CloudBackupService` | Orchestrates Drive backup/list/restore and local handoff export/import |
+| `handoff` CLI | `telegram-sender handoff-export` / `handoff-import` for single-operator machine transfer |
+| Settings UI | **Settings → Cloud Backup** (`cloud_backup_widget.py`) — Drive + **Export for Handoff…** |
 
-Google API client libraries are optional (`pip install '.[cloud]'`). Tokens are encrypted under `app_data/cloud/`.
+Google API client libraries are optional (`pip install '.[cloud]'`). Tokens are encrypted under `app_data/cloud/`. Desktop remains single-operator; multi-user roles belong to SendGram.
 
 ## Web companion (read-only)
 

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.28] - 2026-10-24
+
+### Added
+- **Phase 4 slice: single-operator handoff export/import**: Settings → Cloud Backup → **Export for Handoff…** writes a local `.tmas-backup.zip` (database + safe settings + Telethon sessions) without Google Drive. Import via **Restore from Local File…** or CLI.
+- **CLI**: `telegram-sender handoff-export` / `handoff-import` (`--password`, `--no-sessions` / `--sessions`).
+- Package manifest fields `purpose` (`operator_handoff`) and `include_sessions`; session files restored on import when present.
+- **Unit tests** for argv parsing, session packaging/restore, CLI export/import, and path safety.
+
+### Changed
+- Docs (CLI, usage, API, architecture, FAQ, configuration, README) and ROADMAP mark Phase 4 desktop handoff as shipped; multi-user roles remain SendGram-hosted.
+
 ## [1.2.27] - 2026-10-24
 
 ### Added

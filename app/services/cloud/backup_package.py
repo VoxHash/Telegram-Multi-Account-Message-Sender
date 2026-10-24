@@ -24,6 +24,9 @@ BACKUP_FILE_EXTENSION = ".tmas-backup.zip"
 MANIFEST_FILENAME = "manifest.json"
 DATABASE_FILENAME = "app.db"
 SETTINGS_FILENAME = "settings-export.json"
+SESSIONS_DIRNAME = "sessions"
+PURPOSE_OPERATOR_HANDOFF = "operator_handoff"
+PURPOSE_CLOUD_BACKUP = "cloud_backup"
 
 EXCLUDED_SETTINGS_KEYS = frozenset(
     {
@@ -56,17 +59,28 @@ class BackupPackageBuilder:
         stamp = ts.strftime("%Y%m%d_%H%M%S")
         return f"telegram-sender-backup-{stamp}{BACKUP_FILE_EXTENSION}"
 
+    @staticmethod
+    def generate_handoff_filename(timestamp: Optional[datetime] = None) -> str:
+        """Generate a filename for single-operator handoff packages."""
+        ts = timestamp or datetime.now(timezone.utc)
+        stamp = ts.strftime("%Y%m%d_%H%M%S")
+        return f"telegram-sender-handoff-{stamp}{BACKUP_FILE_EXTENSION}"
+
     def build(
         self,
         output_path: Path,
         *,
         password: Optional[str] = None,
         include_settings: bool = True,
+        include_sessions: bool = False,
+        purpose: Optional[str] = None,
     ) -> Path:
         """
         Build a backup package at ``output_path``.
 
         When ``password`` is set, the zip payload is encrypted (AES via Fernet + PBKDF2).
+        When ``include_sessions`` is True, Telethon session files under ``sessions_dir``
+        are packaged for machine-to-machine operator handoff.
         """
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -89,13 +103,19 @@ class BackupPackageBuilder:
                 )
                 files_meta[SETTINGS_FILENAME] = self._file_metadata(settings_path)
 
-            manifest = {
+            if include_sessions:
+                files_meta.update(self._stage_session_files(staging_dir))
+
+            manifest: Dict[str, Any] = {
                 "schema_version": BACKUP_SCHEMA_VERSION,
                 "app_version": __version__,
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "encrypted": bool(password),
+                "include_sessions": bool(include_sessions),
                 "files": files_meta,
             }
+            if purpose:
+                manifest["purpose"] = purpose
             manifest_path = staging_dir / MANIFEST_FILENAME
             manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
@@ -189,10 +209,33 @@ class BackupPackageBuilder:
     def _create_zip_bytes(staging_dir: Path) -> bytes:
         buffer = BytesIO()
         with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-            for file_path in sorted(staging_dir.iterdir()):
+            for file_path in sorted(staging_dir.rglob("*")):
                 if file_path.is_file():
-                    archive.write(file_path, arcname=file_path.name)
+                    archive.write(
+                        file_path,
+                        arcname=file_path.relative_to(staging_dir).as_posix(),
+                    )
         return buffer.getvalue()
+
+    def _stage_session_files(self, staging_dir: Path) -> Dict[str, Dict[str, Any]]:
+        """Copy Telethon session files into the package staging tree."""
+        settings = get_settings()
+        sessions_src = Path(settings.sessions_dir)
+        meta: Dict[str, Dict[str, Any]] = {}
+        if not sessions_src.is_dir():
+            return meta
+
+        sessions_staging = staging_dir / SESSIONS_DIRNAME
+        for src in sorted(sessions_src.rglob("*")):
+            if not src.is_file():
+                continue
+            rel = src.relative_to(sessions_src)
+            dest = sessions_staging / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+            arcname = f"{SESSIONS_DIRNAME}/{rel.as_posix()}"
+            meta[arcname] = self._file_metadata(dest)
+        return meta
 
     @staticmethod
     def _file_metadata(path: Path) -> Dict[str, Any]:

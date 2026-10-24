@@ -111,6 +111,10 @@ Open **Plugins → Browse Registry** to discover curated plugins from the offici
 
 An optional **read-only** local monitor (`telegram-sender web-monitor` or Settings → Start & Open). It serves account health, campaign status, recent activity, and **live SVG charts** (hourly activity, send-status and health donuts, campaign bars) over stdlib HTTP — no extra packages, no send/control APIs. Chart JSON is also at `/api/charts`. Enable **Auto-start with GUI** / `WEB_COMPANION_AUTO_START` to start it in the background when the desktop app launches (no browser popup; Status in Settings). Keep the default `127.0.0.1` bind. Set `WEB_COMPANION_TOKEN` (or `--token`) for Bearer / `X-TMAS-Token` / `?token=` auth; non-localhost binds require a token. Prefer a TLS reverse proxy in front of localhost — see [Configuration](configuration.md).
 
+### How do I hand off my workspace to another machine?
+
+Desktop TMAS is **single-operator**. Use **Settings → Cloud Backup → Export for Handoff…** (or `telegram-sender handoff-export`) to write a `.tmas-backup.zip` with the database, safe settings, and Telethon sessions. On the destination machine, **Restore from Local File…** or `telegram-sender handoff-import`, then restart. Prefer an encryption password for off-machine transfer. Multi-user roles belong to [SendGram](https://www.sendgram.pro).
+
 ### How do I schedule a campaign?
 
 When creating a campaign, set the "Start Time" field to schedule the campaign for a specific time. The campaign will start automatically at the scheduled time.

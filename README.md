@@ -88,6 +88,7 @@ Then launch with `telegram-sender` or `python -m app.cli`. Full setup: [docs/qui
 - **AI Copy Tools (optional)**: Rewrite, spintax conversion, and variations via your own OpenAI-compatible API key (no AI SDK dependency)
 - **Plugin Registry**: Browse a curated marketplace catalog, install verified `.py` plugins into `app_data/plugins/`, then enable from the Plugins tab
 - **Web Companion (optional, read-only)**: Local stdlib HTTP monitor with live SVG charts (activity, status, campaigns, health), account/campaign tables, and recent activity (`telegram-sender web-monitor` or Settings → Start & Open); optional `WEB_COMPANION_AUTO_START` / Auto-start with GUI (background, no browser); optional Bearer token auth (required for non-localhost); reverse-proxy guidance in docs; no send/control routes
+- **Operator handoff**: Export/import a `.tmas-backup.zip` (DB + sessions) via Settings → **Export for Handoff…** or `telegram-sender handoff-export` / `handoff-import` — single-operator machine transfer; multi-user roles belong to SendGram
 - **Native Accelerator (optional)**: Rust sidecar for parallel spintax batches and multi-account pacing (lower prep CPU/RAM; auto Python fallback)
 - **A/B Testing**: Test different message variants with statistical analysis
 - **Scheduling**: Schedule campaigns for specific times with timezone support

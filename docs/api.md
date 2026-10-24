@@ -826,6 +826,31 @@ from app.utils.crypto import decrypt
 decrypted = decrypt(encrypted_data, "secret_key")
 ```
 
+## Operator handoff (`app.services.cloud` / `app.services.handoff`)
+
+Single-operator machine transfer (Phase 4). Multi-user roles belong to SendGram.
+
+```python
+from pathlib import Path
+from app.services.cloud import CloudBackupService, PURPOSE_OPERATOR_HANDOFF
+
+service = CloudBackupService()
+package = service.export_local_package(
+    Path("operator-handoff.tmas-backup.zip"),
+    password="optional-secret",
+    include_sessions=True,
+    purpose=PURPOSE_OPERATOR_HANDOFF,
+)
+pre_restore = service.restore_from_local_package(package, password="optional-secret")
+```
+
+| Piece | Role |
+| --- | --- |
+| `BackupPackageBuilder.build(..., include_sessions=, purpose=)` | Package DB + safe settings + optional `sessions/` |
+| `CloudBackupService.export_local_package` | Local handoff export (no Google Drive) |
+| `CloudBackupService.restore_from_local_package` | Import/restore; restores session files when present |
+| `parse_handoff_argv` / `run_handoff_cli` | CLI: `handoff-export` / `handoff-import` |
+
 ## Error Handling
 
 All API methods may raise the following exceptions:

@@ -42,6 +42,7 @@ You can configure the application using environment variables. See `example_file
 - `TMMS_NATIVE_BIN`: Absolute path to the `tmms_native` binary if not under `bin/`
 - `GOOGLE_DRIVE_CLIENT_ID`: OAuth client ID for Google Drive cloud backups
 - `GOOGLE_DRIVE_CLIENT_SECRET`: OAuth client secret for Google Drive cloud backups
+- Operator handoff (no Drive): Settings → **Export for Handoff…** or CLI `telegram-sender handoff-export` / `handoff-import` — see [CLI](cli.md) and [Usage](usage.md)
 - `AI_API_KEY`: Optional OpenAI-compatible API key for AI copy tools (leave unset to disable)
 - `AI_BASE_URL`: Chat Completions base URL (default `https://api.openai.com/v1`)
 - `AI_MODEL`: Model id (default `gpt-4o-mini`)

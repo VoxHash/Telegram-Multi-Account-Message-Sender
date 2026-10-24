@@ -90,8 +90,9 @@ Monitor account health, campaign status, and recent activity in a browser withou
 5. Optionally set an encryption password, then click **Backup Now** to upload a `.tmas-backup.zip` to Drive.
 6. Use **Refresh List** to see remote backups; select one and click **Restore Selected Backup** to replace the local database (a pre-restore snapshot is saved under `app_data/`).
 7. **Offline / local restore**: use **Restore from Local File…**, or open a `.tmas-backup.zip` via OS file association (Linux MIME / macOS UTI after packaging install). No Google Drive connection required.
-8. **Restart the application** after a restore so all components reload the database.
-9. Cloud restore and list/upload require network access to Google Drive. If you are offline or Drive is unreachable, the app shows a clear warning and **does not** replace the local database (local-file restore still works).
+8. **Operator handoff (no Drive)**: click **Export for Handoff…** to save a `.tmas-backup.zip` that includes the database, safe settings, and Telethon session files. Copy it to the destination machine and use **Restore from Local File…** (or `telegram-sender handoff-import`). Desktop remains single-operator; multi-user roles belong to [SendGram](https://www.sendgram.pro). Prefer an encryption password for off-machine transfer.
+9. **Restart the application** after a restore so all components reload the database.
+10. Cloud restore and list/upload require network access to Google Drive. If you are offline or Drive is unreachable, the app shows a clear warning and **does not** replace the local database (local-file restore / handoff still work).
 
 ## Analytics export (Dashboard)
 

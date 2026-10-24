@@ -2,17 +2,22 @@
 Orchestrates local backup packages and Google Drive upload/restore.
 """
 
+import shutil
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from app.services import get_logger
 from app.services.db import backup_database, restore_database
 from app.services.settings import get_settings
 
 from .backup_package import (
+    BACKUP_FILE_EXTENSION,
     DATABASE_FILENAME,
+    PURPOSE_CLOUD_BACKUP,
+    PURPOSE_OPERATOR_HANDOFF,
+    SESSIONS_DIRNAME,
     BackupPackageBuilder,
     BackupPackageError,
 )
@@ -60,6 +65,46 @@ class CloudBackupService:
         """Return True when Google Drive credentials are available."""
         return self.provider.is_authenticated()
 
+    def export_local_package(
+        self,
+        output_path: Path,
+        password: Optional[str] = None,
+        *,
+        include_sessions: bool = True,
+        purpose: str = PURPOSE_OPERATOR_HANDOFF,
+    ) -> Path:
+        """
+        Build a local ``.tmas-backup.zip`` for single-operator handoff (no Drive).
+
+        Includes the SQLite database, safe settings, and by default Telethon session
+        files so the same operator can continue on another machine. Treat the file
+        as secret; prefer an encryption password when transferring off-machine.
+        """
+        output_path = Path(output_path)
+        if output_path.is_dir() or str(output_path).endswith(("/", "\\")):
+            name = (
+                BackupPackageBuilder.generate_handoff_filename()
+                if purpose == PURPOSE_OPERATOR_HANDOFF
+                else BackupPackageBuilder.generate_filename()
+            )
+            output_path = output_path / name
+        elif not str(output_path).endswith(BACKUP_FILE_EXTENSION):
+            output_path = Path(str(output_path) + BACKUP_FILE_EXTENSION)
+
+        try:
+            built = self.package_builder.build(
+                output_path,
+                password=password,
+                include_settings=True,
+                include_sessions=include_sessions,
+                purpose=purpose,
+            )
+        except BackupPackageError as exc:
+            raise CloudBackupServiceError(str(exc)) from exc
+
+        self.logger.info(f"Local handoff package exported: {built}")
+        return built
+
     def backup_to_google_drive(self, password: Optional[str] = None) -> str:
         """Build a backup package and upload it to Google Drive."""
         if not self.is_google_drive_connected():
@@ -70,7 +115,13 @@ class CloudBackupService:
         with tempfile.TemporaryDirectory() as temp_dir:
             package_path = Path(temp_dir) / filename
             try:
-                self.package_builder.build(package_path, password=password, include_settings=True)
+                self.package_builder.build(
+                    package_path,
+                    password=password,
+                    include_settings=True,
+                    include_sessions=False,
+                    purpose=PURPOSE_CLOUD_BACKUP,
+                )
             except BackupPackageError as exc:
                 raise CloudBackupServiceError(str(exc)) from exc
 
@@ -137,8 +188,33 @@ class CloudBackupService:
                     f"Pre-restore snapshot kept at: {pre_restore_path}"
                 ) from exc
 
+            self._restore_session_files(extracted)
+
         self.logger.info(f"Restored database from {source_label}")
         return pre_restore_path
+
+    def _restore_session_files(self, extracted: Dict[str, Path]) -> None:
+        """Copy packaged Telethon sessions into the configured sessions directory."""
+        prefix = f"{SESSIONS_DIRNAME}/"
+        session_entries = {
+            name: path
+            for name, path in extracted.items()
+            if name.replace("\\", "/").startswith(prefix)
+        }
+        if not session_entries:
+            return
+
+        sessions_root = Path(self.settings.sessions_dir)
+        sessions_root.mkdir(parents=True, exist_ok=True)
+        for name, source in session_entries.items():
+            normalized = name.replace("\\", "/")
+            rel = normalized[len(prefix) :]
+            if not rel or ".." in Path(rel).parts:
+                raise CloudBackupServiceError(f"Unsafe session path in package: {name}")
+            target = sessions_root / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+        self.logger.info(f"Restored {len(session_entries)} session file(s) to {sessions_root}")
 
     def restore_from_local_package(
         self, package_path: Path, password: Optional[str] = None

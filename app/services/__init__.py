@@ -52,6 +52,9 @@ __all__ = [
     "stop_companion",
     "is_companion_gui_owned",
     "run_web_monitor_cli",
+    # Single-operator handoff
+    "parse_handoff_argv",
+    "run_handoff_cli",
 ]
 
 # name -> (submodule, attribute)
@@ -91,6 +94,8 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "stop_companion": (".web_companion", "stop_companion"),
     "is_companion_gui_owned": (".web_companion", "is_companion_gui_owned"),
     "run_web_monitor_cli": (".web_companion", "run_web_monitor_cli"),
+    "parse_handoff_argv": (".handoff", "parse_handoff_argv"),
+    "run_handoff_cli": (".handoff", "run_handoff_cli"),
 }
 
 

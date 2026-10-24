@@ -73,6 +73,17 @@ class CloudBackupWorker(QThread):
                     _("settings.cloud_restore_success").format(path=str(pre_restore)),
                     pre_restore,
                 )
+            elif self.operation == "export_handoff":
+                built = service.export_local_package(
+                    Path(self.kwargs["package_path"]),
+                    password=self.kwargs.get("password") or None,
+                    include_sessions=bool(self.kwargs.get("include_sessions", True)),
+                )
+                self.finished.emit(
+                    True,
+                    _("settings.cloud_export_handoff_success").format(path=str(built)),
+                    built,
+                )
             else:
                 self.finished.emit(False, _("settings.cloud_unknown_operation"), None)
         except CloudBackupServiceError as exc:
@@ -147,6 +158,12 @@ class CloudBackupWidget(QWidget):
         self.restore_local_button.clicked.connect(self.restore_local_file)
         restore_row.addWidget(self.restore_local_button)
         list_layout.addLayout(restore_row)
+
+        handoff_row = QHBoxLayout()
+        self.export_handoff_button = QPushButton(_("settings.cloud_export_handoff"))
+        self.export_handoff_button.clicked.connect(self.export_handoff_package)
+        handoff_row.addWidget(self.export_handoff_button)
+        list_layout.addLayout(handoff_row)
         layout.addWidget(list_group)
 
         help_label = QLabel(_("settings.cloud_help"))
@@ -170,8 +187,9 @@ class CloudBackupWidget(QWidget):
         self.refresh_button.setEnabled(connected)
         self.restore_button.setEnabled(connected)
         self.backups_list.setEnabled(connected)
-        # Local package restore works offline without Drive.
+        # Local package restore / handoff export work offline without Drive.
         self.restore_local_button.setEnabled(True)
+        self.export_handoff_button.setEnabled(True)
 
     def _password(self) -> Optional[str]:
         value = self.password_edit.text().strip()
@@ -199,6 +217,7 @@ class CloudBackupWidget(QWidget):
             self.refresh_button,
             self.restore_button,
             self.restore_local_button,
+            self.export_handoff_button,
         ):
             widget.setEnabled(not busy)
 
@@ -321,6 +340,40 @@ class CloudBackupWidget(QWidget):
 
         self._start_worker(
             "restore_local", package_path=str(path), password=self._password()
+        )
+
+    def export_handoff_package(self):
+        """Export a local handoff package (DB + sessions) without Google Drive."""
+        from PyQt5.QtWidgets import QFileDialog
+
+        from ...services.cloud import BackupPackageBuilder
+
+        default_name = BackupPackageBuilder.generate_handoff_filename()
+        chosen, _ = QFileDialog.getSaveFileName(
+            self,
+            _("settings.cloud_export_handoff_title"),
+            default_name,
+            _("settings.cloud_restore_local_filter"),
+        )
+        if not chosen:
+            return
+
+        path = Path(chosen)
+        confirm = QMessageBox.information(
+            self,
+            _("settings.cloud_export_handoff_confirm_title"),
+            _("settings.cloud_export_handoff_confirm_message").format(path=str(path)),
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
+        if confirm != QMessageBox.Yes:
+            return
+
+        self._start_worker(
+            "export_handoff",
+            package_path=str(path),
+            password=self._password(),
+            include_sessions=True,
         )
 
     def offer_associated_backup(self, package_path: Path):

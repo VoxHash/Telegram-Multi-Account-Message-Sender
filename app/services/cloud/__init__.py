@@ -5,6 +5,9 @@ Cloud backup services (package builder and provider abstraction).
 from .backup_package import (
     BACKUP_FILE_EXTENSION,
     BACKUP_SCHEMA_VERSION,
+    PURPOSE_CLOUD_BACKUP,
+    PURPOSE_OPERATOR_HANDOFF,
+    SESSIONS_DIRNAME,
     BackupPackageBuilder,
     BackupPackageError,
 )
@@ -21,6 +24,9 @@ from .token_store import DriveTokenStore
 __all__ = [
     "BACKUP_FILE_EXTENSION",
     "BACKUP_SCHEMA_VERSION",
+    "PURPOSE_CLOUD_BACKUP",
+    "PURPOSE_OPERATOR_HANDOFF",
+    "SESSIONS_DIRNAME",
     "BackupPackageBuilder",
     "BackupPackageError",
     "CloudBackupService",

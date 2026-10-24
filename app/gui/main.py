@@ -2,6 +2,9 @@
 Main window for the Telegram Multi-Account Message Sender.
 """
 
+from pathlib import Path
+from typing import Optional
+
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -32,7 +35,7 @@ from .widgets.about_widget import AboutWidget
 class MainWindow(QMainWindow):
     """Main application window."""
 
-    def __init__(self):
+    def __init__(self, pending_backup_path: Optional[Path] = None):
         """Initialize main window."""
         super().__init__()
 
@@ -40,6 +43,7 @@ class MainWindow(QMainWindow):
         self.logger = get_logger()
         self.theme_manager = ThemeManager()
         self.translation_manager = get_translation_manager()
+        self._pending_backup_path = pending_backup_path
 
         # Connect language change signal
         self.translation_manager.language_changed.connect(self.on_language_changed)
@@ -55,6 +59,9 @@ class MainWindow(QMainWindow):
 
         # Initial status update
         self.update_status()
+
+        if self._pending_backup_path is not None:
+            QTimer.singleShot(0, self._handle_pending_backup)
 
         self.logger.info("Main window initialized")
 
@@ -144,6 +151,22 @@ class MainWindow(QMainWindow):
         """Create about tab."""
         self.about_widget = AboutWidget()
         self.tab_widget.addTab(self.about_widget, _("tabs.about"))
+
+    def _handle_pending_backup(self):
+        """Open Settings → Cloud Backup for an OS file-association launch."""
+        path = self._pending_backup_path
+        self._pending_backup_path = None
+        if path is None:
+            return
+        settings_index = self.tab_widget.indexOf(self.settings_widget)
+        if settings_index >= 0:
+            self.tab_widget.setCurrentIndex(settings_index)
+        cloud_index = self.settings_widget.tab_widget.indexOf(
+            self.settings_widget.cloud_backup_widget
+        )
+        if cloud_index >= 0:
+            self.settings_widget.tab_widget.setCurrentIndex(cloud_index)
+        self.settings_widget.cloud_backup_widget.offer_associated_backup(path)
 
     def setup_menu(self):
         """Set up menu bar."""

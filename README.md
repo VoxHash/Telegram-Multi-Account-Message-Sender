@@ -170,6 +170,12 @@ docker run -it --rm \
 
 Download the appropriate installer from the [Releases](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/releases) page.
 
+- **Linux**: extract the `*-linux.tar.gz` asset and run `./install.sh` (registers the app menu entry and `*.tmas-backup.zip` MIME type under `~/.local`).
+- **macOS**: open the `.dmg` (unsigned builds may need right-click → Open; signing/notarization not shipped).
+- **Windows**: run the standalone `.exe`.
+
+Details: [docs/installation.md](docs/installation.md).
+
 ### Configuration
 
 1. **Get Telegram API Credentials**:

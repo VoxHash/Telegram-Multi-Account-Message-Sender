@@ -95,13 +95,13 @@ jobs:
         pip install pyinstaller
     
     - name: Build Linux executable
-      continue-on-error: true
       env:
         QT_QPA_PLATFORM: offscreen
       run: |
-        # Use spec file for more reliable builds (modify console setting for Linux)
+        # One-file Linux build; console=True helps CI/headless diagnosis
         sed -i 's/console=False/console=True/' main.spec || true
-        pyinstaller main.spec || pyinstaller --onefile --name telegram-multi-account-sender --additional-hooks-dir=hooks --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=telethon --hidden-import=sqlmodel --hidden-import=pydantic --hidden-import=app.gui.widgets.telegram_selector main.py
+        pyinstaller main.spec
+        test -f dist/telegram-multi-account-sender
     
     - name: Set version for Linux build
       id: set_version_linux
@@ -116,10 +116,14 @@ jobs:
         fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
     
-    - name: Create .tar.gz
-      if: success()
+    - name: Assemble Linux distribution (desktop + MIME + install.sh)
       run: |
-        tar -czf telegram-multi-account-sender-${{ steps.set_version_linux.outputs.version }}-linux.tar.gz dist/telegram-multi-account-sender || true
+        VERSION="${{ steps.set_version_linux.outputs.version }}"
+        DIST_DIR="telegram-multi-account-sender-${VERSION}-linux"
+        chmod +x packaging/linux/assemble-dist.sh packaging/linux/install.sh
+        ./packaging/linux/assemble-dist.sh dist/telegram-multi-account-sender "${DIST_DIR}" "${VERSION}"
+        tar -czf "${DIST_DIR}.tar.gz" "${DIST_DIR}"
+        test -f "${DIST_DIR}.tar.gz"
     
     - name: Upload Linux artifacts
       if: success() || failure()
@@ -127,7 +131,7 @@ jobs:
       with:
         name: linux-build
         path: |
-          telegram-multi-account-sender-*.tar.gz
+          telegram-multi-account-sender-*-linux.tar.gz
         retention-days: 30
         if-no-files-found: warn
 
@@ -149,11 +153,17 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
     
-    - name: Build macOS application
-      continue-on-error: true
+    - name: Build macOS icns (iconutil)
       run: |
-        # Use spec file for more reliable builds
-        pyinstaller main.spec || pyinstaller --windowed --name telegram-multi-account-sender --icon=assets/icons/favicon.ico --additional-hooks-dir=hooks --hidden-import=app.gui.widgets.telegram_selector main.py || pyinstaller --onefile --name telegram-multi-account-sender --additional-hooks-dir=hooks --hidden-import=app.gui.widgets.telegram_selector main.py
+        chmod +x packaging/macos/build-icns.sh packaging/macos/assemble-app.sh
+        ./packaging/macos/build-icns.sh
+
+    - name: Build macOS application
+      run: |
+        pyinstaller main.spec
+        test -d "dist/Telegram Multi-Account Message Sender.app" \
+          || test -d dist/telegram-multi-account-sender.app \
+          || test -f dist/telegram-multi-account-sender
     
     - name: Set version for macOS build
       id: set_version_macos
@@ -167,17 +177,31 @@ jobs:
           VERSION="${{ github.ref_name }}"
         fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "version_number=${VERSION#v}" >> $GITHUB_OUTPUT
+    
+    - name: Assemble .app with Info.plist document types
+      run: |
+        VERSION="${{ steps.set_version_macos.outputs.version_number }}"
+        OUT_APP="dist/Telegram-Multi-Account-Sender.app"
+        if [ -d "dist/Telegram Multi-Account Message Sender.app" ]; then
+          SRC="dist/Telegram Multi-Account Message Sender.app"
+        elif [ -d "dist/telegram-multi-account-sender.app" ]; then
+          SRC="dist/telegram-multi-account-sender.app"
+        else
+          SRC="dist/telegram-multi-account-sender"
+        fi
+        ./packaging/macos/assemble-app.sh "${SRC}" "${OUT_APP}" "${VERSION}"
+        test -f "${OUT_APP}/Contents/Info.plist"
     
     - name: Create .dmg
-      if: success()
       run: |
-        if [ -d "dist/telegram-multi-account-sender.app" ]; then
-          hdiutil create -srcfolder dist/telegram-multi-account-sender.app -volname "Telegram Multi-Account Message Sender" -fs HFS+ -format UDZO telegram-multi-account-sender-${{ steps.set_version_macos.outputs.version }}-macOS.dmg || true
-        elif [ -f "dist/telegram-multi-account-sender" ]; then
-          mkdir -p dist/Telegram-Multi-Account-Sender.app/Contents/MacOS
-          cp dist/telegram-multi-account-sender dist/Telegram-Multi-Account-Sender.app/Contents/MacOS/
-          hdiutil create -srcfolder dist/Telegram-Multi-Account-Sender.app -volname "Telegram Multi-Account Message Sender" -fs HFS+ -format UDZO telegram-multi-account-sender-${{ steps.set_version_macos.outputs.version }}-macOS.dmg || true
-        fi
+        hdiutil create \
+          -srcfolder dist/Telegram-Multi-Account-Sender.app \
+          -volname "Telegram Multi-Account Message Sender" \
+          -fs HFS+ \
+          -format UDZO \
+          "telegram-multi-account-sender-${{ steps.set_version_macos.outputs.version }}-macOS.dmg"
+        test -f "telegram-multi-account-sender-${{ steps.set_version_macos.outputs.version }}-macOS.dmg"
     
     - name: Upload macOS artifacts
       if: success() || failure()
@@ -185,7 +209,7 @@ jobs:
       with:
         name: macos-build
         path: |
-          telegram-multi-account-sender-*.dmg
+          telegram-multi-account-sender-*-macOS.dmg
         retention-days: 30
         if-no-files-found: warn
 
@@ -332,10 +356,10 @@ jobs:
           - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-windows.exe` - Standalone executable
           
           **Linux:**
-          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-linux.tar.gz` - Linux distribution
+          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-linux.tar.gz` - Binary + `install.sh` (desktop entry, icons, `*.tmas-backup.zip` MIME)
           
           **macOS:**
-          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-macOS.dmg` - Disk image installer
+          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-macOS.dmg` - `.app` with backup document types (built on macOS runners; signing/notarization not included)
 
           **Optional native accelerator (Linux x86_64):**
           - `tmms_native-linux-x86_64` — place as `bin/tmms_native` (see docs/installation.md)

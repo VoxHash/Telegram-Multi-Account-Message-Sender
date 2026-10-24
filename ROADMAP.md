@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.22)
+## Current Status (v1.2.23)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -30,16 +30,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **Blocking mypy** for `app/core`, `app/services`, `app/models` (strict flags; CI fails on errors)
 - **Optional AI copy tools** (user-supplied OpenAI-compatible API key; stdlib HTTP; Templates rewrite / spintax / variations)
 - **Plugin marketplace / registry** (curated JSON catalog, offline bundled fallback, SHA-256 install into `app_data/plugins/`)
+- **Enhanced macOS/Linux packaging and file associations** (Linux desktop/MIME/`install.sh`; macOS `.app` Info.plist UTI; local `.tmas-backup.zip` restore)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Additional cloud providers beyond Google Drive
 
-### Latest release (v1.2.22 — 2026-10-24)
-- Plugin marketplace / registry: browse curated catalog, install verified plugins, offline bundled fallback
+### Latest release (v1.2.23 — 2026-10-24)
+- Phase 3 packaging: Linux desktop + MIME install; macOS `.app` document types; local backup file association restore
 
 ### Previous highlights
+- **v1.2.22**: Plugin marketplace / registry: browse curated catalog, install verified plugins, offline bundled fallback
 - **v1.2.21**: Optional AI-assisted copy tools behind user-supplied API keys (no AI SDK dependency)
 - **v1.2.20**: Stricter mypy: blocking CI for core/services/models; typed JSON columns; remaining type gaps documented below
 - **v1.2.19**: Quality + cloud UX: CI coverage summary, type-hint pass, offline restore messaging, analytics CSV/JSON export
@@ -89,7 +91,8 @@ Realistic, shippable work — not a full platform rewrite.
   - Leftover: community submissions beyond the two official registry plugins; signed catalogs
 
 ### Phase 3 (later): Platform expansion
-- [ ] Enhanced macOS/Linux packaging and file associations
+- [x] Enhanced macOS/Linux packaging and file associations
+  - Leftover: Apple code signing / notarization; Windows file-association installer polish
 - [ ] Optional lightweight web companion (read-only monitoring first)
 - [ ] Mobile companion deferred until web companion proves demand
 

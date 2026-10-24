@@ -35,7 +35,7 @@ class TestCliEntrypoint:
             qapp.assert_called_once()
             mock_app.setApplicationName.assert_called_once()
             mock_app.setApplicationVersion.assert_called_once()
-            main_window.assert_called_once_with()
+            main_window.assert_called_once_with(pending_backup_path=None)
             mock_window.show.assert_called_once_with()
             mock_app.exec_.assert_called_once_with()
             sys_exit.assert_called_once_with(0)

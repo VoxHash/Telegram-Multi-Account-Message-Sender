@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.23] - 2026-10-24
+
+### Added
+- **Phase 3 packaging (Linux)**: Release tarball ships binary plus FreeDesktop `.desktop` entry, icons, `application/x-tmas-backup` MIME for `*.tmas-backup.zip`, and user-local `install.sh` / uninstall (`packaging/linux/`).
+- **Phase 3 packaging (macOS)**: PyInstaller `.app` bundle with `Info.plist` document types / UTI `dev.voxhash.tmas-backup`; `packaging/macos/build-icns.sh` + `assemble-app.sh` for Actions `macos-latest` (signing/notarization still out of scope).
+- **File association restore**: Opening a `.tmas-backup.zip` launches Settings → Cloud Backup local restore; **Restore from Local File…** works offline without Google Drive.
+- **Unit tests** for launch-arg parsing, packaging metadata, and local package restore.
+
+### Changed
+- Google Drive restore snapshots the local DB only after a successful download (failed downloads leave the DB untouched).
+- Release workflow assembles the Linux dist layout and a proper macOS `.app` before publishing artifacts.
+
 ## [1.2.22] - 2026-10-24
 
 ### Added

@@ -92,19 +92,12 @@ class CloudBackupService:
         except GoogleDriveError as exc:
             raise CloudBackupServiceError(str(exc)) from exc
 
-    def restore_from_google_drive(
-        self, remote_id: str, password: Optional[str] = None
+    def _snapshot_and_restore_package(
+        self, package_path: Path, password: Optional[str] = None, *, source_label: str
     ) -> Path:
-        """
-        Download a remote backup, verify it, snapshot the current DB, and restore.
-
-        Returns the path to the pre-restore local database snapshot.
-        Raises before modifying the local database when offline / Drive unreachable.
-        """
-        if not self.is_google_drive_connected():
-            raise CloudBackupServiceError("Connect to Google Drive before restoring")
-        # Probe network before any local snapshot so offline restores leave DB untouched.
-        self._require_online("cloud restore")
+        """Verify a local package, snapshot the DB, restore app.db, return snapshot path."""
+        if not package_path.is_file():
+            raise CloudBackupServiceError(f"Backup package not found: {package_path}")
 
         app_data = Path(self.settings.app_data_dir)
         app_data.mkdir(parents=True, exist_ok=True)
@@ -118,17 +111,7 @@ class CloudBackupService:
             raise CloudBackupServiceError(f"Failed to create pre-restore snapshot: {exc}") from exc
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            package_path = temp_path / "restore-package.tmas-backup.zip"
-            extract_dir = temp_path / "extracted"
-
-            try:
-                self.provider.download(remote_id, package_path)
-            except GoogleDriveError as exc:
-                raise CloudBackupServiceError(
-                    f"{exc} Pre-restore snapshot kept at: {pre_restore_path}"
-                ) from exc
-
+            extract_dir = Path(temp_dir) / "extracted"
             try:
                 self.package_builder.verify(package_path, password=password)
                 extracted = self.package_builder.extract(
@@ -154,5 +137,47 @@ class CloudBackupService:
                     f"Pre-restore snapshot kept at: {pre_restore_path}"
                 ) from exc
 
-        self.logger.info(f"Restored database from Google Drive backup {remote_id}")
+        self.logger.info(f"Restored database from {source_label}")
         return pre_restore_path
+
+    def restore_from_local_package(
+        self, package_path: Path, password: Optional[str] = None
+    ) -> Path:
+        """
+        Restore from a local ``.tmas-backup.zip`` (file association / offline path).
+
+        Does not require network or Google Drive. Returns the pre-restore DB snapshot path.
+        """
+        return self._snapshot_and_restore_package(
+            Path(package_path),
+            password=password,
+            source_label=f"local package {package_path}",
+        )
+
+    def restore_from_google_drive(
+        self, remote_id: str, password: Optional[str] = None
+    ) -> Path:
+        """
+        Download a remote backup, verify it, snapshot the current DB, and restore.
+
+        Returns the path to the pre-restore local database snapshot.
+        Raises before modifying the local database when offline / Drive unreachable.
+        Local DB is untouched until the package downloads successfully.
+        """
+        if not self.is_google_drive_connected():
+            raise CloudBackupServiceError("Connect to Google Drive before restoring")
+        # Probe network before download so offline restores leave DB untouched.
+        self._require_online("cloud restore")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package_path = Path(temp_dir) / "restore-package.tmas-backup.zip"
+            try:
+                self.provider.download(remote_id, package_path)
+            except GoogleDriveError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+            return self._snapshot_and_restore_package(
+                package_path,
+                password=password,
+                source_label=f"Google Drive backup {remote_id}",
+            )

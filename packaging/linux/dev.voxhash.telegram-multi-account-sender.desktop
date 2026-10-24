@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Telegram Multi-Account Message Sender
+GenericName=Telegram Campaign Tool
+Comment=Manage and send messages across multiple Telegram accounts
+Exec=telegram-multi-account-sender %f
+Icon=dev.voxhash.telegram-multi-account-sender
+Terminal=false
+Categories=Network;Office;Qt;
+MimeType=application/x-tmas-backup;
+Keywords=telegram;messaging;campaign;spintax;
+StartupNotify=true
+StartupWMClass=telegram-multi-account-sender

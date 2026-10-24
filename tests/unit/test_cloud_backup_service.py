@@ -108,3 +108,44 @@ class TestCloudBackupService:
         assert pre_restore.exists()
         assert pre_restore.parent == app_data
         mock_restore.assert_called_once_with(db_path)
+
+    def test_restore_from_local_package(self, mock_provider, mock_builder, tmp_path, monkeypatch):
+        package_path = tmp_path / "local.tmas-backup.zip"
+        package_path.write_bytes(b"zip")
+        db_path = tmp_path / "extracted" / DATABASE_FILENAME
+        db_path.parent.mkdir(parents=True)
+        db_path.write_bytes(b"sqlite-data")
+
+        mock_builder.verify.return_value = {"schema_version": "1"}
+        mock_builder.extract.return_value = {DATABASE_FILENAME: db_path}
+
+        app_data = tmp_path / "app_data"
+        monkeypatch.setattr(
+            "app.services.cloud.cloud_backup_service.get_settings",
+            lambda: MagicMock(app_data_dir=str(app_data)),
+        )
+        service = CloudBackupService(provider=mock_provider, package_builder=mock_builder)
+
+        def _fake_backup_database(backup_path):
+            path = Path(backup_path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"pre-restore-db")
+            return path
+
+        with patch(
+            "app.services.cloud.cloud_backup_service.backup_database",
+            side_effect=_fake_backup_database,
+        ):
+            with patch(
+                "app.services.cloud.cloud_backup_service.restore_database"
+            ) as mock_restore:
+                pre_restore = service.restore_from_local_package(package_path)
+
+        assert pre_restore.exists()
+        mock_restore.assert_called_once_with(db_path)
+        mock_provider.download.assert_not_called()
+
+    def test_restore_from_local_missing_file(self, mock_provider, mock_builder, tmp_path):
+        service = CloudBackupService(provider=mock_provider, package_builder=mock_builder)
+        with pytest.raises(CloudBackupServiceError, match="not found"):
+            service.restore_from_local_package(tmp_path / "missing.tmas-backup.zip")

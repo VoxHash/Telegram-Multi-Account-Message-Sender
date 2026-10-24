@@ -84,22 +84,16 @@ class TestCloudBackupOffline:
 
         assert OFFLINE_ERROR_MARKER in str(exc_info.value)
 
-    def test_restore_download_failure_preserves_snapshot_path(
+    def test_restore_download_failure_leaves_local_db_untouched(
         self, mock_provider, mock_builder, tmp_path, monkeypatch
     ):
-        service = CloudBackupService(provider=mock_provider, package_builder=mock_builder)
+        """Failed Drive downloads must not snapshot or replace the local database."""
         app_data = tmp_path / "app_data"
         monkeypatch.setattr(
             "app.services.cloud.cloud_backup_service.get_settings",
             lambda: MagicMock(app_data_dir=str(app_data)),
         )
         service = CloudBackupService(provider=mock_provider, package_builder=mock_builder)
-
-        def _fake_backup_database(backup_path):
-            path = Path(backup_path)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(b"pre-restore-db")
-            return path
 
         mock_provider.download.side_effect = GoogleDriveError(
             format_offline_error("backup download")
@@ -110,12 +104,12 @@ class TestCloudBackupOffline:
             return_value=True,
         ):
             with patch(
-                "app.services.cloud.cloud_backup_service.backup_database",
-                side_effect=_fake_backup_database,
-            ):
+                "app.services.cloud.cloud_backup_service.backup_database"
+            ) as mock_backup:
                 with pytest.raises(CloudBackupServiceError) as exc_info:
                     service.restore_from_google_drive("remote-123")
 
         message = str(exc_info.value)
         assert is_offline_error_message(message)
-        assert "Pre-restore snapshot kept at:" in message
+        mock_backup.assert_not_called()
+        assert not app_data.exists() or not any(app_data.glob("pre_restore_*.db"))

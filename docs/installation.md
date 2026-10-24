@@ -67,15 +67,37 @@ ghcr.io/voxhash/telegram-multi-account-message-sender
 
 Download platform installers or executables from the [GitHub Releases](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/releases) page.
 
+### Linux release tarball (desktop + MIME)
+
+The Linux asset is a directory archive (`telegram-multi-account-sender-v*-linux.tar.gz`) that includes the binary, icons, FreeDesktop `.desktop` entry, `application/x-tmas-backup` MIME XML for `*.tmas-backup.zip`, and `install.sh`:
+
+```bash
+tar -xzf telegram-multi-account-sender-v*-linux.tar.gz
+cd telegram-multi-account-sender-v*-linux
+./install.sh
+```
+
+That installs into `~/.local` (no root). Uninstall with `./install.sh --uninstall`. After install, opening a `.tmas-backup.zip` from the file manager launches a local restore prompt.
+
+### macOS DMG
+
+The macOS asset is a `.dmg` built on GitHub Actions `macos-latest` runners. The `.app` ships `Info.plist` document types / UTI `dev.voxhash.tmas-backup` for `*.tmas-backup.zip`. **Code signing and notarization are not included** in this repo’s workflow — Gatekeeper may require right-click → Open on unsigned builds. Local ICNS generation uses `packaging/macos/build-icns.sh` (`iconutil`; macOS only).
+
 ## Frozen builds (PyInstaller)
 
-The repository includes `main.spec` and hooks under `hooks/` for one-file builds.
+The repository includes `main.spec` and hooks under `hooks/`. On Linux/Windows the spec produces a one-file binary; on macOS it builds an `.app` bundle with backup file associations.
 
 Recommended:
 
 ```bash
 pip install pyinstaller
 pyinstaller main.spec
+```
+
+Linux release layout (after building the binary):
+
+```bash
+./packaging/linux/assemble-dist.sh dist/telegram-multi-account-sender ./tmms-linux v1.2.23
 ```
 
 Alternative (hook directory):

@@ -63,6 +63,16 @@ class CloudBackupWorker(QThread):
                     _("settings.cloud_restore_success").format(path=str(pre_restore)),
                     pre_restore,
                 )
+            elif self.operation == "restore_local":
+                pre_restore = service.restore_from_local_package(
+                    Path(self.kwargs["package_path"]),
+                    password=self.kwargs.get("password") or None,
+                )
+                self.finished.emit(
+                    True,
+                    _("settings.cloud_restore_success").format(path=str(pre_restore)),
+                    pre_restore,
+                )
             else:
                 self.finished.emit(False, _("settings.cloud_unknown_operation"), None)
         except CloudBackupServiceError as exc:
@@ -129,9 +139,14 @@ class CloudBackupWidget(QWidget):
         self.backups_list.setSelectionMode(QListWidget.SingleSelection)
         list_layout.addWidget(self.backups_list)
 
+        restore_row = QHBoxLayout()
         self.restore_button = QPushButton(_("settings.cloud_restore_selected"))
         self.restore_button.clicked.connect(self.restore_selected)
-        list_layout.addWidget(self.restore_button)
+        restore_row.addWidget(self.restore_button)
+        self.restore_local_button = QPushButton(_("settings.cloud_restore_local"))
+        self.restore_local_button.clicked.connect(self.restore_local_file)
+        restore_row.addWidget(self.restore_local_button)
+        list_layout.addLayout(restore_row)
         layout.addWidget(list_group)
 
         help_label = QLabel(_("settings.cloud_help"))
@@ -155,6 +170,8 @@ class CloudBackupWidget(QWidget):
         self.refresh_button.setEnabled(connected)
         self.restore_button.setEnabled(connected)
         self.backups_list.setEnabled(connected)
+        # Local package restore works offline without Drive.
+        self.restore_local_button.setEnabled(True)
 
     def _password(self) -> Optional[str]:
         value = self.password_edit.text().strip()
@@ -181,6 +198,7 @@ class CloudBackupWidget(QWidget):
             self.backup_button,
             self.refresh_button,
             self.restore_button,
+            self.restore_local_button,
         ):
             widget.setEnabled(not busy)
 
@@ -193,7 +211,12 @@ class CloudBackupWidget(QWidget):
 
         if success:
             QMessageBox.information(self, _("common.success"), message)
-            if self._worker and self._worker.operation in ("connect", "backup", "restore"):
+            if self._worker and self._worker.operation in (
+                "connect",
+                "backup",
+                "restore",
+                "restore_local",
+            ):
                 if self._worker.operation == "connect":
                     self.refresh_backup_list()
         else:
@@ -269,3 +292,37 @@ class CloudBackupWidget(QWidget):
             return
 
         self._start_worker("restore", remote_id=remote_id, password=self._password())
+
+    def restore_local_file(self, package_path: Optional[Path] = None):
+        """Restore from a local ``.tmas-backup.zip`` (picker or file association)."""
+        from PyQt5.QtWidgets import QFileDialog
+
+        path = Path(package_path) if package_path else None
+        if path is None or not path.is_file():
+            chosen, _ = QFileDialog.getOpenFileName(
+                self,
+                _("settings.cloud_restore_local_title"),
+                "",
+                _("settings.cloud_restore_local_filter"),
+            )
+            if not chosen:
+                return
+            path = Path(chosen)
+
+        confirm = QMessageBox.warning(
+            self,
+            _("settings.cloud_restore_local_confirm_title"),
+            _("settings.cloud_restore_local_confirm_message").format(path=str(path)),
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if confirm != QMessageBox.Yes:
+            return
+
+        self._start_worker(
+            "restore_local", package_path=str(path), password=self._password()
+        )
+
+    def offer_associated_backup(self, package_path: Path):
+        """Prompt restore when the OS opened a ``.tmas-backup.zip`` via file association."""
+        self.restore_local_file(package_path=package_path)

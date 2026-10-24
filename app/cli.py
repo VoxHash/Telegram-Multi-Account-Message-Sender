@@ -10,6 +10,8 @@ from pathlib import Path
 app_dir = Path(__file__).parent
 sys.path.insert(0, str(app_dir))
 
+from app import __version__  # noqa: E402
+from app.core.launch_args import filter_qt_argv, resolve_existing_backup_package  # noqa: E402
 from app.services import initialize_database, get_settings, get_logger  # noqa: E402
 from app.gui.main import MainWindow  # noqa: E402
 
@@ -19,6 +21,9 @@ from PyQt5.QtWidgets import QApplication  # noqa: E402
 
 def main() -> None:
     """Main entry point for the CLI."""
+    pending_backup = resolve_existing_backup_package(sys.argv)
+    qt_argv = filter_qt_argv(sys.argv)
+
     # Initialize database
     initialize_database()
 
@@ -27,14 +32,16 @@ def main() -> None:
     logger = get_logger()
 
     logger.info("Starting Telegram Multi-Account Message Sender...")
+    if pending_backup is not None:
+        logger.info(f"Opened via file association: {pending_backup}")
 
     # Create QApplication
-    app = QApplication(sys.argv)
+    app = QApplication(qt_argv)
     app.setApplicationName("Telegram Multi-Account Message Sender")
-    app.setApplicationVersion("1.2.20")
+    app.setApplicationVersion(__version__)
 
     # Create and show main window
-    main_window = MainWindow()
+    main_window = MainWindow(pending_backup_path=pending_backup)
     main_window.show()
 
     # Run application

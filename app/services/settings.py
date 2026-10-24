@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.2.22"
+    app_version: str = "1.2.23"
     app_env: AppEnvironment = AppEnvironment.DEVELOPMENT
     debug: bool = False
     start_with_windows: bool = False

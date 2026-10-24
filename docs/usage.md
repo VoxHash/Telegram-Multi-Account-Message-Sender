@@ -79,8 +79,9 @@ Sideloading with **Load Plugin** remains available for local `.py` files that ar
 4. Click **Connect Google Drive** and approve access in your browser.
 5. Optionally set an encryption password, then click **Backup Now** to upload a `.tmas-backup.zip` to Drive.
 6. Use **Refresh List** to see remote backups; select one and click **Restore Selected Backup** to replace the local database (a pre-restore snapshot is saved under `app_data/`).
-7. **Restart the application** after a restore so all components reload the database.
-8. Restore and list/upload require network access to Google Drive. If you are offline or Drive is unreachable, the app shows a clear warning and **does not** replace the local database.
+7. **Offline / local restore**: use **Restore from Local File…**, or open a `.tmas-backup.zip` via OS file association (Linux MIME / macOS UTI after packaging install). No Google Drive connection required.
+8. **Restart the application** after a restore so all components reload the database.
+9. Cloud restore and list/upload require network access to Google Drive. If you are offline or Drive is unreachable, the app shows a clear warning and **does not** replace the local database (local-file restore still works).
 
 ## Analytics export (Dashboard)
 

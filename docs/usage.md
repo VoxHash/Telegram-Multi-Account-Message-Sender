@@ -52,6 +52,16 @@ The application provides a graphical interface for managing multiple Telegram ac
 5. **Create Campaigns**: Create and launch campaigns
 6. **Monitor**: Track campaign progress and logs
 
+## Cloud Backup (Google Drive)
+
+1. Configure `GOOGLE_DRIVE_CLIENT_ID` and `GOOGLE_DRIVE_CLIENT_SECRET` in `.env` (see [Configuration Guide](configuration.md)).
+2. Install optional cloud packages: `pip install '.[cloud]'`.
+3. Open **Settings → Cloud Backup**.
+4. Click **Connect Google Drive** and approve access in your browser.
+5. Optionally set an encryption password, then click **Backup Now** to upload a `.tmas-backup.zip` to Drive.
+6. Use **Refresh List** to see remote backups; select one and click **Restore Selected Backup** to replace the local database (a pre-restore snapshot is saved under `app_data/`).
+7. **Restart the application** after a restore so all components reload the database.
+
 ## Advanced Features
 
 ### Spintax

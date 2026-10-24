@@ -85,6 +85,19 @@ Python calls the sidecar once per batch via JSON on stdin/stdout (`app/core/nati
 
 **Expected benefit (local desktop):** bulk spintax prep uses OS threads without holding the GIL; schedule construction avoids large transient Python object graphs for long recipient lists, so the app competes less for RAM/CPU with other programs during campaign start.
 
+## Cloud backup (Google Drive)
+
+Optional encrypted backup/restore lives under `app/services/cloud/`:
+
+| Component | Role |
+| --- | --- |
+| `BackupPackageBuilder` | Builds/verifies `.tmas-backup.zip` (SQLite + safe settings export) |
+| `GoogleDriveProvider` | OAuth desktop flow + Drive upload/list/download (`drive.file` scope) |
+| `CloudBackupService` | Orchestrates backup, list, and restore with a pre-restore local snapshot |
+| Settings UI | **Settings → Cloud Backup** (`cloud_backup_widget.py`) |
+
+Google API client libraries are optional (`pip install '.[cloud]'`). Tokens are encrypted under `app_data/cloud/`.
+
 ## See Also
 
 - [API Documentation](api.md) for API details

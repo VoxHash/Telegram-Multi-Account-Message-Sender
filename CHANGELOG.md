@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.16] - 2026-10-24
+
+### Added
+- **Cloud backup MVP (Google Drive)**: Encrypted `.tmas-backup.zip` packages (database + safe settings), OAuth desktop connect, upload/list/restore from **Settings → Cloud Backup**, with pre-restore local DB snapshot.
+- **Optional `[cloud]` extras**: `google-api-python-client`, `google-auth-oauthlib`, `google-auth-httplib2` via `pip install '.[cloud]'`.
+
 ## [1.2.15] - 2026-10-24
 
 ### Added

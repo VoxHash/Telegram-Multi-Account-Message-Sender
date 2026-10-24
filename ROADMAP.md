@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.15)
+## Current Status (v1.2.16)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -19,17 +19,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Documentation kit (getting started, installation, usage, API, FAQ, troubleshooting)
 - CI: compileall, GUI import smoke, pip-install smoke, unit tests
 - Optional Rust native accelerator (`tmms_native`) with prebuilt `tmms_native-linux-x86_64` on Releases
+- Encrypted Google Drive cloud backup / restore MVP (Settings → Cloud Backup)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
-- Cloud backup / sync (partial work exists on feature branches; merging as next High priority)
+- Offline-friendly restore messaging and additional cloud providers
 
-### Latest release (v1.2.15 — 2026-10-24)
-- Rust native accelerator for parallel spintax + pacing (`native/tmms_native`, `app/core/native_accel.py`)
-- Prebuilt Linux x86_64 binary asset on GitHub Releases; pure-Python fallback when absent
+### Latest release (v1.2.16 — 2026-10-24)
+- Cloud backup MVP: `.tmas-backup.zip` builder, Google Drive OAuth provider, Settings UI, restore with pre-restore snapshot
 
 ### Previous highlights
+- **v1.2.15**: Rust native accelerator + prebuilt Linux x86_64 binary on Releases
 - **v1.2.14**: Documentation kit completion, SendGram upgrade path, repo hygiene
 - **v1.2.13**: GHCR OCI image description metadata
 - **v1.2.12**: PyPI `pandas` dependency, frozen translation bundling, GHCR publish workflow
@@ -43,12 +44,12 @@ Realistic, shippable work — not a full platform rewrite.
 
 | Priority | Item | Outcome |
 | --- | --- | --- |
-| High | Cloud backup MVP (encrypted export/restore) | Safe backup of app data to a user-owned cloud folder |
 | High | Account health dashboard polish | Clear health scores and actionable warnings in the UI |
 | Medium | Expand unit/integration tests | Cover campaign filter payloads, settings, and CLI entrypoints |
 | Medium | Pydantic v2 field validators | Remove V1 `@validator` deprecation warnings |
 | Medium | Circular-import hardening for `app.core` package exports | Safer `from app.core...` imports outside the GUI boot path |
 | Low | Plugin marketplace / registry | Discover third-party plugins (after API stability) |
+| Done (v1.2.16) | Cloud backup MVP (encrypted export/restore) | Safe backup of app data to a user-owned Google Drive folder |
 | Done (v1.2.15) | Ship prebuilt `tmms_native` in releases | Users get Rust accel without a local Rust toolchain |
 
 ---
@@ -56,7 +57,7 @@ Realistic, shippable work — not a full platform rewrite.
 ## Phase plan
 
 ### Phase 2 focus (active): Cloud + automation quality
-- [ ] Encrypted cloud backup (Google Drive first; other providers later)
+- [x] Encrypted cloud backup (Google Drive first; other providers later)
 - [ ] Offline-friendly restore and conflict messaging
 - [ ] Stronger campaign analytics export (CSV/JSON)
 - [ ] AI-assisted copy tools only behind optional, user-supplied API keys (no hard dependency)

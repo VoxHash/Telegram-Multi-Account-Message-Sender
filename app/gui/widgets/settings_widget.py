@@ -24,6 +24,7 @@ from ...services.logger import reload_logger
 from ...services.translation import _, get_translation_manager
 from ...services.warmup_manager import get_warmup_manager
 from ...models import Account
+from .cloud_backup_widget import CloudBackupWidget
 
 
 class SettingsWidget(QWidget):
@@ -373,6 +374,9 @@ class SettingsWidget(QWidget):
         safety_layout.addWidget(log_group)
 
         self.tab_widget.addTab(safety_tab, _("settings.safety"))
+
+        self.cloud_backup_widget = CloudBackupWidget()
+        self.tab_widget.addTab(self.cloud_backup_widget, _("settings.cloud_backup_tab"))
 
         # Buttons
         button_layout = QHBoxLayout()

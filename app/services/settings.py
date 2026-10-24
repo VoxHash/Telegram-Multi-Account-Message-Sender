@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.2.15"
+    app_version: str = "1.2.16"
     app_env: AppEnvironment = "development"
     debug: bool = False
     start_with_windows: bool = False
@@ -127,6 +127,10 @@ class Settings(BaseSettings):
 
     # Optional: Sentry
     sentry_dsn: Optional[str] = None
+
+    # Cloud backup (Google Drive)
+    google_drive_client_id: Optional[str] = None
+    google_drive_client_secret: Optional[str] = None
 
     # Optional: Additional settings
     custom_settings: Dict[str, Any] = Field(default_factory=dict)

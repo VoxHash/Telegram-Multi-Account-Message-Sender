@@ -25,6 +25,17 @@ Common issues and solutions for Telegram Multi-Account Message Sender.
 4. Optional: set `TMMS_NATIVE_BIN` to the absolute binary path
 5. Missing binary is safe — the app falls back to Python automatically
 
+### Cloud backup / Google Drive connect fails
+
+**Problem:** Settings → Cloud Backup cannot connect or upload
+
+**Solutions:**
+1. Install optional deps: `pip install '.[cloud]'`
+2. Set `GOOGLE_DRIVE_CLIENT_ID` and `GOOGLE_DRIVE_CLIENT_SECRET` in `.env` (OAuth Desktop client)
+3. Enable the Google Drive API for the project in Google Cloud Console
+4. Complete the browser OAuth consent when prompted
+5. After restore, restart the app so the database connection reloads
+
 ### Dependencies Installation Fails
 
 **Problem:** `pip install` fails with errors

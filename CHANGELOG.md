@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.30] - 2026-10-24
+
+### Added
+- **Phase 4: developer SDK polish for registry submissions**: Validation helpers for catalog schema version, entry versions/`plugin_type`, local SHA-256 checks against plugin files, and structural checks on plugin `.py` packages (absolute imports, concrete `Plugin` subclass, metadata, default config).
+- **CLI**: `telegram-sender plugin-validate <catalog.json|plugin.py> [--plugins-dir DIR] [--app-version X]`.
+- **Sample plugin template**: `registry/templates/sample_filter_plugin.py` for community filter submissions.
+- **Unit tests** for version helpers, official catalog/SHA-256 validation, relative-import rejection, sample template, and CLI argv.
+
+### Changed
+- Docs (CLI, API, FAQ, usage, CONTRIBUTING, README) and ROADMAP mark developer SDK polish as shipped; Phase 4 team/enterprise leftovers remain SendGram-scoped or deferred.
+
 ## [1.2.29] - 2026-10-24
 
 ### Added

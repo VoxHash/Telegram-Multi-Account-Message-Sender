@@ -55,6 +55,9 @@ __all__ = [
     # Single-operator handoff
     "parse_handoff_argv",
     "run_handoff_cli",
+    # Plugin SDK / registry submission validation
+    "parse_plugin_validate_argv",
+    "run_plugin_validate_cli",
 ]
 
 # name -> (submodule, attribute)
@@ -96,6 +99,8 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "run_web_monitor_cli": (".web_companion", "run_web_monitor_cli"),
     "parse_handoff_argv": (".handoff", "parse_handoff_argv"),
     "run_handoff_cli": (".handoff", "run_handoff_cli"),
+    "parse_plugin_validate_argv": (".plugin_sdk", "parse_plugin_validate_argv"),
+    "run_plugin_validate_cli": (".plugin_sdk", "run_plugin_validate_cli"),
 }
 
 

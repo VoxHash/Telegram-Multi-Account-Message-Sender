@@ -74,6 +74,25 @@ telegram-sender handoff-import ./templates-campaigns.tmas-backup.zip --mode repl
 
 Packages use the same `.tmas-backup.zip` format as Cloud Backup. Full handoff exports default to including Telethon sessions. Selective entity packages are merge-friendly. Treat packages as secret. After import, restart the app.
 
+### Plugin / registry validation (developer SDK)
+
+Validate a catalog submission or a plugin `.py` package before opening a registry PR.
+
+```bash
+telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins
+telegram-sender plugin-validate registry/plugins/url_strip_filter.py
+telegram-sender plugin-validate registry/templates/sample_filter_plugin.py --app-version 1.2.30
+python -m app.cli plugin-validate path/to/plugin.py
+```
+
+| Flag | Description |
+| --- | --- |
+| path | Catalog `.json` or plugin `.py` to validate |
+| `--plugins-dir` / `-d` | With a catalog: verify SHA-256 digests against local plugin files |
+| `--app-version` / `-a` | App version for `min_app_version` checks (defaults to this install) |
+
+Catalog checks cover schema version, entry fields, versions, and known `plugin_type` values. Plugin checks require absolute imports (`from app.core.plugin import …`), a concrete `Plugin` subclass, metadata, and a valid default config. See [API](api.md) and `registry/templates/sample_filter_plugin.py`.
+
 ## Python API
 
 ### Basic Usage

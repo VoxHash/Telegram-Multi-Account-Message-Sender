@@ -499,6 +499,37 @@ path = registry.install("voxhash.url-strip-filter")  # writes under app_data/plu
 
 Installable registry plugins must use absolute imports (`from app.core.plugin import …`). Submit new entries via pull request to `registry/catalog.json` + `registry/plugins/`.
 
+#### Plugin SDK validation (`app.services.plugin_sdk`)
+
+Helpers for catalog / plugin package submissions (schema version, SHA-256, structural checks). CLI: `telegram-sender plugin-validate`.
+
+```python
+from app.services.plugin_sdk import (
+    SUPPORTED_CATALOG_SCHEMA_VERSION,
+    validate_catalog_file,
+    validate_catalog_sha256,
+    validate_plugin_file,
+    compare_versions,
+    check_min_app_version,
+)
+
+catalog, report = validate_catalog_file(Path("registry/catalog.json"), app_version="1.2.30")
+assert report.ok
+sha_report = validate_catalog_sha256(catalog, Path("registry/plugins"))
+plugin_report = validate_plugin_file(Path("registry/templates/sample_filter_plugin.py"))
+```
+
+**Constants / helpers:**
+- `SUPPORTED_CATALOG_SCHEMA_VERSION` (currently `1`)
+- `parse_version_tuple` / `compare_versions` / `check_min_app_version`
+- `compute_file_sha256`
+- `validate_catalog_schema` / `validate_catalog_file` / `validate_catalog_sha256`
+- `validate_plugin_file`
+- `parse_plugin_validate_argv` / `run_plugin_validate_cli`
+
+**Sample template:** `registry/templates/sample_filter_plugin.py`  
+**Base classes:** `app.core.plugin` (`Plugin`, `MessageFilterPlugin`, `AnalyticsPlugin`, `PluginMetadata`, `PluginType`, `PluginAPI`)
+
 ### AI Copy Service (optional)
 
 #### `AICopyService` / `get_ai_copy_service()`

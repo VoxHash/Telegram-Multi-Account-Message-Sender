@@ -11,6 +11,10 @@ app_dir = Path(__file__).parent
 sys.path.insert(0, str(app_dir))
 
 from app.services.handoff import parse_handoff_argv, run_handoff_cli  # noqa: E402
+from app.services.plugin_sdk import (  # noqa: E402
+    parse_plugin_validate_argv,
+    run_plugin_validate_cli,
+)
 from app.services.web_companion import parse_web_monitor_argv, run_web_monitor_cli  # noqa: E402
 
 
@@ -23,6 +27,10 @@ def main() -> None:
     is_handoff, *_ = parse_handoff_argv(sys.argv)
     if is_handoff:
         raise SystemExit(run_handoff_cli(sys.argv))
+
+    is_plugin_validate, *_ = parse_plugin_validate_argv(sys.argv)
+    if is_plugin_validate:
+        raise SystemExit(run_plugin_validate_cli(sys.argv))
 
     from app import __version__
     from app.core.launch_args import filter_qt_argv, resolve_existing_backup_package

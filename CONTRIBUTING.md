@@ -107,6 +107,21 @@ We welcome feature suggestions! Please:
 
 7. **Create a Pull Request** (see PR Flow section below)
 
+#### Plugin / registry submissions
+
+Community plugins for the curated marketplace:
+
+1. Start from `registry/templates/sample_filter_plugin.py` (absolute imports: `from app.core.plugin import …`).
+2. Add the installable file under `registry/plugins/` and an entry in `registry/catalog.json` (`id`, `download_url`, `filename`, `sha256`, `plugin_type`, `min_app_version`).
+3. Validate before opening a PR:
+   ```bash
+   telegram-sender plugin-validate path/to/your_plugin.py
+   telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins
+   ```
+4. Keep the PR focused on the plugin + catalog entry; do not auto-enable third-party code on install.
+
+See [docs/api.md](docs/api.md) (Plugin SDK validation) and [docs/cli.md](docs/cli.md).
+
 #### Pull Request Guidelines
 
 - **Clear title**: Describe what the PR does

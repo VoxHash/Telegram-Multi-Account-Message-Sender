@@ -113,6 +113,18 @@ Optional local monitor in `app/services/web_companion.py` (stdlib `http.server` 
 
 Default bind is `127.0.0.1:8765`. Non-loopback binds require `WEB_COMPANION_TOKEN`. Prefer a TLS reverse proxy in front of localhost. Desktop remains the control surface.
 
+## Plugin registry / developer SDK
+
+| Piece | Role |
+| --- | --- |
+| `app.core.plugin` | Base classes (`Plugin`, filter/analytics/…) and `PluginAPI` |
+| `PluginManager` | Discover/load/enable `.py` plugins from `app_data/plugins/` and built-ins |
+| `PluginRegistryService` | Curated JSON catalog fetch/search/install with optional SHA-256 |
+| `plugin_sdk` | Catalog schema / SHA-256 / plugin package validation; CLI `plugin-validate` |
+| `registry/` | Source catalog + installable plugins; `registry/templates/` sample for submissions |
+
+Install never auto-enables third-party code. Submit via PR after `telegram-sender plugin-validate`.
+
 ## See Also
 
 - [API Documentation](api.md) for API details

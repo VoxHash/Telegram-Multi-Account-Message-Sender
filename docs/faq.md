@@ -107,6 +107,13 @@ They are opt-in. Set your own OpenAI-compatible `AI_API_KEY` in Settings (or `.e
 
 Open **Plugins → Browse Registry** to discover curated plugins from the official catalog (`registry/catalog.json`). Install downloads a SHA-256–verified `.py` file into `app_data/plugins/`; you still enable it manually after review. Offline, the app uses the bundled catalog. Override the catalog URL with `PLUGIN_REGISTRY_URL` if needed.
 
+### How do I submit or validate a registry plugin?
+
+1. Start from `registry/templates/sample_filter_plugin.py` (absolute imports only).
+2. Add the `.py` under `registry/plugins/` and an entry in `registry/catalog.json` (`download_url`, `filename`, `sha256`).
+3. Run `telegram-sender plugin-validate path/to/plugin.py` and `telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins`.
+4. Open a pull request. Install never auto-enables third-party code.
+
 ### What is the web companion?
 
 An optional **read-only** local monitor (`telegram-sender web-monitor` or Settings → Start & Open). It serves account health, campaign status, recent activity, and **live SVG charts** (hourly activity, send-status and health donuts, campaign bars) over stdlib HTTP — no extra packages, no send/control APIs. Chart JSON is also at `/api/charts`. Enable **Auto-start with GUI** / `WEB_COMPANION_AUTO_START` to start it in the background when the desktop app launches (no browser popup; Status in Settings). Keep the default `127.0.0.1` bind. Set `WEB_COMPANION_TOKEN` (or `--token`) for Bearer / `X-TMAS-Token` / `?token=` auth; non-localhost binds require a token. Prefer a TLS reverse proxy in front of localhost — see [Configuration](configuration.md).

@@ -42,6 +42,25 @@ You can configure the application using environment variables. See `example_file
 - `TMMS_NATIVE_BIN`: Absolute path to the `tmms_native` binary if not under `bin/`
 - `GOOGLE_DRIVE_CLIENT_ID`: OAuth client ID for Google Drive cloud backups
 - `GOOGLE_DRIVE_CLIENT_SECRET`: OAuth client secret for Google Drive cloud backups
+- `AI_API_KEY`: Optional OpenAI-compatible API key for AI copy tools (leave unset to disable)
+- `AI_BASE_URL`: Chat Completions base URL (default `https://api.openai.com/v1`)
+- `AI_MODEL`: Model id (default `gpt-4o-mini`)
+
+### AI Copy Tools (optional)
+
+No AI SDK is bundled. When you set a user-supplied key, Templates can rewrite copy, convert to spintax, or suggest variations over HTTPS Chat Completions.
+
+1. Create an API key with your OpenAI account (or an OpenAI-compatible gateway).
+2. Add to `.env` (or **Settings → General → AI Copy Tools**):
+
+```env
+AI_API_KEY=sk-your-key-here
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o-mini
+```
+
+3. Save settings, open a template, and use **Rewrite with AI**, **AI → Spintax**, or **AI variations**.
+4. Leave `AI_API_KEY` empty to keep AI buttons inactive (no network calls, no hard dependency).
 
 ### Google Drive Cloud Backup (optional)
 

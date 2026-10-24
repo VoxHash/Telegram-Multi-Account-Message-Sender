@@ -419,6 +419,12 @@ settings = Settings()
 - `log_level: LogLevel`: Logging level
 - `start_with_windows: bool`: Start with Windows
 - `rate_limit_per_minute: int`: Default rate limit
+- `ai_api_key: Optional[str]`: User-supplied OpenAI-compatible key (optional AI copy)
+- `ai_base_url: str`: Chat Completions base URL (default `https://api.openai.com/v1`)
+- `ai_model: str`: Model id (default `gpt-4o-mini`)
+
+**Methods:**
+- `is_ai_copy_configured() -> bool`: True when `ai_api_key` is non-empty
 
 #### `reload_settings() -> Settings`
 
@@ -429,6 +435,30 @@ from app.services import reload_settings
 
 settings = reload_settings()
 ```
+
+### AI Copy Service (optional)
+
+#### `AICopyService` / `get_ai_copy_service()`
+
+Optional campaign copy helpers over OpenAI-compatible Chat Completions. Uses stdlib `urllib` only — no `openai` package.
+
+```python
+from app.services.ai_copy import get_ai_copy_service
+
+service = get_ai_copy_service()
+if service.is_configured():
+    rewritten = service.rewrite("Hello {name}, welcome aboard!")
+    spun = service.to_spintax(rewritten)
+    drafts = service.suggest_variations(rewritten, count=3)
+```
+
+**Methods:**
+- `is_configured() -> bool`
+- `rewrite(text: str, instruction: Optional[str] = None) -> str`
+- `to_spintax(text: str) -> str`
+- `suggest_variations(text: str, count: int = 3) -> List[str]`
+
+**Errors:** `AICopyNotConfiguredError`, `AICopyOfflineError`, `AICopyError`
 
 ### Database Service
 

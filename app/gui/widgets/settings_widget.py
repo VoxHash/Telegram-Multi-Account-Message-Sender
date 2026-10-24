@@ -114,6 +114,33 @@ class SettingsWidget(QWidget):
 
         general_layout.addWidget(telegram_group)
 
+        # Optional AI copy tools (user-supplied key; no hard SDK dependency)
+        ai_group = QGroupBox(_("settings.ai_copy_settings"))
+        ai_layout = QFormLayout(ai_group)
+
+        self.ai_api_key_edit = QLineEdit()
+        self.ai_api_key_edit.setText(self.settings.ai_api_key or "")
+        self.ai_api_key_edit.setEchoMode(QLineEdit.Password)
+        self.ai_api_key_edit.setPlaceholderText(_("settings.ai_api_key_placeholder"))
+        ai_layout.addRow(f"{_('settings.ai_api_key')}:", self.ai_api_key_edit)
+
+        self.ai_base_url_edit = QLineEdit()
+        self.ai_base_url_edit.setText(self.settings.ai_base_url or "https://api.openai.com/v1")
+        self.ai_base_url_edit.setPlaceholderText("https://api.openai.com/v1")
+        ai_layout.addRow(f"{_('settings.ai_base_url')}:", self.ai_base_url_edit)
+
+        self.ai_model_edit = QLineEdit()
+        self.ai_model_edit.setText(self.settings.ai_model or "gpt-4o-mini")
+        self.ai_model_edit.setPlaceholderText("gpt-4o-mini")
+        ai_layout.addRow(f"{_('settings.ai_model')}:", self.ai_model_edit)
+
+        ai_help = QLabel(_("settings.ai_copy_help"))
+        ai_help.setWordWrap(True)
+        ai_help.setStyleSheet("color: #888888; font-style: italic;")
+        ai_layout.addRow(ai_help)
+
+        general_layout.addWidget(ai_group)
+
         # Database Settings
         db_group = QGroupBox(_("settings.database_settings"))
         db_layout = QFormLayout(db_group)
@@ -416,6 +443,13 @@ class SettingsWidget(QWidget):
             )
             self.settings.telegram_api_hash = self.api_hash_edit.text().strip() or None
 
+            # Optional AI copy tools
+            self.settings.ai_api_key = self.ai_api_key_edit.text().strip() or None
+            self.settings.ai_base_url = (
+                self.ai_base_url_edit.text().strip() or "https://api.openai.com/v1"
+            )
+            self.settings.ai_model = self.ai_model_edit.text().strip() or "gpt-4o-mini"
+
             # Database settings
             self.settings.database_url = self.db_url_edit.text().strip()
 
@@ -520,6 +554,11 @@ RESPECT_RATE_LIMITS={str(self.settings.respect_rate_limits).lower()}
 STOP_ON_ERROR={str(self.settings.stop_on_error).lower()}
 MAX_RETRIES={self.settings.max_retries}
 RETRY_DELAY_SECONDS={self.settings.retry_delay_seconds}
+
+# Optional AI copy tools (OpenAI-compatible; leave AI_API_KEY empty to disable)
+AI_API_KEY={self.settings.ai_api_key or ''}
+AI_BASE_URL={self.settings.ai_base_url or 'https://api.openai.com/v1'}
+AI_MODEL={self.settings.ai_model or 'gpt-4o-mini'}
 """
 
             with open(".env", "w") as f:
@@ -553,6 +592,13 @@ RETRY_DELAY_SECONDS={self.settings.retry_delay_seconds}
                 str(self.settings.telegram_api_id) if self.settings.telegram_api_id else ""
             )
             self.api_hash_edit.setText(self.settings.telegram_api_hash or "")
+
+            # Optional AI copy tools
+            self.ai_api_key_edit.setText(self.settings.ai_api_key or "")
+            self.ai_base_url_edit.setText(
+                self.settings.ai_base_url or "https://api.openai.com/v1"
+            )
+            self.ai_model_edit.setText(self.settings.ai_model or "gpt-4o-mini")
 
             # Database settings
             self.db_url_edit.setText(self.settings.database_url)

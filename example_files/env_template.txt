@@ -38,6 +38,15 @@ TELEGRAM_API_HASH=your_api_hash_here
 # GOOGLE_DRIVE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 # GOOGLE_DRIVE_CLIENT_SECRET=your-client-secret
 
+# AI Copy Tools (SENSITIVE - Optional)
+# OpenAI-compatible Chat Completions key. No openai SDK is installed;
+# the app calls HTTPS directly. Leave unset to disable AI template buttons.
+# Compatible gateways: set AI_BASE_URL to their /v1 prefix (e.g. OpenAI, proxy).
+# ⚠️ SENSITIVE: Keep this secret
+# AI_API_KEY=sk-your-key-here
+# AI_BASE_URL=https://api.openai.com/v1
+# AI_MODEL=gpt-4o-mini
+
 # =============================================================================
 # ⚙️ NON-SENSITIVE CONFIGURATION VARIABLES
 # =============================================================================

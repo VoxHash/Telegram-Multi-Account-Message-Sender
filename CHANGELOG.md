@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.21] - 2026-10-24
+
+### Added
+- **Optional AI copy tools**: Templates can **Rewrite with AI**, convert **AI → Spintax**, or request **AI variations** when the user supplies an OpenAI-compatible API key (`AI_API_KEY` / Settings → AI Copy Tools). Calls Chat Completions over HTTPS with stdlib `urllib` only — no `openai` package or hard dependency.
+- **Settings**: `ai_api_key`, `ai_base_url` (default `https://api.openai.com/v1`), `ai_model` (default `gpt-4o-mini`); `Settings.is_ai_copy_configured()`.
+- **Unit tests** for configuration guards, offline fail-fast, rewrite/spintax/variations HTTP parsing, and settings integration.
+- **Docs**: Configuration, usage, API, README, and `example_files/env_template.txt` cover optional AI setup.
+
 ## [1.2.20] - 2026-10-24
 
 ### Changed

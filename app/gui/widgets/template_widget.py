@@ -85,6 +85,25 @@ class TemplateDialog(QDialog):
         self.message_edit.setMinimumHeight(150)
         message_layout.addWidget(self.message_edit)
 
+        # Optional AI copy tools (requires user-supplied API key in Settings)
+        ai_row = QHBoxLayout()
+        self.ai_rewrite_button = QPushButton(_("templates.ai_rewrite"))
+        self.ai_rewrite_button.setToolTip(_("templates.ai_rewrite_tooltip"))
+        self.ai_rewrite_button.clicked.connect(self.ai_rewrite_message)
+        ai_row.addWidget(self.ai_rewrite_button)
+
+        self.ai_spintax_button = QPushButton(_("templates.ai_to_spintax"))
+        self.ai_spintax_button.setToolTip(_("templates.ai_to_spintax_tooltip"))
+        self.ai_spintax_button.clicked.connect(self.ai_convert_to_spintax)
+        ai_row.addWidget(self.ai_spintax_button)
+
+        self.ai_variations_button = QPushButton(_("templates.ai_variations"))
+        self.ai_variations_button.setToolTip(_("templates.ai_variations_tooltip"))
+        self.ai_variations_button.clicked.connect(self.ai_suggest_variations)
+        ai_row.addWidget(self.ai_variations_button)
+        ai_row.addStretch()
+        message_layout.addLayout(ai_row)
+
         # Variables help
         variables_help = QLabel(_("templates.available_variables"))
         variables_help.setStyleSheet("color: #888888; font-style: italic;")
@@ -203,6 +222,94 @@ class TemplateDialog(QDialog):
         msg.setText(help_text)
         msg.setIcon(QMessageBox.Information)
         msg.exec_()
+
+    def _run_ai_copy(self, mode: str) -> None:
+        """Invoke optional AI copy helpers; require a user-supplied API key."""
+        from PyQt5.QtWidgets import QApplication
+
+        from ...services.ai_copy import (
+            AICopyError,
+            AICopyNotConfiguredError,
+            AICopyOfflineError,
+            get_ai_copy_service,
+        )
+
+        source = self.message_edit.toPlainText().strip()
+        if not source:
+            QMessageBox.warning(self, _("common.warning"), _("templates.message_required"))
+            return
+
+        service = get_ai_copy_service()
+        if not service.is_configured():
+            QMessageBox.information(
+                self,
+                _("templates.ai_not_configured_title"),
+                _("templates.ai_not_configured_message"),
+            )
+            return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            if mode == "rewrite":
+                result = service.rewrite(source)
+                self.message_edit.setPlainText(result)
+                QMessageBox.information(
+                    self, _("templates.ai_success_title"), _("templates.ai_rewrite_done")
+                )
+            elif mode == "spintax":
+                result = service.to_spintax(source)
+                self.message_edit.setPlainText(result)
+                self.use_spintax_check.setChecked(True)
+                QMessageBox.information(
+                    self, _("templates.ai_success_title"), _("templates.ai_spintax_done")
+                )
+            elif mode == "variations":
+                variations = service.suggest_variations(source, count=3)
+                preview = "\n\n---\n\n".join(variations)
+                box = QMessageBox(self)
+                box.setWindowTitle(_("templates.ai_variations"))
+                box.setIcon(QMessageBox.Information)
+                box.setText(_("templates.ai_variations_pick"))
+                box.setDetailedText(preview)
+                apply_first = box.addButton(
+                    _("templates.ai_use_first_variation"), QMessageBox.AcceptRole
+                )
+                box.addButton(QMessageBox.Cancel)
+                box.exec_()
+                if box.clickedButton() == apply_first and variations:
+                    self.message_edit.setPlainText(variations[0])
+            else:
+                raise AICopyError(f"Unknown AI copy mode: {mode}")
+        except AICopyNotConfiguredError as exc:
+            QMessageBox.information(
+                self, _("templates.ai_not_configured_title"), str(exc)
+            )
+        except AICopyOfflineError as exc:
+            QMessageBox.warning(self, _("templates.ai_offline_title"), str(exc))
+        except AICopyError as exc:
+            self.logger.error(f"AI copy error: {exc}")
+            QMessageBox.critical(
+                self, _("common.error"), _("templates.ai_failed").format(error=str(exc))
+            )
+        except Exception as exc:
+            self.logger.error(f"Unexpected AI copy error: {exc}")
+            QMessageBox.critical(
+                self, _("common.error"), _("templates.ai_failed").format(error=str(exc))
+            )
+        finally:
+            QApplication.restoreOverrideCursor()
+
+    def ai_rewrite_message(self) -> None:
+        """Rewrite the current template message with the optional AI provider."""
+        self._run_ai_copy("rewrite")
+
+    def ai_convert_to_spintax(self) -> None:
+        """Convert the current message into spintax via the optional AI provider."""
+        self._run_ai_copy("spintax")
+
+    def ai_suggest_variations(self) -> None:
+        """Suggest alternate drafts via the optional AI provider."""
+        self._run_ai_copy("variations")
 
     def toggle_spintax_settings(self, enabled: bool):
         """Toggle spintax settings visibility."""

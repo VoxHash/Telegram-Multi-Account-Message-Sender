@@ -99,6 +99,10 @@ This generates variations like:
 - "Hello Jane, welcome to my fantastic service!"
 - "Hello Alex, welcome to our amazing service!"
 
+### How do optional AI copy tools work?
+
+They are opt-in. Set your own OpenAI-compatible `AI_API_KEY` in Settings (or `.env`). Templates then offer rewrite, spintax conversion, and variations over HTTPS Chat Completions. No AI SDK is installed; leave the key empty to disable the feature.
+
 ### How do I schedule a campaign?
 
 When creating a campaign, set the "Start Time" field to schedule the campaign for a specific time. The campaign will start automatically at the scheduled time.

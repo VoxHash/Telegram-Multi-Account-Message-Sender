@@ -85,6 +85,7 @@ Then launch with `telegram-sender` or `python -m app.cli`. Full setup: [docs/qui
 ### 🔧 Advanced Features
 
 - **Spintax Support**: Create message variations using spintax syntax with real-time processing
+- **AI Copy Tools (optional)**: Rewrite, spintax conversion, and variations via your own OpenAI-compatible API key (no AI SDK dependency)
 - **Native Accelerator (optional)**: Rust sidecar for parallel spintax batches and multi-account pacing (lower prep CPU/RAM; auto Python fallback)
 - **A/B Testing**: Test different message variants with statistical analysis
 - **Scheduling**: Schedule campaigns for specific times with timezone support

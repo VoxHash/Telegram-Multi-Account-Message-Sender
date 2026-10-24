@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.2.20"
+    app_version: str = "1.2.21"
     app_env: AppEnvironment = AppEnvironment.DEVELOPMENT
     debug: bool = False
     start_with_windows: bool = False
@@ -131,6 +131,11 @@ class Settings(BaseSettings):
     # Cloud backup (Google Drive)
     google_drive_client_id: Optional[str] = None
     google_drive_client_secret: Optional[str] = None
+
+    # Optional AI copy tools (OpenAI-compatible; user-supplied key, no SDK dependency)
+    ai_api_key: Optional[str] = None
+    ai_base_url: str = "https://api.openai.com/v1"
+    ai_model: str = "gpt-4o-mini"
 
     # Optional: Additional settings
     custom_settings: Dict[str, Any] = Field(default_factory=dict)
@@ -233,6 +238,10 @@ class Settings(BaseSettings):
     def is_telegram_configured(self) -> bool:
         """Check if Telegram API is configured."""
         return self.telegram_api_id is not None and self.telegram_api_hash is not None
+
+    def is_ai_copy_configured(self) -> bool:
+        """Check if optional AI copy tools have a user-supplied API key."""
+        return bool(self.ai_api_key and str(self.ai_api_key).strip())
 
     def get_proxy_settings(self) -> Dict[str, Optional[str]]:
         """Get proxy settings as dictionary."""

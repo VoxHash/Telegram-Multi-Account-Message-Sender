@@ -46,6 +46,8 @@ You can configure the application using environment variables. See `example_file
 - `S3_ENDPOINT_URL`: Optional custom endpoint (MinIO, Cloudflare R2, Wasabi, Backblaze B2 S3 API, …); leave empty for AWS S3
 - `S3_REGION`: Region name (default `us-east-1`)
 - `S3_PREFIX`: Object key prefix for backups (default `tmas/backups/`)
+- `DROPBOX_ACCESS_TOKEN`: Dropbox Bearer access token for cloud backup (from [Dropbox App Console](https://www.dropbox.com/developers/apps))
+- `DROPBOX_FOLDER`: Dropbox folder for backups (default `/TMAS/backups`)
 - Operator handoff (no cloud): Settings → **Export for Handoff…** / **Export Templates/Campaigns…**, or CLI `telegram-sender handoff-export` / `handoff-import` (`--entities`, `--mode`) — see [CLI](cli.md) and [Usage](usage.md)
 - `AI_API_KEY`: Optional OpenAI-compatible API key for AI copy tools (leave unset to disable)
 - `AI_BASE_URL`: Chat Completions base URL (default `https://api.openai.com/v1`)
@@ -173,6 +175,22 @@ S3_PREFIX=tmas/backups/
 2. For AWS S3, leave `S3_ENDPOINT_URL` empty. For MinIO/R2/Wasabi/B2, set the provider’s S3 API endpoint.
 3. In the app, open **Settings → Cloud Backup**, select **S3-Compatible**, and click **Verify S3 Credentials**.
 4. Use **Backup Now** / **Refresh List** / **Restore Selected Backup** as with Drive. Disconnect clears the in-memory client only (`.env` keys stay).
+
+### Dropbox Cloud Backup (optional)
+
+No extra Python package beyond the existing `[cloud]` install path (stdlib HTTP to the Dropbox API; works on Python 3.10+).
+
+1. Create an app at [Dropbox App Console](https://www.dropbox.com/developers/apps) (Scoped access; App folder or Full Dropbox).
+2. Generate an access token and add it to `.env`:
+
+```env
+DROPBOX_ACCESS_TOKEN=sl.your-access-token
+# Optional folder (created on first upload):
+DROPBOX_FOLDER=/TMAS/backups
+```
+
+3. In the app, open **Settings → Cloud Backup**, select **Dropbox**, and click **Verify Dropbox Token**.
+4. Use **Backup Now** / **Refresh List** / **Restore Selected Backup** as with Drive/S3. Disconnect clears in-memory auth only (`.env` token stays).
 
 ## Account Configuration
 

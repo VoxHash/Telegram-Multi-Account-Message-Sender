@@ -1,5 +1,5 @@
 """
-Cloud backup settings widget (Google Drive + S3-compatible).
+Cloud backup settings widget (Google Drive + S3-compatible + Dropbox).
 """
 
 from pathlib import Path
@@ -31,6 +31,7 @@ from ...services.translation import _
 
 PROVIDER_GOOGLE_DRIVE = "google_drive"
 PROVIDER_S3 = "s3"
+PROVIDER_DROPBOX = "dropbox"
 
 
 class CloudBackupWorker(QThread):
@@ -51,6 +52,11 @@ class CloudBackupWorker(QThread):
                 if provider == PROVIDER_S3:
                     service.connect_s3()
                     self.finished.emit(True, _("settings.cloud_s3_connect_success"), None)
+                elif provider == PROVIDER_DROPBOX:
+                    service.connect_dropbox()
+                    self.finished.emit(
+                        True, _("settings.cloud_dropbox_connect_success"), None
+                    )
                 else:
                     service.connect_google_drive()
                     self.finished.emit(True, _("settings.cloud_connect_success"), None)
@@ -59,6 +65,11 @@ class CloudBackupWorker(QThread):
                     service.disconnect_s3()
                     self.finished.emit(
                         True, _("settings.cloud_s3_disconnect_success"), None
+                    )
+                elif provider == PROVIDER_DROPBOX:
+                    service.disconnect_dropbox()
+                    self.finished.emit(
+                        True, _("settings.cloud_dropbox_disconnect_success"), None
                     )
                 else:
                     service.disconnect_google_drive()
@@ -71,6 +82,13 @@ class CloudBackupWorker(QThread):
                     self.finished.emit(
                         True, _("settings.cloud_s3_backup_success"), remote_id
                     )
+                elif provider == PROVIDER_DROPBOX:
+                    remote_id = service.backup_to_dropbox(
+                        password=self.kwargs.get("password") or None
+                    )
+                    self.finished.emit(
+                        True, _("settings.cloud_dropbox_backup_success"), remote_id
+                    )
                 else:
                     remote_id = service.backup_to_google_drive(
                         password=self.kwargs.get("password") or None
@@ -79,12 +97,19 @@ class CloudBackupWorker(QThread):
             elif self.operation == "list":
                 if provider == PROVIDER_S3:
                     backups = service.list_s3_backups()
+                elif provider == PROVIDER_DROPBOX:
+                    backups = service.list_dropbox_backups()
                 else:
                     backups = service.list_google_drive_backups()
                 self.finished.emit(True, _("settings.cloud_list_success"), backups)
             elif self.operation == "restore":
                 if provider == PROVIDER_S3:
                     pre_restore = service.restore_from_s3(
+                        self.kwargs["remote_id"],
+                        password=self.kwargs.get("password") or None,
+                    )
+                elif provider == PROVIDER_DROPBOX:
+                    pre_restore = service.restore_from_dropbox(
                         self.kwargs["remote_id"],
                         password=self.kwargs.get("password") or None,
                     )
@@ -135,7 +160,7 @@ class CloudBackupWorker(QThread):
 
 
 class CloudBackupWidget(QWidget):
-    """Settings tab for Google Drive / S3 cloud backup and restore."""
+    """Settings tab for Google Drive / S3 / Dropbox cloud backup and restore."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -159,6 +184,9 @@ class CloudBackupWidget(QWidget):
             _("settings.cloud_provider_google_drive"), PROVIDER_GOOGLE_DRIVE
         )
         self.provider_combo.addItem(_("settings.cloud_provider_s3"), PROVIDER_S3)
+        self.provider_combo.addItem(
+            _("settings.cloud_provider_dropbox"), PROVIDER_DROPBOX
+        )
         self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
         provider_row.addWidget(self.provider_combo)
         status_layout.addLayout(provider_row)
@@ -250,6 +278,15 @@ class CloudBackupWidget(QWidget):
                 self.status_label.setText(_("settings.cloud_s3_status_configured"))
             else:
                 self.status_label.setText(_("settings.cloud_s3_status_disconnected"))
+        elif provider == PROVIDER_DROPBOX:
+            self.connect_button.setText(_("settings.cloud_connect_dropbox"))
+            connected = self.service.is_dropbox_connected()
+            if connected:
+                self.status_label.setText(_("settings.cloud_dropbox_status_connected"))
+            elif self.service.is_dropbox_configured():
+                self.status_label.setText(_("settings.cloud_dropbox_status_configured"))
+            else:
+                self.status_label.setText(_("settings.cloud_dropbox_status_disconnected"))
         else:
             self.connect_button.setText(_("settings.cloud_connect_drive"))
             connected = self.service.is_google_drive_connected()
@@ -398,6 +435,9 @@ class CloudBackupWidget(QWidget):
         if provider == PROVIDER_S3:
             connected = self.service.is_s3_connected()
             disconnected_msg = _("settings.cloud_s3_status_disconnected")
+        elif provider == PROVIDER_DROPBOX:
+            connected = self.service.is_dropbox_connected()
+            disconnected_msg = _("settings.cloud_dropbox_status_disconnected")
         else:
             connected = self.service.is_google_drive_connected()
             disconnected_msg = _("settings.cloud_status_disconnected")

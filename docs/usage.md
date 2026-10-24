@@ -88,12 +88,12 @@ Monitor account health, campaign status, and recent activity in a browser withou
 4. Review the result before saving. Placeholders like `{name}` are preserved when the model follows instructions.
 5. With no API key configured, the buttons show a setup message and make no network calls.
 
-## Cloud Backup (Google Drive + S3-compatible)
+## Cloud Backup (Google Drive + S3-compatible + Dropbox)
 
-1. Install optional cloud packages: `pip install '.[cloud]'`.
-2. Configure either Google Drive OAuth (`GOOGLE_DRIVE_CLIENT_ID` / `GOOGLE_DRIVE_CLIENT_SECRET`) or S3 credentials (`S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_BUCKET`, optional `S3_ENDPOINT_URL` / `S3_REGION` / `S3_PREFIX`) in `.env` — see [Configuration Guide](configuration.md).
-3. Open **Settings → Cloud Backup** and choose the provider (Google Drive or S3-Compatible).
-4. **Google Drive**: click **Connect Google Drive** and approve access in your browser. **S3**: click **Verify S3 Credentials**.
+1. Install optional cloud packages for Drive/S3: `pip install '.[cloud]'`. Dropbox uses stdlib HTTP (no extra package).
+2. Configure Google Drive OAuth (`GOOGLE_DRIVE_CLIENT_ID` / `GOOGLE_DRIVE_CLIENT_SECRET`), S3 credentials (`S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_BUCKET`, optional `S3_ENDPOINT_URL` / `S3_REGION` / `S3_PREFIX`), and/or Dropbox (`DROPBOX_ACCESS_TOKEN`, optional `DROPBOX_FOLDER`) in `.env` — see [Configuration Guide](configuration.md).
+3. Open **Settings → Cloud Backup** and choose the provider (Google Drive, S3-Compatible, or Dropbox).
+4. **Google Drive**: click **Connect Google Drive** and approve access in your browser. **S3**: click **Verify S3 Credentials**. **Dropbox**: click **Verify Dropbox Token**.
 5. Optionally set an encryption password, then click **Backup Now** to upload a `.tmas-backup.zip`.
 6. Use **Refresh List** to see remote backups; select one and click **Restore Selected Backup** to replace the local database (a pre-restore snapshot is saved under `app_data/`).
 7. **Offline / local restore**: use **Restore from Local File…**, or open a `.tmas-backup.zip` via OS file association (Linux MIME / macOS UTI after packaging install). No cloud connection required.

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.32] - 2026-10-24
+
+### Added
+- **Phase 2 leftover: Dropbox cloud backup**: `DropboxProvider` (stdlib HTTP to Dropbox API v2) for encrypted `.tmas-backup.zip` upload/list/download/delete. Settings env: `DROPBOX_ACCESS_TOKEN`, optional `DROPBOX_FOLDER` (default `/TMAS/backups`).
+- **Settings → Cloud Backup** provider selector now includes Dropbox alongside Google Drive and S3-Compatible; verify / backup / list / restore wired through `CloudBackupService`.
+- **Unit tests** for Dropbox helpers, mocked upload/list/download/delete, missing-folder list, service backup/list/restore offline guards.
+
+### Changed
+- Docs (configuration, usage, architecture, API, FAQ, troubleshooting, README) and ROADMAP mark Dropbox as shipped; OneDrive and other non-S3 providers remain in progress.
+
 ## [1.2.31] - 2026-10-24
 
 ### Added

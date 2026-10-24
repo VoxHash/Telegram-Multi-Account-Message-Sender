@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.31)
+## Current Status (v1.2.32)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -36,16 +36,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **Selective entity export + merge-on-import** (templates/campaigns `entities.json`; CLI `--entities` / `--mode merge|replace`; Settings Export Templates/Campaigns)
 - **Developer SDK polish for registry submissions** (`plugin-validate` CLI; catalog schema/SHA-256 helpers; sample filter template)
 - **S3-compatible cloud backup** (AWS S3 / MinIO / R2 / Wasabi / B2 via boto3; Settings provider selector)
+- **Dropbox cloud backup** (Bearer access token + folder; stdlib HTTP; Settings provider selector)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
-- Additional cloud providers beyond Google Drive + S3 (e.g. Dropbox / OneDrive)
+- Additional cloud providers beyond Google Drive + S3 + Dropbox (e.g. OneDrive)
 
-### Latest release (v1.2.31 — 2026-10-24)
-- Phase 2: S3-compatible cloud backup provider (beyond Google Drive)
+### Latest release (v1.2.32 — 2026-10-24)
+- Phase 2 leftover: Dropbox cloud backup provider (beyond Google Drive + S3)
 
 ### Previous highlights
+- **v1.2.31**: Phase 2: S3-compatible cloud backup provider (beyond Google Drive)
 - **v1.2.30**: Phase 4: broader developer SDK polish as registry submissions grow
 - **v1.2.29**: Phase 4 leftover: selective template/campaign export and merge-on-import vs replace
 - **v1.2.28**: Phase 4 slice: desktop single-operator export/import for handoff (local package + sessions; multi-user roles remain SendGram)
@@ -96,7 +98,8 @@ Realistic, shippable work — not a full platform rewrite.
 ### Phase 2 focus (active): Cloud + automation quality
 - [x] Encrypted cloud backup (Google Drive first; other providers later)
 - [x] S3-compatible cloud backup (AWS / MinIO / R2 / Wasabi / B2) — v1.2.31
-  - Leftover: Dropbox / OneDrive and other non-S3 providers
+- [x] Dropbox cloud backup (access token + folder; stdlib HTTP) — v1.2.32
+  - Leftover: OneDrive and other non-S3 providers
 - [x] Offline-friendly restore and conflict messaging
 - [x] Stronger campaign analytics export (CSV/JSON)
 - [x] AI-assisted copy tools only behind optional, user-supplied API keys (no hard dependency)

@@ -140,6 +140,10 @@ class Settings(BaseSettings):
     s3_endpoint_url: Optional[str] = None
     s3_prefix: str = "tmas/backups/"
 
+    # Cloud backup (Dropbox — Bearer access token from Dropbox App Console)
+    dropbox_access_token: Optional[str] = None
+    dropbox_folder: str = "/TMAS/backups"
+
     # Optional AI copy tools (OpenAI-compatible; user-supplied key, no SDK dependency)
     ai_api_key: Optional[str] = None
     ai_base_url: str = "https://api.openai.com/v1"

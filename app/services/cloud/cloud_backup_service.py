@@ -1,5 +1,5 @@
 """
-Orchestrates local backup packages and cloud upload/restore (Drive + S3).
+Orchestrates local backup packages and cloud upload/restore (Drive + S3 + Dropbox).
 """
 
 import json
@@ -23,6 +23,7 @@ from .backup_package import (
     BackupPackageBuilder,
     BackupPackageError,
 )
+from .dropbox_provider import DropboxError, DropboxProvider
 from .entity_transfer import (
     ENTITIES_FILENAME,
     IMPORT_MODE_MERGE,
@@ -50,14 +51,15 @@ class CloudBackupService:
         self,
         provider: Optional[GoogleDriveProvider] = None,
         s3_provider: Optional[S3CompatibleProvider] = None,
+        dropbox_provider: Optional[DropboxProvider] = None,
         package_builder: Optional[BackupPackageBuilder] = None,
     ) -> None:
         self.logger = get_logger()
         self.settings = get_settings()
         self.provider = provider or GoogleDriveProvider()
         self.s3_provider = s3_provider or S3CompatibleProvider()
+        self.dropbox_provider = dropbox_provider or DropboxProvider()
         self.package_builder = package_builder or BackupPackageBuilder()
-
     def _require_online(self, operation: str) -> None:
         """Fail fast with offline-friendly messaging when the network is down."""
         if not check_network_available():
@@ -441,4 +443,91 @@ class CloudBackupService:
                 package_path,
                 password=password,
                 source_label=f"S3 backup {remote_id}",
+            )
+
+    def connect_dropbox(self) -> None:
+        """Validate Dropbox access token (``users/get_current_account``)."""
+        self._require_online("Dropbox connect")
+        try:
+            if not self.dropbox_provider.authenticate():
+                raise CloudBackupServiceError("Dropbox authentication failed")
+        except DropboxError as exc:
+            raise CloudBackupServiceError(str(exc)) from exc
+
+    def disconnect_dropbox(self) -> None:
+        """Clear in-memory Dropbox auth (``.env`` token is unchanged)."""
+        self.dropbox_provider.disconnect()
+
+    def is_dropbox_connected(self) -> bool:
+        """Return True when the Dropbox token verifies against the API."""
+        return self.dropbox_provider.is_authenticated()
+
+    def is_dropbox_configured(self) -> bool:
+        """Return True when ``DROPBOX_ACCESS_TOKEN`` is present."""
+        return DropboxProvider.is_configured()
+
+    def backup_to_dropbox(self, password: Optional[str] = None) -> str:
+        """Build a backup package and upload it to Dropbox."""
+        if not self.is_dropbox_connected():
+            raise CloudBackupServiceError(
+                "Verify Dropbox credentials before creating a backup"
+            )
+        self._require_online("cloud backup upload")
+
+        filename = BackupPackageBuilder.generate_filename()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package_path = Path(temp_dir) / filename
+            try:
+                self.package_builder.build(
+                    package_path,
+                    password=password,
+                    include_settings=True,
+                    include_sessions=False,
+                    purpose=PURPOSE_CLOUD_BACKUP,
+                )
+            except BackupPackageError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+            try:
+                remote_id = self.dropbox_provider.upload(package_path, filename)
+            except DropboxError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+        self.logger.info(f"Dropbox cloud backup uploaded: {filename} ({remote_id})")
+        return remote_id
+
+    def list_dropbox_backups(self) -> List[RemoteBackupItem]:
+        """List backup packages stored under the configured Dropbox folder."""
+        if not self.is_dropbox_connected():
+            raise CloudBackupServiceError("Verify Dropbox credentials to list backups")
+        self._require_online("listing cloud backups")
+        try:
+            return self.dropbox_provider.list_backups()
+        except DropboxError as exc:
+            raise CloudBackupServiceError(str(exc)) from exc
+
+    def restore_from_dropbox(
+        self, remote_id: str, password: Optional[str] = None
+    ) -> Path:
+        """
+        Download a Dropbox backup, verify it, snapshot the current DB, and restore.
+
+        Returns the path to the pre-restore local database snapshot.
+        Raises before modifying the local database when offline / Dropbox unreachable.
+        """
+        if not self.is_dropbox_connected():
+            raise CloudBackupServiceError("Verify Dropbox credentials before restoring")
+        self._require_online("cloud restore")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package_path = Path(temp_dir) / "restore-package.tmas-backup.zip"
+            try:
+                self.dropbox_provider.download(remote_id, package_path)
+            except DropboxError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+            return self._snapshot_and_restore_package(
+                package_path,
+                password=password,
+                source_label=f"Dropbox backup {remote_id}",
             )

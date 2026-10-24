@@ -891,6 +891,8 @@ service.restore_from_local_package(entities, mode="merge")
 | `CloudBackupService.inspect_local_package` | Detect `entities.json` vs `app.db` for UI prompts |
 | `CloudBackupService.backup_to_s3` / `list_s3_backups` / `restore_from_s3` | S3-compatible cloud backup (boto3; optional `[cloud]` extra) |
 | `S3CompatibleProvider` | `CloudProvider` for AWS S3 / MinIO / R2 / Wasabi / B2 |
+| `CloudBackupService.backup_to_dropbox` / `list_dropbox_backups` / `restore_from_dropbox` | Dropbox cloud backup (stdlib HTTP; `DROPBOX_ACCESS_TOKEN`) |
+| `DropboxProvider` | `CloudProvider` for Dropbox folder upload/list/download |
 | `collect_entities` / `import_entities` | Build / apply selective payload |
 | `parse_handoff_argv` / `run_handoff_cli` | CLI: `handoff-export` / `handoff-import` |
 

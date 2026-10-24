@@ -47,12 +47,23 @@ Common issues and solutions for Telegram Multi-Account Message Sender.
 4. Confirm the bucket exists and the key pair can `s3:ListBucket` / `s3:PutObject` / `s3:GetObject` under `S3_PREFIX` (default `tmas/backups/`)
 5. After restore, restart the app so the database connection reloads
 
+### Cloud backup / Dropbox verify fails
+
+**Problem:** Settings → Cloud Backup → Dropbox cannot verify token or upload
+
+**Solutions:**
+1. Set `DROPBOX_ACCESS_TOKEN` in `.env` (generate at [Dropbox App Console](https://www.dropbox.com/developers/apps))
+2. Optional: set `DROPBOX_FOLDER` (default `/TMAS/backups`); the folder is created on first upload
+3. Confirm the token has `files.content.write` / `files.content.read` (or equivalent) scopes for your app
+4. No extra Python package is required for Dropbox (stdlib HTTP); Drive/S3 still need `pip install '.[cloud]'`
+5. After restore, restart the app so the database connection reloads
+
 ### Cloud restore fails while offline
 
 **Problem:** Restore (or list/backup) shows “Offline or cloud unreachable” / “Cannot restore while offline”
 
 **Solutions:**
-1. Confirm internet connectivity (and that VPN/firewall allows `googleapis.com` or your S3 endpoint)
+1. Confirm internet connectivity (and that VPN/firewall allows `googleapis.com`, `api.dropboxapi.com` / `content.dropboxapi.com`, or your S3 endpoint)
 2. Retry **Refresh List**, then restore when online
 3. Local data is left unchanged until a download succeeds; if a pre-restore snapshot path is shown after a mid-flight failure, keep that file under `app_data/`
 4. You can continue using the app fully offline; only cloud sync needs the network

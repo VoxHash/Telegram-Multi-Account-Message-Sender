@@ -24,6 +24,7 @@ from .entity_transfer import (
     import_entities,
     parse_entity_kinds,
 )
+from .dropbox_provider import DropboxError, DropboxProvider
 from .google_drive import GoogleDriveError, GoogleDriveProvider
 from .network import (
     check_network_available,
@@ -52,6 +53,8 @@ __all__ = [
     "CloudBackupServiceError",
     "CloudProvider",
     "DriveTokenStore",
+    "DropboxError",
+    "DropboxProvider",
     "EntityTransferError",
     "GoogleDriveError",
     "GoogleDriveProvider",

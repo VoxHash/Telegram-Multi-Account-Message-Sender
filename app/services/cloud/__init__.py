@@ -6,12 +6,24 @@ from .backup_package import (
     BACKUP_FILE_EXTENSION,
     BACKUP_SCHEMA_VERSION,
     PURPOSE_CLOUD_BACKUP,
+    PURPOSE_ENTITY_TRANSFER,
     PURPOSE_OPERATOR_HANDOFF,
     SESSIONS_DIRNAME,
     BackupPackageBuilder,
     BackupPackageError,
 )
 from .cloud_backup_service import CloudBackupService, CloudBackupServiceError
+from .entity_transfer import (
+    ENTITIES_FILENAME,
+    ENTITY_CAMPAIGNS,
+    ENTITY_TEMPLATES,
+    IMPORT_MODE_MERGE,
+    IMPORT_MODE_REPLACE,
+    EntityTransferError,
+    collect_entities,
+    import_entities,
+    parse_entity_kinds,
+)
 from .google_drive import GoogleDriveError, GoogleDriveProvider
 from .network import (
     check_network_available,
@@ -24,7 +36,13 @@ from .token_store import DriveTokenStore
 __all__ = [
     "BACKUP_FILE_EXTENSION",
     "BACKUP_SCHEMA_VERSION",
+    "ENTITIES_FILENAME",
+    "ENTITY_CAMPAIGNS",
+    "ENTITY_TEMPLATES",
+    "IMPORT_MODE_MERGE",
+    "IMPORT_MODE_REPLACE",
     "PURPOSE_CLOUD_BACKUP",
+    "PURPOSE_ENTITY_TRANSFER",
     "PURPOSE_OPERATOR_HANDOFF",
     "SESSIONS_DIRNAME",
     "BackupPackageBuilder",
@@ -33,10 +51,14 @@ __all__ = [
     "CloudBackupServiceError",
     "CloudProvider",
     "DriveTokenStore",
+    "EntityTransferError",
     "GoogleDriveError",
     "GoogleDriveProvider",
     "RemoteBackupItem",
     "check_network_available",
+    "collect_entities",
     "format_offline_error",
+    "import_entities",
     "is_offline_error_message",
+    "parse_entity_kinds",
 ]

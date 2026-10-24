@@ -11,13 +11,19 @@ import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
-from typing import cast,  Any, Dict, Optional
+from typing import cast, Any, Dict, Optional, Sequence, Set
 
 from app import __version__
 from app.services import get_logger
 from app.services.db import backup_database
 from app.services.settings import get_settings
 from app.utils.crypto import decrypt_data, encrypt_data
+
+from .entity_transfer import (
+    ENTITIES_FILENAME,
+    VALID_ENTITY_KINDS,
+    collect_entities,
+)
 
 BACKUP_SCHEMA_VERSION = "1"
 BACKUP_FILE_EXTENSION = ".tmas-backup.zip"
@@ -27,6 +33,7 @@ SETTINGS_FILENAME = "settings-export.json"
 SESSIONS_DIRNAME = "sessions"
 PURPOSE_OPERATOR_HANDOFF = "operator_handoff"
 PURPOSE_CLOUD_BACKUP = "cloud_backup"
+PURPOSE_ENTITY_TRANSFER = "entity_transfer"
 
 EXCLUDED_SETTINGS_KEYS = frozenset(
     {
@@ -66,6 +73,13 @@ class BackupPackageBuilder:
         stamp = ts.strftime("%Y%m%d_%H%M%S")
         return f"telegram-sender-handoff-{stamp}{BACKUP_FILE_EXTENSION}"
 
+    @staticmethod
+    def generate_entities_filename(timestamp: Optional[datetime] = None) -> str:
+        """Generate a filename for selective template/campaign packages."""
+        ts = timestamp or datetime.now(timezone.utc)
+        stamp = ts.strftime("%Y%m%d_%H%M%S")
+        return f"telegram-sender-entities-{stamp}{BACKUP_FILE_EXTENSION}"
+
     def build(
         self,
         output_path: Path,
@@ -74,6 +88,7 @@ class BackupPackageBuilder:
         include_settings: bool = True,
         include_sessions: bool = False,
         purpose: Optional[str] = None,
+        entity_kinds: Optional[Sequence[str]] = None,
     ) -> Path:
         """
         Build a backup package at ``output_path``.
@@ -81,41 +96,67 @@ class BackupPackageBuilder:
         When ``password`` is set, the zip payload is encrypted (AES via Fernet + PBKDF2).
         When ``include_sessions`` is True, Telethon session files under ``sessions_dir``
         are packaged for machine-to-machine operator handoff.
+        When ``entity_kinds`` is set (``templates`` / ``campaigns``), build a selective
+        package with ``entities.json`` and omit the full database and sessions.
         """
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        kinds: Optional[Set[str]] = None
+        if entity_kinds is not None:
+            kinds = {str(k).strip().lower() for k in entity_kinds if str(k).strip()}
+            if not kinds:
+                raise BackupPackageError("entity_kinds must include templates and/or campaigns")
+            unknown = kinds - VALID_ENTITY_KINDS
+            if unknown:
+                raise BackupPackageError(f"Unknown entity kinds: {sorted(unknown)}")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             staging_dir = Path(temp_dir) / "package"
             staging_dir.mkdir(parents=True, exist_ok=True)
 
-            db_backup_path = staging_dir / DATABASE_FILENAME
-            backup_database(db_backup_path)
-
             files_meta: Dict[str, Dict[str, Any]] = {}
-            files_meta[DATABASE_FILENAME] = self._file_metadata(db_backup_path)
+            effective_purpose: Optional[str] = purpose
 
-            if include_settings:
-                settings_path = staging_dir / SETTINGS_FILENAME
-                settings_path.write_text(
-                    json.dumps(self._export_safe_settings(), indent=2),
+            if kinds is not None:
+                entities_payload = collect_entities(kinds)
+                entities_path = staging_dir / ENTITIES_FILENAME
+                entities_path.write_text(
+                    json.dumps(entities_payload, indent=2),
                     encoding="utf-8",
                 )
-                files_meta[SETTINGS_FILENAME] = self._file_metadata(settings_path)
+                files_meta[ENTITIES_FILENAME] = self._file_metadata(entities_path)
+                effective_purpose = purpose or PURPOSE_ENTITY_TRANSFER
+                include_sessions = False
+            else:
+                db_backup_path = staging_dir / DATABASE_FILENAME
+                backup_database(db_backup_path)
+                files_meta[DATABASE_FILENAME] = self._file_metadata(db_backup_path)
 
-            if include_sessions:
-                files_meta.update(self._stage_session_files(staging_dir))
+                if include_settings:
+                    settings_path = staging_dir / SETTINGS_FILENAME
+                    settings_path.write_text(
+                        json.dumps(self._export_safe_settings(), indent=2),
+                        encoding="utf-8",
+                    )
+                    files_meta[SETTINGS_FILENAME] = self._file_metadata(settings_path)
+
+                if include_sessions:
+                    files_meta.update(self._stage_session_files(staging_dir))
 
             manifest: Dict[str, Any] = {
                 "schema_version": BACKUP_SCHEMA_VERSION,
                 "app_version": __version__,
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "encrypted": bool(password),
-                "include_sessions": bool(include_sessions),
+                "include_sessions": bool(include_sessions) if kinds is None else False,
                 "files": files_meta,
             }
-            if purpose:
-                manifest["purpose"] = purpose
+            if kinds is not None:
+                manifest["entity_kinds"] = sorted(kinds)
+                manifest["default_import_mode"] = "merge"
+            if effective_purpose:
+                manifest["purpose"] = effective_purpose
             manifest_path = staging_dir / MANIFEST_FILENAME
             manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
@@ -268,5 +309,9 @@ class BackupPackageBuilder:
             )
         if "files" not in manifest or not isinstance(manifest["files"], dict):
             raise BackupPackageError("Invalid manifest: missing files section")
-        if DATABASE_FILENAME not in manifest["files"]:
-            raise BackupPackageError("Invalid manifest: app.db entry required")
+        has_db = DATABASE_FILENAME in manifest["files"]
+        has_entities = ENTITIES_FILENAME in manifest["files"]
+        if not has_db and not has_entities:
+            raise BackupPackageError(
+                "Invalid manifest: app.db or entities.json entry required"
+            )

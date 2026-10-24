@@ -113,7 +113,7 @@ An optional **read-only** local monitor (`telegram-sender web-monitor` or Settin
 
 ### How do I hand off my workspace to another machine?
 
-Desktop TMAS is **single-operator**. Use **Settings → Cloud Backup → Export for Handoff…** (or `telegram-sender handoff-export`) to write a `.tmas-backup.zip` with the database, safe settings, and Telethon sessions. On the destination machine, **Restore from Local File…** or `telegram-sender handoff-import`, then restart. Prefer an encryption password for off-machine transfer. Multi-user roles belong to [SendGram](https://www.sendgram.pro).
+Desktop TMAS is **single-operator**. Use **Settings → Cloud Backup → Export for Handoff…** (or `telegram-sender handoff-export`) for a full `.tmas-backup.zip` (database, safe settings, Telethon sessions), or **Export Templates/Campaigns…** / `--entities templates,campaigns` for a selective package. Entity imports support **merge** (upsert by name) or **replace**. Prefer an encryption password for off-machine transfer. Multi-user roles belong to [SendGram](https://www.sendgram.pro).
 
 ### How do I schedule a campaign?
 

@@ -49,7 +49,7 @@ def file_db(tmp_path, monkeypatch):
 
 class TestParseHandoffArgv:
     def test_detects_export(self):
-        is_h, action, path, password, include_sessions = parse_handoff_argv(
+        is_h, action, path, password, include_sessions, entities, mode = parse_handoff_argv(
             ["telegram-sender", "handoff-export", "/tmp/out.tmas-backup.zip", "-p", "secret"]
         )
         assert is_h is True
@@ -57,9 +57,11 @@ class TestParseHandoffArgv:
         assert path == Path("/tmp/out.tmas-backup.zip")
         assert password == "secret"
         assert include_sessions is True
+        assert entities is None
+        assert mode is None
 
     def test_detects_import_and_no_sessions(self):
-        is_h, action, path, password, include_sessions = parse_handoff_argv(
+        is_h, action, path, password, include_sessions, entities, mode = parse_handoff_argv(
             [
                 "telegram-sender",
                 "handoff-import",
@@ -73,6 +75,8 @@ class TestParseHandoffArgv:
         assert password is None
         # --no-sessions only affects export; flag still parsed for argv consistency
         assert include_sessions is False
+        assert entities is None
+        assert mode is None
 
     def test_non_handoff_argv(self):
         is_h, *_ = parse_handoff_argv(["telegram-sender", "web-monitor"])

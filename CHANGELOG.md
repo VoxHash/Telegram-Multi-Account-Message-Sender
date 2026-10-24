@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.29] - 2026-10-24
+
+### Added
+- **Phase 4 leftover: selective entity export**: Export templates and/or campaigns only (no full DB/sessions) via Settings → **Export Templates/Campaigns…** or `telegram-sender handoff-export --entities templates,campaigns`. Packages contain `entities.json` with purpose `entity_transfer`.
+- **Merge-on-import vs replace**: Entity packages import with `--mode merge` (upsert by name; default) or `--mode replace` (soft-delete existing of those kinds, then import). GUI Restore from Local File prompts Yes=merge / No=replace for entity-only packages.
+- **Unit tests** for entity kind parsing, selective package build, merge/replace import, and CLI flags.
+
+### Changed
+- Docs (CLI, usage, API, architecture, FAQ, README) and ROADMAP mark selective entity transfer as shipped; broader developer SDK polish remains next in Phase 4.
+
 ## [1.2.28] - 2026-10-24
 
 ### Added

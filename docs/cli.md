@@ -51,23 +51,28 @@ Write methods are rejected (`405`). Prefer `127.0.0.1` behind a TLS reverse prox
 
 ### Operator handoff (export / import)
 
-Move a single-operator workspace between machines without Google Drive. Multi-user roles belong to [SendGram](https://www.sendgram.pro).
+Move a single-operator workspace between machines without Google Drive, or transfer templates/campaigns only. Multi-user roles belong to [SendGram](https://www.sendgram.pro).
 
 ```bash
 telegram-sender handoff-export ./operator-handoff.tmas-backup.zip
 telegram-sender handoff-export ./handoff.tmas-backup.zip --password 'secret'
 telegram-sender handoff-export ./db-only.tmas-backup.zip --no-sessions
+telegram-sender handoff-export ./templates-campaigns.tmas-backup.zip --entities templates,campaigns
 telegram-sender handoff-import ./operator-handoff.tmas-backup.zip --password 'secret'
+telegram-sender handoff-import ./templates-campaigns.tmas-backup.zip --mode merge
+telegram-sender handoff-import ./templates-campaigns.tmas-backup.zip --mode replace
 ```
 
 | Flag | Description |
 | --- | --- |
 | path | Output file/dir (export) or package to restore (import) |
 | `--password` / `-p` | Optional encryption password (prompted on TTY if omitted) |
-| `--no-sessions` | Export database + settings only (omit Telethon sessions) |
-| `--sessions` | Include session files (default for export) |
+| `--no-sessions` | Full export: database + settings only (omit Telethon sessions) |
+| `--sessions` | Include session files (default for full export) |
+| `--entities` / `-e` | Selective export: `templates`, `campaigns`, or `all` (writes `entities.json`; no DB/sessions) |
+| `--mode` / `-m` | Import: `merge` (upsert by name) or `replace`. Entity packages default to merge; full DB packages default to replace. Merge requires `entities.json`. |
 
-Packages use the same `.tmas-backup.zip` format as Cloud Backup. Handoff exports default to including Telethon sessions so the same operator can continue on another machine. Treat packages as secret. After import, restart the app.
+Packages use the same `.tmas-backup.zip` format as Cloud Backup. Full handoff exports default to including Telethon sessions. Selective entity packages are merge-friendly. Treat packages as secret. After import, restart the app.
 
 ## Python API
 

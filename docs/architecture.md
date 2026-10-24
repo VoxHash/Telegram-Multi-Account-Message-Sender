@@ -93,8 +93,9 @@ Optional encrypted backup/restore lives under `app/services/cloud/`:
 | --- | --- |
 | `BackupPackageBuilder` | Builds/verifies `.tmas-backup.zip` (SQLite + safe settings; optional Telethon sessions) |
 | `GoogleDriveProvider` | OAuth desktop flow + Drive upload/list/download (`drive.file` scope) |
-| `CloudBackupService` | Orchestrates Drive backup/list/restore and local handoff export/import |
-| `handoff` CLI | `telegram-sender handoff-export` / `handoff-import` for single-operator machine transfer |
+| `CloudBackupService` | Orchestrates Drive backup/list/restore and local handoff / entity export/import |
+| `entity_transfer` | Selective templates/campaigns `entities.json` collect + merge/replace import |
+| `handoff` CLI | `telegram-sender handoff-export` / `handoff-import` (`--entities`, `--mode`) |
 | Settings UI | **Settings → Cloud Backup** (`cloud_backup_widget.py`) — Drive + **Export for Handoff…** |
 
 Google API client libraries are optional (`pip install '.[cloud]'`). Tokens are encrypted under `app_data/cloud/`. Desktop remains single-operator; multi-user roles belong to SendGram.

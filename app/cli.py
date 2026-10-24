@@ -20,7 +20,7 @@ def main() -> None:
     if is_web:
         raise SystemExit(run_web_monitor_cli(sys.argv))
 
-    is_handoff, _, _, _, _ = parse_handoff_argv(sys.argv)
+    is_handoff, *_ = parse_handoff_argv(sys.argv)
     if is_handoff:
         raise SystemExit(run_handoff_cli(sys.argv))
 

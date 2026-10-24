@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.28)
+## Current Status (v1.2.29)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -33,16 +33,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **Enhanced macOS/Linux packaging and file associations** (Linux desktop/MIME/`install.sh`; macOS `.app` Info.plist UTI; local `.tmas-backup.zip` restore)
 - **Optional lightweight web companion (read-only monitoring)** (stdlib `http.server`; CLI `web-monitor` + Settings open; localhost by default; Bearer token auth + reverse-proxy guidance; live SVG charts; optional GUI auto-start)
 - **Single-operator handoff export/import** (local `.tmas-backup.zip` with sessions; CLI `handoff-export` / `handoff-import`; Settings Export for Handoff)
+- **Selective entity export + merge-on-import** (templates/campaigns `entities.json`; CLI `--entities` / `--mode merge|replace`; Settings Export Templates/Campaigns)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Additional cloud providers beyond Google Drive
 
-### Latest release (v1.2.28 — 2026-10-24)
-- Phase 4 slice: desktop single-operator export/import for handoff (local package + sessions; multi-user roles remain SendGram)
+### Latest release (v1.2.29 — 2026-10-24)
+- Phase 4 leftover: selective template/campaign export and merge-on-import vs replace
 
 ### Previous highlights
+- **v1.2.28**: Phase 4 slice: desktop single-operator export/import for handoff (local package + sessions; multi-user roles remain SendGram)
 - **v1.2.27**: Phase 3 leftover: optional web companion auto-start with GUI (`WEB_COMPANION_AUTO_START`)
 - **v1.2.26**: Phase 3 leftover: web companion richer live charts (`/api/charts` + SVG dashboard)
 - **v1.2.25**: Phase 3 leftover: web companion Bearer token auth + reverse-proxy guidance for non-localhost
@@ -109,7 +111,7 @@ Realistic, shippable work — not a full platform rewrite.
 ### Phase 4 (later): Team / enterprise
 - [x] Multi-user roles belong primarily to SendGram (hosted) — documented; no desktop RBAC
 - [x] Desktop remains single-operator with export/import for handoff (v1.2.28)
-  - Leftover: selective entity export (templates/campaigns only); merge-on-import vs replace
+- [x] Selective entity export (templates/campaigns only) + merge-on-import vs replace (v1.2.29)
 - [ ] Broader developer SDK polish as registry submissions grow
 
 ---

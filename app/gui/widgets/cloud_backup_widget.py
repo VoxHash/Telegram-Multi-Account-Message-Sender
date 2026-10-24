@@ -7,6 +7,9 @@ from typing import List, Optional
 
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QDialogButtonBox,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -67,6 +70,7 @@ class CloudBackupWorker(QThread):
                 pre_restore = service.restore_from_local_package(
                     Path(self.kwargs["package_path"]),
                     password=self.kwargs.get("password") or None,
+                    mode=str(self.kwargs.get("mode") or "replace"),
                 )
                 self.finished.emit(
                     True,
@@ -78,10 +82,16 @@ class CloudBackupWorker(QThread):
                     Path(self.kwargs["package_path"]),
                     password=self.kwargs.get("password") or None,
                     include_sessions=bool(self.kwargs.get("include_sessions", True)),
+                    entity_kinds=self.kwargs.get("entity_kinds"),
+                )
+                success_key = (
+                    "settings.cloud_export_entities_success"
+                    if self.kwargs.get("entity_kinds")
+                    else "settings.cloud_export_handoff_success"
                 )
                 self.finished.emit(
                     True,
-                    _("settings.cloud_export_handoff_success").format(path=str(built)),
+                    _(success_key).format(path=str(built)),
                     built,
                 )
             else:
@@ -163,6 +173,9 @@ class CloudBackupWidget(QWidget):
         self.export_handoff_button = QPushButton(_("settings.cloud_export_handoff"))
         self.export_handoff_button.clicked.connect(self.export_handoff_package)
         handoff_row.addWidget(self.export_handoff_button)
+        self.export_entities_button = QPushButton(_("settings.cloud_export_entities"))
+        self.export_entities_button.clicked.connect(self.export_entities_package)
+        handoff_row.addWidget(self.export_entities_button)
         list_layout.addLayout(handoff_row)
         layout.addWidget(list_group)
 
@@ -190,6 +203,7 @@ class CloudBackupWidget(QWidget):
         # Local package restore / handoff export work offline without Drive.
         self.restore_local_button.setEnabled(True)
         self.export_handoff_button.setEnabled(True)
+        self.export_entities_button.setEnabled(True)
 
     def _password(self) -> Optional[str]:
         value = self.password_edit.text().strip()
@@ -218,6 +232,7 @@ class CloudBackupWidget(QWidget):
             self.restore_button,
             self.restore_local_button,
             self.export_handoff_button,
+            self.export_entities_button,
         ):
             widget.setEnabled(not busy)
 
@@ -328,18 +343,41 @@ class CloudBackupWidget(QWidget):
                 return
             path = Path(chosen)
 
-        confirm = QMessageBox.warning(
-            self,
-            _("settings.cloud_restore_local_confirm_title"),
-            _("settings.cloud_restore_local_confirm_message").format(path=str(path)),
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
-        )
-        if confirm != QMessageBox.Yes:
+        mode = "replace"
+        try:
+            info = self.service.inspect_local_package(path, password=self._password())
+        except CloudBackupServiceError as exc:
+            QMessageBox.critical(self, _("common.error"), str(exc))
             return
 
+        if info.get("has_entities") and not info.get("has_database"):
+            choice = QMessageBox.question(
+                self,
+                _("settings.cloud_import_mode_title"),
+                _("settings.cloud_import_mode_message").format(path=str(path)),
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes,
+            )
+            if choice == QMessageBox.Cancel:
+                return
+            # Yes = merge, No = replace entity kinds
+            mode = "merge" if choice == QMessageBox.Yes else "replace"
+        else:
+            confirm = QMessageBox.warning(
+                self,
+                _("settings.cloud_restore_local_confirm_title"),
+                _("settings.cloud_restore_local_confirm_message").format(path=str(path)),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if confirm != QMessageBox.Yes:
+                return
+
         self._start_worker(
-            "restore_local", package_path=str(path), password=self._password()
+            "restore_local",
+            package_path=str(path),
+            password=self._password(),
+            mode=mode,
         )
 
     def export_handoff_package(self):
@@ -374,6 +412,60 @@ class CloudBackupWidget(QWidget):
             package_path=str(path),
             password=self._password(),
             include_sessions=True,
+        )
+
+    def export_entities_package(self):
+        """Export templates and/or campaigns only (merge-friendly entities.json)."""
+        from PyQt5.QtWidgets import QFileDialog
+
+        from ...services.cloud import BackupPackageBuilder
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(_("settings.cloud_export_entities_title"))
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(QLabel(_("settings.cloud_export_entities_prompt")))
+        templates_cb = QCheckBox(_("settings.cloud_export_entities_templates"))
+        templates_cb.setChecked(True)
+        campaigns_cb = QCheckBox(_("settings.cloud_export_entities_campaigns"))
+        campaigns_cb.setChecked(True)
+        layout.addWidget(templates_cb)
+        layout.addWidget(campaigns_cb)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        kinds = []
+        if templates_cb.isChecked():
+            kinds.append("templates")
+        if campaigns_cb.isChecked():
+            kinds.append("campaigns")
+        if not kinds:
+            QMessageBox.warning(
+                self,
+                _("common.warning"),
+                _("settings.cloud_export_entities_none"),
+            )
+            return
+
+        default_name = BackupPackageBuilder.generate_entities_filename()
+        chosen, _ = QFileDialog.getSaveFileName(
+            self,
+            _("settings.cloud_export_entities_save_title"),
+            default_name,
+            _("settings.cloud_restore_local_filter"),
+        )
+        if not chosen:
+            return
+
+        self._start_worker(
+            "export_handoff",
+            package_path=str(Path(chosen)),
+            password=self._password(),
+            include_sessions=False,
+            entity_kinds=kinds,
         )
 
     def offer_associated_backup(self, package_path: Path):

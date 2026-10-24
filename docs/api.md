@@ -828,13 +828,14 @@ decrypted = decrypt(encrypted_data, "secret_key")
 
 ## Operator handoff (`app.services.cloud` / `app.services.handoff`)
 
-Single-operator machine transfer (Phase 4). Multi-user roles belong to SendGram.
+Single-operator machine transfer and selective entity transfer (Phase 4). Multi-user roles belong to SendGram.
 
 ```python
 from pathlib import Path
 from app.services.cloud import CloudBackupService, PURPOSE_OPERATOR_HANDOFF
 
 service = CloudBackupService()
+# Full workspace handoff
 package = service.export_local_package(
     Path("operator-handoff.tmas-backup.zip"),
     password="optional-secret",
@@ -842,13 +843,22 @@ package = service.export_local_package(
     purpose=PURPOSE_OPERATOR_HANDOFF,
 )
 pre_restore = service.restore_from_local_package(package, password="optional-secret")
+
+# Selective templates/campaigns (entities.json; merge by default)
+entities = service.export_local_package(
+    Path("templates-campaigns.tmas-backup.zip"),
+    entity_kinds=["templates", "campaigns"],
+)
+service.restore_from_local_package(entities, mode="merge")
 ```
 
 | Piece | Role |
 | --- | --- |
-| `BackupPackageBuilder.build(..., include_sessions=, purpose=)` | Package DB + safe settings + optional `sessions/` |
-| `CloudBackupService.export_local_package` | Local handoff export (no Google Drive) |
-| `CloudBackupService.restore_from_local_package` | Import/restore; restores session files when present |
+| `BackupPackageBuilder.build(..., include_sessions=, purpose=, entity_kinds=)` | Full DB package or selective `entities.json` |
+| `CloudBackupService.export_local_package` | Local handoff / entity export (no Google Drive) |
+| `CloudBackupService.restore_from_local_package(..., mode=)` | Full replace, or entity merge/replace |
+| `CloudBackupService.inspect_local_package` | Detect `entities.json` vs `app.db` for UI prompts |
+| `collect_entities` / `import_entities` | Build / apply selective payload |
 | `parse_handoff_argv` / `run_handoff_cli` | CLI: `handoff-export` / `handoff-import` |
 
 ## Error Handling

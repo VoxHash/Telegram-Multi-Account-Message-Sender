@@ -141,6 +141,26 @@ class SettingsWidget(QWidget):
 
         general_layout.addWidget(ai_group)
 
+        # Plugin registry / marketplace
+        registry_group = QGroupBox(_("settings.plugin_registry_settings"))
+        registry_layout = QFormLayout(registry_group)
+
+        self.plugin_registry_url_edit = QLineEdit()
+        self.plugin_registry_url_edit.setText(self.settings.plugin_registry_url or "")
+        self.plugin_registry_url_edit.setPlaceholderText(
+            "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender/main/registry/catalog.json"
+        )
+        registry_layout.addRow(
+            f"{_('settings.plugin_registry_url')}:", self.plugin_registry_url_edit
+        )
+
+        registry_help = QLabel(_("settings.plugin_registry_help"))
+        registry_help.setWordWrap(True)
+        registry_help.setStyleSheet("color: #888888; font-style: italic;")
+        registry_layout.addRow(registry_help)
+
+        general_layout.addWidget(registry_group)
+
         # Database Settings
         db_group = QGroupBox(_("settings.database_settings"))
         db_layout = QFormLayout(db_group)
@@ -450,6 +470,15 @@ class SettingsWidget(QWidget):
             )
             self.settings.ai_model = self.ai_model_edit.text().strip() or "gpt-4o-mini"
 
+            # Plugin registry
+            default_registry = (
+                "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender"
+                "/main/registry/catalog.json"
+            )
+            self.settings.plugin_registry_url = (
+                self.plugin_registry_url_edit.text().strip() or default_registry
+            )
+
             # Database settings
             self.settings.database_url = self.db_url_edit.text().strip()
 
@@ -559,6 +588,9 @@ RETRY_DELAY_SECONDS={self.settings.retry_delay_seconds}
 AI_API_KEY={self.settings.ai_api_key or ''}
 AI_BASE_URL={self.settings.ai_base_url or 'https://api.openai.com/v1'}
 AI_MODEL={self.settings.ai_model or 'gpt-4o-mini'}
+
+# Plugin registry / marketplace catalog URL
+PLUGIN_REGISTRY_URL={self.settings.plugin_registry_url or ''}
 """
 
             with open(".env", "w") as f:
@@ -599,6 +631,9 @@ AI_MODEL={self.settings.ai_model or 'gpt-4o-mini'}
                 self.settings.ai_base_url or "https://api.openai.com/v1"
             )
             self.ai_model_edit.setText(self.settings.ai_model or "gpt-4o-mini")
+
+            # Plugin registry
+            self.plugin_registry_url_edit.setText(self.settings.plugin_registry_url or "")
 
             # Database settings
             self.db_url_edit.setText(self.settings.database_url)

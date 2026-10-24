@@ -422,6 +422,7 @@ settings = Settings()
 - `ai_api_key: Optional[str]`: User-supplied OpenAI-compatible key (optional AI copy)
 - `ai_base_url: str`: Chat Completions base URL (default `https://api.openai.com/v1`)
 - `ai_model: str`: Model id (default `gpt-4o-mini`)
+- `plugin_registry_url: str`: HTTPS catalog URL for the plugin marketplace (default: official GitHub registry)
 
 **Methods:**
 - `is_ai_copy_configured() -> bool`: True when `ai_api_key` is non-empty
@@ -435,6 +436,36 @@ from app.services import reload_settings
 
 settings = reload_settings()
 ```
+
+### Plugin Registry / Marketplace
+
+#### `PluginRegistryService` / `get_plugin_registry_service()`
+
+Curated plugin catalog client. Fetches a remote JSON catalog (default: official GitHub `registry/catalog.json`), falls back to the bundled offline copy, searches entries, and installs downloadable `.py` plugins with optional SHA-256 verification. Uses stdlib `urllib` only.
+
+```python
+from app.services.plugin_registry import get_plugin_registry_service
+
+registry = get_plugin_registry_service()
+catalog = registry.fetch_catalog()
+matches = registry.search(query="url", plugin_type="filter")
+path = registry.install("voxhash.url-strip-filter")  # writes under app_data/plugins/
+```
+
+**Catalog location (source of truth):** `registry/catalog.json`  
+**Bundled offline copy:** `app/plugins/registry/catalog.json`  
+**Default URL:** `Settings.plugin_registry_url` / `PLUGIN_REGISTRY_URL`
+
+**Methods:**
+- `fetch_catalog(prefer_remote: bool = True) -> RegistryCatalog`
+- `search(query: str = "", plugin_type: Optional[str] = None, tags: Optional[Sequence[str]] = None) -> List[RegistryPluginEntry]`
+- `get_entry(plugin_id: str) -> RegistryPluginEntry`
+- `is_installed(entry: RegistryPluginEntry) -> bool`
+- `install(plugin_id: str, overwrite: bool = False) -> Path`
+
+**Errors:** `PluginRegistryError`, `PluginRegistryOfflineError`, `PluginRegistryInstallError`
+
+Installable registry plugins must use absolute imports (`from app.core.plugin import …`). Submit new entries via pull request to `registry/catalog.json` + `registry/plugins/`.
 
 ### AI Copy Service (optional)
 

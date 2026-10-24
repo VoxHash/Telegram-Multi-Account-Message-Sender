@@ -42,6 +42,9 @@ __all__ = [
     "get_plugin_manager",
     "PluginManager",
     "initialize_plugins",
+    # Plugin Registry / Marketplace
+    "get_plugin_registry_service",
+    "PluginRegistryService",
 ]
 
 # name -> (submodule, attribute)
@@ -70,6 +73,8 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "get_plugin_manager": (".plugin_manager", "get_plugin_manager"),
     "PluginManager": (".plugin_manager", "PluginManager"),
     "initialize_plugins": (".plugin_manager", "initialize_plugins"),
+    "get_plugin_registry_service": (".plugin_registry", "get_plugin_registry_service"),
+    "PluginRegistryService": (".plugin_registry", "PluginRegistryService"),
 }
 
 

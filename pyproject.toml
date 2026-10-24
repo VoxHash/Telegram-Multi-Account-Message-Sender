@@ -1,6 +1,6 @@
 [project]
 name = "telegram-multi-account-sender"
-version = "1.2.21"
+version = "1.2.22"
 description = "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"
 readme = "README.md"
 license = {text = "Eclipse Public License 2.0"}
@@ -110,7 +110,12 @@ include = ["app*"]
 exclude = ["tests*", "docs*", "example_files*"]
 
 [tool.setuptools.package-data]
-app = ["translations/*.json", "assets/icons/*.ico", "assets/icons/*.png"]
+app = [
+    "translations/*.json",
+    "assets/icons/*.ico",
+    "assets/icons/*.png",
+    "plugins/registry/*.json",
+]
 
 [tool.setuptools.data-files]
 "example_files" = [

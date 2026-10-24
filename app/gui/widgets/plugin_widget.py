@@ -2,7 +2,7 @@
 Plugin management widget for the Telegram Multi-Account Message Sender.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox,
     QFormLayout,
     QFileDialog,
+    QComboBox,
 )
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont, QColor
@@ -28,6 +29,13 @@ from pathlib import Path
 from ...services import get_logger
 from ...services.translation import _
 from ...services.plugin_manager import get_plugin_manager
+from ...services.plugin_registry import (
+    PluginRegistryError,
+    PluginRegistryInstallError,
+    PluginRegistryOfflineError,
+    RegistryPluginEntry,
+    get_plugin_registry_service,
+)
 from ...core.plugin import PluginStatus
 
 
@@ -55,6 +63,10 @@ class PluginListWidget(QWidget):
         self.refresh_button = QPushButton(_("common.refresh"))
         self.refresh_button.clicked.connect(self.refresh_plugins)
         toolbar.addWidget(self.refresh_button)
+
+        self.browse_registry_button = QPushButton(_("plugins.browse_registry"))
+        self.browse_registry_button.clicked.connect(self.browse_registry)
+        toolbar.addWidget(self.browse_registry_button)
 
         self.load_button = QPushButton(_("plugins.load_plugin"))
         self.load_button.clicked.connect(self.load_plugin_file)
@@ -208,7 +220,7 @@ class PluginListWidget(QWidget):
         <p><b>{_('plugins.type')}:</b> {metadata.plugin_type.value.title()}</p>
         <p><b>{_('plugins.author')}:</b> {metadata.author}</p>
         <p><b>{_('plugins.status')}:</b> {plugin_info.status.value.title()}</p>
-        <p><b>{_('plugins.description')}:</b> {metadata.description}</p>
+        <p><b>{_('plugins.description_label')}:</b> {metadata.description}</p>
         """
 
         if metadata.homepage:
@@ -249,6 +261,206 @@ class PluginListWidget(QWidget):
             self.plugin_manager.reload_all_plugins()
             self.refresh_plugins()
             QMessageBox.information(self, _("common.success"), _("plugins.reloaded_successfully"))
+
+    def browse_registry(self):
+        """Open the plugin marketplace / registry browser."""
+        dialog = PluginRegistryDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            self.refresh_plugins()
+
+
+class PluginRegistryDialog(QDialog):
+    """Browse and install plugins from the official curated registry."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.logger = get_logger()
+        self.registry = get_plugin_registry_service()
+        self.plugin_manager = get_plugin_manager()
+        self._entries: List[RegistryPluginEntry] = []
+        self.setup_ui()
+        self.refresh_catalog()
+
+    def setup_ui(self):
+        self.setWindowTitle(_("plugins.registry_title"))
+        self.resize(820, 480)
+        layout = QVBoxLayout(self)
+
+        help_label = QLabel(_("plugins.registry_help"))
+        help_label.setWordWrap(True)
+        layout.addWidget(help_label)
+
+        filters = QHBoxLayout()
+        self.search_edit = QLineEdit()
+        self.search_edit.setPlaceholderText(_("plugins.registry_search_placeholder"))
+        self.search_edit.returnPressed.connect(self.refresh_catalog)
+        filters.addWidget(self.search_edit)
+
+        self.type_combo = QComboBox()
+        self.type_combo.addItem(_("plugins.registry_all_types"), "")
+        for value, label in (
+            ("filter", "Filter"),
+            ("analytics", "Analytics"),
+            ("notification", "Notification"),
+            ("integration", "Integration"),
+            ("transformer", "Transformer"),
+            ("ui_extension", "UI Extension"),
+            ("custom", "Custom"),
+        ):
+            self.type_combo.addItem(label, value)
+        filters.addWidget(self.type_combo)
+
+        search_btn = QPushButton(_("plugins.registry_search"))
+        search_btn.clicked.connect(self.refresh_catalog)
+        filters.addWidget(search_btn)
+
+        refresh_btn = QPushButton(_("common.refresh"))
+        refresh_btn.clicked.connect(self.refresh_catalog)
+        filters.addWidget(refresh_btn)
+        layout.addLayout(filters)
+
+        self.source_label = QLabel("")
+        self.source_label.setStyleSheet("color: #888888;")
+        layout.addWidget(self.source_label)
+
+        self.table = QTableWidget()
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(
+            [
+                _("plugins.name"),
+                _("plugins.version"),
+                _("plugins.type"),
+                _("plugins.author"),
+                _("plugins.registry_availability"),
+                _("common.actions"),
+            ]
+        )
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        layout.addWidget(self.table)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.rejected.connect(self.reject)
+        buttons.accepted.connect(self.accept)
+        close_btn = buttons.button(QDialogButtonBox.Close)
+        if close_btn:
+            close_btn.clicked.connect(self.accept)
+        layout.addWidget(buttons)
+
+    def refresh_catalog(self):
+        try:
+            catalog = self.registry.fetch_catalog(prefer_remote=True)
+            query = self.search_edit.text().strip()
+            plugin_type = self.type_combo.currentData() or None
+            from ...services.plugin_registry import search_catalog
+
+            self._entries = search_catalog(
+                catalog, query=query, plugin_type=plugin_type or None
+            )
+            source = catalog.source
+            self.source_label.setText(
+                _("plugins.registry_source").format(
+                    source=source, name=catalog.name, updated=catalog.updated_at or "—"
+                )
+            )
+            self._populate_table()
+        except PluginRegistryOfflineError as exc:
+            QMessageBox.warning(
+                self,
+                _("plugins.registry_offline_title"),
+                _("plugins.registry_offline_message").format(error=str(exc)),
+            )
+        except PluginRegistryError as exc:
+            QMessageBox.warning(self, _("common.error"), str(exc))
+
+    def _availability_label(self, entry: RegistryPluginEntry) -> str:
+        if entry.local_only or entry.bundled:
+            return _("plugins.registry_bundled")
+        if self.registry.is_installed(entry):
+            return _("plugins.registry_installed")
+        return _("plugins.registry_available")
+
+    def _populate_table(self):
+        self.table.setRowCount(len(self._entries))
+        for row, entry in enumerate(self._entries):
+            self.table.setItem(row, 0, QTableWidgetItem(entry.name))
+            self.table.setItem(row, 1, QTableWidgetItem(entry.version))
+            self.table.setItem(row, 2, QTableWidgetItem(entry.plugin_type.title()))
+            self.table.setItem(row, 3, QTableWidgetItem(entry.author))
+            self.table.setItem(row, 4, QTableWidgetItem(self._availability_label(entry)))
+
+            actions = QWidget()
+            actions_layout = QHBoxLayout(actions)
+            actions_layout.setContentsMargins(2, 2, 2, 2)
+
+            info_btn = QPushButton(_("common.information"))
+            info_btn.clicked.connect(lambda _, e=entry: self.show_entry_info(e))
+            actions_layout.addWidget(info_btn)
+
+            if entry.is_installable and not self.registry.is_installed(entry):
+                install_btn = QPushButton(_("plugins.registry_install"))
+                install_btn.clicked.connect(lambda _, e=entry: self.install_entry(e))
+                actions_layout.addWidget(install_btn)
+            elif entry.is_installable and self.registry.is_installed(entry):
+                reinstall_btn = QPushButton(_("plugins.registry_reinstall"))
+                reinstall_btn.clicked.connect(
+                    lambda _, e=entry: self.install_entry(e, overwrite=True)
+                )
+                actions_layout.addWidget(reinstall_btn)
+
+            self.table.setCellWidget(row, 5, actions)
+
+    def show_entry_info(self, entry: RegistryPluginEntry):
+        text = f"""
+        <h2>{entry.name}</h2>
+        <p><b>ID:</b> {entry.id}</p>
+        <p><b>{_('plugins.version')}:</b> {entry.version}</p>
+        <p><b>{_('plugins.type')}:</b> {entry.plugin_type.title()}</p>
+        <p><b>{_('plugins.author')}:</b> {entry.author}</p>
+        <p><b>{_('plugins.description_label')}:</b> {entry.description}</p>
+        """
+        if entry.homepage:
+            text += f"<p><b>{_('plugins.homepage')}:</b> {entry.homepage}</p>"
+        if entry.repository:
+            text += f"<p><b>{_('plugins.repository')}:</b> {entry.repository}</p>"
+        if entry.tags:
+            text += f"<p><b>Tags:</b> {', '.join(entry.tags)}</p>"
+        QMessageBox.information(self, _("plugins.plugin_info"), text)
+
+    def install_entry(self, entry: RegistryPluginEntry, overwrite: bool = False):
+        reply = QMessageBox.question(
+            self,
+            _("common.confirm"),
+            _("plugins.registry_install_confirm").format(name=entry.name, version=entry.version),
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+        try:
+            path = self.registry.install(entry.id, overwrite=overwrite)
+            plugin_info = self.plugin_manager.load_plugin(path)
+            if plugin_info:
+                QMessageBox.information(
+                    self,
+                    _("common.success"),
+                    _("plugins.registry_install_success").format(path=str(path)),
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    _("common.error"),
+                    _("plugins.registry_install_load_failed").format(path=str(path)),
+                )
+            self.refresh_catalog()
+        except PluginRegistryOfflineError as exc:
+            QMessageBox.warning(
+                self,
+                _("plugins.registry_offline_title"),
+                _("plugins.registry_offline_message").format(error=str(exc)),
+            )
+        except (PluginRegistryInstallError, PluginRegistryError) as exc:
+            QMessageBox.warning(self, _("common.error"), str(exc))
 
 
 class PluginConfigDialog(QDialog):

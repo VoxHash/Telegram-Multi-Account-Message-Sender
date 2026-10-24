@@ -6,6 +6,6 @@ across multiple Telegram accounts with advanced features like scheduling,
 spintax, media support, and compliance controls.
 """
 
-__version__ = "1.2.21"
+__version__ = "1.2.22"
 __author__ = "VoxHash"
 __email__ = "contact@voxhash.dev"

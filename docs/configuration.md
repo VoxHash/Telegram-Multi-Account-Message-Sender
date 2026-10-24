@@ -45,6 +45,17 @@ You can configure the application using environment variables. See `example_file
 - `AI_API_KEY`: Optional OpenAI-compatible API key for AI copy tools (leave unset to disable)
 - `AI_BASE_URL`: Chat Completions base URL (default `https://api.openai.com/v1`)
 - `AI_MODEL`: Model id (default `gpt-4o-mini`)
+- `PLUGIN_REGISTRY_URL`: HTTPS URL of the curated plugin catalog JSON (default: official GitHub `registry/catalog.json`)
+
+### Plugin Registry (marketplace)
+
+Discover curated plugins from **Plugins → Browse Registry**. The app fetches the remote catalog when online and falls back to the bundled offline catalog under `app/plugins/registry/catalog.json`.
+
+```env
+PLUGIN_REGISTRY_URL=https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender/main/registry/catalog.json
+```
+
+Installable entries download a verified `.py` file (SHA-256 when listed) into `app_data/plugins/`. Enable the plugin from the Plugins list after review. Documentation-only / bundled entries are listed but not downloaded.
 
 ### AI Copy Tools (optional)
 

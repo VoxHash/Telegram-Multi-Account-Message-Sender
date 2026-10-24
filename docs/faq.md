@@ -103,6 +103,10 @@ This generates variations like:
 
 They are opt-in. Set your own OpenAI-compatible `AI_API_KEY` in Settings (or `.env`). Templates then offer rewrite, spintax conversion, and variations over HTTPS Chat Completions. No AI SDK is installed; leave the key empty to disable the feature.
 
+### How does the plugin registry work?
+
+Open **Plugins → Browse Registry** to discover curated plugins from the official catalog (`registry/catalog.json`). Install downloads a SHA-256–verified `.py` file into `app_data/plugins/`; you still enable it manually after review. Offline, the app uses the bundled catalog. Override the catalog URL with `PLUGIN_REGISTRY_URL` if needed.
+
 ### How do I schedule a campaign?
 
 When creating a campaign, set the "Start Time" field to schedule the campaign for a specific time. The campaign will start automatically at the scheduled time.

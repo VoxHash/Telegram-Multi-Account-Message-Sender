@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.2.21"
+    app_version: str = "1.2.22"
     app_env: AppEnvironment = AppEnvironment.DEVELOPMENT
     debug: bool = False
     start_with_windows: bool = False
@@ -136,6 +136,12 @@ class Settings(BaseSettings):
     ai_api_key: Optional[str] = None
     ai_base_url: str = "https://api.openai.com/v1"
     ai_model: str = "gpt-4o-mini"
+
+    # Plugin marketplace / registry (curated JSON catalog; empty uses official default)
+    plugin_registry_url: str = (
+        "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender"
+        "/main/registry/catalog.json"
+    )
 
     # Optional: Additional settings
     custom_settings: Dict[str, Any] = Field(default_factory=dict)

@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.21)
+## Current Status (v1.2.22)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -29,16 +29,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Incremental type hints on high-value core/services modules
 - **Blocking mypy** for `app/core`, `app/services`, `app/models` (strict flags; CI fails on errors)
 - **Optional AI copy tools** (user-supplied OpenAI-compatible API key; stdlib HTTP; Templates rewrite / spintax / variations)
+- **Plugin marketplace / registry** (curated JSON catalog, offline bundled fallback, SHA-256 install into `app_data/plugins/`)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Additional cloud providers beyond Google Drive
 
-### Latest release (v1.2.21 — 2026-10-24)
-- Optional AI-assisted copy tools behind user-supplied API keys (no AI SDK dependency)
+### Latest release (v1.2.22 — 2026-10-24)
+- Plugin marketplace / registry: browse curated catalog, install verified plugins, offline bundled fallback
 
 ### Previous highlights
+- **v1.2.21**: Optional AI-assisted copy tools behind user-supplied API keys (no AI SDK dependency)
 - **v1.2.20**: Stricter mypy: blocking CI for core/services/models; typed JSON columns; remaining type gaps documented below
 - **v1.2.19**: Quality + cloud UX: CI coverage summary, type-hint pass, offline restore messaging, analytics CSV/JSON export
 - **v1.2.18**: Expanded unit tests, Pydantic v2 Settings validators, core/services circular-import hardening
@@ -58,6 +60,7 @@ Realistic, shippable work — not a full platform rewrite.
 
 | Priority | Item | Outcome |
 | --- | --- | --- |
+| Done (v1.2.22) | Plugin marketplace / registry | Discover/install curated plugins via JSON catalog (remote + bundled offline); SHA-256 verify; Plugins → Browse Registry |
 | Done (v1.2.21) | AI-assisted copy tools (optional keys) | Templates rewrite / spintax / variations via OpenAI-compatible Chat Completions; user-supplied `AI_API_KEY`; no SDK hard dependency |
 | Done (v1.2.20) | Stricter mypy (blocking) | Strict flags + CI fail for `app/core`, `app/services`, `app/models`; GUI/plugins excluded |
 | Done (v1.2.19) | Coverage reporting in CI summary | pytest-cov + GitHub Actions job summary; fail-under **20%** baseline on ubuntu/3.11 |
@@ -67,7 +70,6 @@ Realistic, shippable work — not a full platform rewrite.
 | Done (v1.2.18) | Expand unit/integration tests | Cover campaign filter payloads, settings validators, CLI entrypoints, import smoke |
 | Done (v1.2.18) | Pydantic v2 field validators | Remove V1 `@validator` deprecation warnings |
 | Done (v1.2.18) | Circular-import hardening for `app.core` package exports | Safer `from app.core...` imports outside the GUI boot path |
-| Low | Plugin marketplace / registry | Discover third-party plugins (after API stability) |
 | Done (v1.2.17) | Account health dashboard polish | Clear health scores, summary cards, and actionable warnings in the UI |
 | Done (v1.2.16) | Cloud backup MVP (encrypted export/restore) | Safe backup of app data to a user-owned Google Drive folder |
 | Done (v1.2.15) | Ship prebuilt `tmms_native` in releases | Users get Rust accel without a local Rust toolchain |
@@ -83,6 +85,8 @@ Realistic, shippable work — not a full platform rewrite.
 - [x] AI-assisted copy tools only behind optional, user-supplied API keys (no hard dependency)
   - Leftover: non-English locale strings for AI UI keys (English kit shipped; other locales fall back to key path until translated)
   - Leftover: provider presets beyond generic OpenAI-compatible base URL (Azure path quirks, Anthropic native API)
+- [x] Plugin marketplace / registry (curated catalog discover + verified install)
+  - Leftover: community submissions beyond the two official registry plugins; signed catalogs
 
 ### Phase 3 (later): Platform expansion
 - [ ] Enhanced macOS/Linux packaging and file associations
@@ -92,7 +96,7 @@ Realistic, shippable work — not a full platform rewrite.
 ### Phase 4 (later): Team / enterprise
 - [ ] Multi-user roles belong primarily to SendGram (hosted)
 - [ ] Desktop remains single-operator with export/import for handoff
-- [ ] Developer SDK / plugin docs after marketplace demand appears
+- [ ] Broader developer SDK polish as registry submissions grow
 
 ---
 

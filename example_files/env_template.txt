@@ -52,6 +52,10 @@ TELEGRAM_API_HASH=your_api_hash_here
 # =============================================================================
 # These variables are safe to share and can be committed to version control
 
+# Plugin registry catalog (NON-SENSITIVE)
+# Official curated JSON catalog for Plugins → Browse Registry. Offline fallback is bundled.
+# PLUGIN_REGISTRY_URL=https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender/main/registry/catalog.json
+
 # Database Configuration (NON-SENSITIVE)
 # SQLite database file path (relative to app root)
 DATABASE_URL=sqlite:///./app_data/app.db

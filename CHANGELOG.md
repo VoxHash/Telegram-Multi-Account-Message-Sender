@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.22] - 2026-10-24
+
+### Added
+- **Plugin marketplace / registry**: Curated JSON catalog (`registry/catalog.json`) with remote fetch, bundled offline fallback, search/filter, and install of verified `.py` plugins into `app_data/plugins/` (optional SHA-256 check). **Plugins → Browse Registry**; settings / `PLUGIN_REGISTRY_URL` for catalog URL.
+- **Registry plugins**: `voxhash.url-strip-filter` and `voxhash.event-logger-analytics` (absolute-import installables under `registry/plugins/`).
+- **Unit tests** for catalog validation, search, remote/offline fallback, install + SHA-256 verification, and local-only guards.
+- **Docs**: Configuration, usage, API, FAQ, README, and env template cover the registry.
+
 ## [1.2.21] - 2026-10-24
 
 ### Added

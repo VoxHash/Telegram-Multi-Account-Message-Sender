@@ -53,6 +53,16 @@ The application provides a graphical interface for managing multiple Telegram ac
 5. **Create Campaigns**: Create and launch campaigns
 6. **Monitor**: Track campaign progress and logs
 
+## Plugin Registry
+
+1. Open **Plugins → Browse Registry**.
+2. Search or filter by type; the catalog source (remote or bundled offline) is shown above the list.
+3. Select **Install** on an available entry. The app downloads the plugin into `app_data/plugins/` and verifies SHA-256 when the catalog provides it.
+4. Back on the Plugins list, **Enable** the plugin after reviewing the file. Install never auto-enables third-party code.
+5. Optional: set `PLUGIN_REGISTRY_URL` in Settings / `.env` to point at a mirror. See [Configuration Guide](configuration.md) and [API Reference](api.md).
+
+Sideloading with **Load Plugin** remains available for local `.py` files that are not in the catalog.
+
 ## AI Copy Tools (optional)
 
 1. Set `AI_API_KEY` (and optionally `AI_BASE_URL` / `AI_MODEL`) in `.env` or **Settings → General → AI Copy Tools**. See [Configuration Guide](configuration.md).

@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.14)
+## Current Status (v1.2.15)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -18,18 +18,19 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - PyPI package, GitHub Releases / installers, GHCR container images with OCI description metadata
 - Documentation kit (getting started, installation, usage, API, FAQ, troubleshooting)
 - CI: compileall, GUI import smoke, pip-install smoke, unit tests
+- Optional Rust native accelerator (`tmms_native`) with prebuilt `tmms_native-linux-x86_64` on Releases
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
-- Cloud backup / sync (partial work exists on feature branches; not merged as a finished product)
+- Cloud backup / sync (partial work exists on feature branches; merging as next High priority)
 
-### Latest release (v1.2.14 — 2026-10-05)
-- Documentation kit completion (getting-started + installation; PyInstaller notes folded in)
-- README SendGram upgrade path and shield badges
-- Repository hygiene (stray markdown removed, `.gitignore` tightened)
+### Latest release (v1.2.15 — 2026-10-24)
+- Rust native accelerator for parallel spintax + pacing (`native/tmms_native`, `app/core/native_accel.py`)
+- Prebuilt Linux x86_64 binary asset on GitHub Releases; pure-Python fallback when absent
 
 ### Previous highlights
+- **v1.2.14**: Documentation kit completion, SendGram upgrade path, repo hygiene
 - **v1.2.13**: GHCR OCI image description metadata
 - **v1.2.12**: PyPI `pandas` dependency, frozen translation bundling, GHCR publish workflow
 - **v1.2.10–v1.2.11**: Python 3.11 syntax fix, session import path, test-message logging crash, stricter release CI
@@ -48,6 +49,7 @@ Realistic, shippable work — not a full platform rewrite.
 | Medium | Pydantic v2 field validators | Remove V1 `@validator` deprecation warnings |
 | Medium | Circular-import hardening for `app.core` package exports | Safer `from app.core...` imports outside the GUI boot path |
 | Low | Plugin marketplace / registry | Discover third-party plugins (after API stability) |
+| Done (v1.2.15) | Ship prebuilt `tmms_native` in releases | Users get Rust accel without a local Rust toolchain |
 
 ---
 

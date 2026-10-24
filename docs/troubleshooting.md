@@ -14,6 +14,17 @@ Common issues and solutions for Telegram Multi-Account Message Sender.
 3. Verify installation: `python --version`
 4. On Windows, try `py` instead of `python`
 
+### Native accelerator not used
+
+**Problem:** Campaigns still use pure Python spintax/pacing
+
+**Solutions:**
+1. Build the sidecar: `./native/build.sh` (needs Rust/`cargo`)
+2. Confirm `bin/tmms_native` exists and is executable
+3. Ensure `TMMS_NATIVE_ACCEL` is not set to `0`
+4. Optional: set `TMMS_NATIVE_BIN` to the absolute binary path
+5. Missing binary is safe — the app falls back to Python automatically
+
 ### Dependencies Installation Fails
 
 **Problem:** `pip install` fails with errors

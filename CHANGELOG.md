@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.15] - 2026-10-24
+
+### Added
+- **Rust native accelerator (`tmms_native`)**: Optional sidecar for parallel spintax batch expansion (rayon) and multi-account pacing schedules; Python auto-detects `bin/tmms_native` with pure-Python fallback (`TMMS_NATIVE_ACCEL=0` / missing binary).
+- **Campaign prep path**: Campaigns pre-expand spintax and apply paced waits via `app/core/native_accel.py` before Telethon sends.
+- **Prebuilt native binary**: GitHub Releases ship `tmms_native-linux-x86_64` (place as `bin/tmms_native`); build from source with `./native/build.sh` on other platforms.
+
 ## [1.2.14] - 2026-10-05
 
 ### Added

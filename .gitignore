@@ -13,6 +13,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Rust native accelerator build artifacts (source under native/ is tracked)
+native/**/target/
+bin/tmms_native
+bin/tmms_native.exe
+
 # Distribution / packaging
 build/
 develop-eggs/

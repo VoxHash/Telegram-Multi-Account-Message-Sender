@@ -70,9 +70,24 @@ Telegram Multi-Account Message Sender is built with a modular architecture using
 - **Telethon**: Telegram client library
 - **SQLModel**: Database ORM
 - **asyncio**: Asynchronous operations
+- **tmms_native** (optional): Rust sidecar for parallel spintax and pacing
+
+## Native accelerator (Rust)
+
+Hot paths that are CPU-bound and parallelizable without touching Telethon live in a small Rust binary (`native/tmms_native`, installed as `bin/tmms_native`):
+
+| Path | Role |
+| --- | --- |
+| Parallel spintax batch expand | Rayon workers expand `{a\|b\|c}` templates for N recipients before the send loop |
+| Multi-account pace schedule | Compact wait/account slots for rate limits + jitter |
+
+Python calls the sidecar once per batch via JSON on stdin/stdout (`app/core/native_accel.py`). GUI, SQLModel, and Telethon stay in Python. If the binary is absent or `TMMS_NATIVE_ACCEL=0`, the same APIs use pure Python.
+
+**Expected benefit (local desktop):** bulk spintax prep uses OS threads without holding the GIL; schedule construction avoids large transient Python object graphs for long recipient lists, so the app competes less for RAM/CPU with other programs during campaign start.
 
 ## See Also
 
 - [API Documentation](api.md) for API details
 - [Development Guide](../CONTRIBUTING.md) for development setup
+- [Installation](installation.md#optional-rust-native-accelerator) for the build step
 

@@ -85,6 +85,7 @@ Then launch with `telegram-sender` or `python -m app.cli`. Full setup: [docs/qui
 ### 🔧 Advanced Features
 
 - **Spintax Support**: Create message variations using spintax syntax with real-time processing
+- **Native Accelerator (optional)**: Rust sidecar for parallel spintax batches and multi-account pacing (lower prep CPU/RAM; auto Python fallback)
 - **A/B Testing**: Test different message variants with statistical analysis
 - **Scheduling**: Schedule campaigns for specific times with timezone support
 - **Rate Limiting**: Respect Telegram's rate limits with intelligent throttling
@@ -145,6 +146,8 @@ pip install telegram-multi-account-sender
 git clone https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender.git
 cd Telegram-Multi-Account-Message-Sender
 pip install -r requirements.txt
+# Optional: Rust accelerator — download tmms_native-linux-x86_64 from Releases
+# into bin/tmms_native, or build with: ./native/build.sh
 python main.py
 ```
 

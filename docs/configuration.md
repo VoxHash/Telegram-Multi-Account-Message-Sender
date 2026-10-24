@@ -38,6 +38,8 @@ You can configure the application using environment variables. See `example_file
 - `DATABASE_URL`: Database connection string
 - `LOG_LEVEL`: Logging level
 - `THEME`: Application theme
+- `TMMS_NATIVE_ACCEL`: Set to `0` to force pure-Python spintax/pacing (default: enabled when binary exists)
+- `TMMS_NATIVE_BIN`: Absolute path to the `tmms_native` binary if not under `bin/`
 
 ## Account Configuration
 

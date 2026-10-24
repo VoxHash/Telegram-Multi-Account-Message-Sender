@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.2.14"
+    app_version: str = "1.2.15"
     app_env: AppEnvironment = "development"
     debug: bool = False
     start_with_windows: bool = False
@@ -91,6 +91,11 @@ class Settings(BaseSettings):
     global_max_concurrency: int = 5
     max_messages_per_hour: int = 100
     max_messages_per_day: int = 1000
+
+    # Native accelerator (Rust sidecar: parallel spintax + pacing). Auto-falls
+    # back to pure Python when the binary is missing. Override with env
+    # TMMS_NATIVE_ACCEL=0 or TMMS_NATIVE_BIN=/path/to/tmms_native.
+    native_accel_enabled: bool = True
 
     # Warmup Settings
     warmup_enabled: bool = True

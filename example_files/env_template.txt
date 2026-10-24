@@ -64,6 +64,12 @@ MAX_MESSAGES_PER_HOUR=100
 MAX_MESSAGES_PER_DAY=1000
 RANDOM_JITTER_SECONDS=5
 
+# Native accelerator (NON-SENSITIVE — optional Rust sidecar)
+# Build with: ./native/build.sh  →  bin/tmms_native
+# NATIVE_ACCEL_ENABLED=true
+# TMMS_NATIVE_ACCEL=1
+# TMMS_NATIVE_BIN=
+
 # Warmup Settings (NON-SENSITIVE)
 WARMUP_ENABLED=true
 WARMUP_MESSAGES=5

@@ -1,11 +1,16 @@
 """
 Spintax processing for message personalization.
+
+Bulk expansion prefers the optional Rust native accelerator (`tmms_native`)
+when available; single expansions and missing binaries use pure Python.
 """
 
 import re
 import random
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+
+from .native_accel import spintax_expand_batch
 
 
 @dataclass
@@ -15,6 +20,7 @@ class SpintaxResult:
     text: str
     variables_used: List[str]
     variants_count: int
+    backend: str = "python"
 
 
 class SpintaxProcessor:
@@ -52,7 +58,26 @@ class SpintaxProcessor:
             text=result_text,
             variables_used=list(set(variables_used)),
             variants_count=total_variants,
+            backend="python",
         )
+
+    def expand_batch(self, text: str, count: int) -> List[str]:
+        """
+        Expand the same template `count` times.
+
+        Uses Rust+rayon for larger batches when the native binary is present;
+        otherwise expands in pure Python (same semantics as `process`).
+        """
+        if count <= 0:
+            return []
+        if not text or not isinstance(text, str):
+            return [""] * count
+
+        native_texts = spintax_expand_batch(text, count, seed=self.seed)
+        if native_texts is not None:
+            return native_texts
+
+        return [self.process(text).text for _ in range(count)]
 
     def _find_spintax_patterns(self, text: str) -> List[str]:
         """Find all spintax patterns in text."""
@@ -95,11 +120,13 @@ class SpintaxProcessor:
 
     def get_preview_samples(self, text: str, count: int = 10) -> List[str]:
         """Get preview samples of processed spintax."""
-        samples = []
-        for _ in range(count):
-            result = self.process(text)
-            samples.append(result.text)
-        return samples
+        if count <= 0:
+            return []
+        # Prefer native for multi-sample previews (force skips small-batch skip).
+        native_texts = spintax_expand_batch(text, count, seed=self.seed, force=True)
+        if native_texts is not None:
+            return native_texts
+        return [self.process(text).text for _ in range(count)]
 
     def get_variants_count(self, text: str) -> int:
         """Get total number of possible variants."""

@@ -14,6 +14,7 @@ from ..services.plugin_manager import get_plugin_manager
 from ..core.engine import MessageEngine, CampaignRunner
 from ..core.telethon_client import TelegramClientManager
 from ..core.spintax import SpintaxProcessor
+from ..core.native_accel import build_pace_schedule
 from ..core.plugin import MessageFilterPlugin, AnalyticsPlugin
 
 
@@ -561,34 +562,55 @@ class CampaignManager(QObject):
                 already_sent = await self._get_sent_recipients(campaign_id)
                 self._sent_recipients[campaign_id].update(already_sent)
 
+                # Pending recipients only — pace + spintax batch over real send set
+                pending_recipients = [
+                    r for r in recipients if r.id not in self._sent_recipients[campaign_id]
+                ]
+
+                account_by_id = {a.id: a for a in accounts}
+                pace_slots = build_pace_schedule(
+                    len(pending_recipients),
+                    [a.id for a in accounts],
+                    campaign.messages_per_minute or 1,
+                    messages_per_hour=campaign.messages_per_hour or 60,
+                    jitter_seconds=float(campaign.random_jitter_seconds or 0),
+                    max_concurrent_accounts=campaign.max_concurrent_accounts or 1,
+                )
+                pre_expanded = self._preexpand_campaign_messages(campaign, pending_recipients)
+
                 # Process recipients
                 sent_count = campaign.sent_count  # Start with existing count
                 failed_count = campaign.failed_count  # Start with existing count
                 skipped_count = campaign.skipped_count  # Start with existing count
+                total_for_progress = max(len(recipients), 1)
 
-                for i, recipient in enumerate(recipients):
+                for i, recipient in enumerate(pending_recipients):
                     # Check if campaign should continue
                     with get_session() as check_session:
                         check_campaign = check_session.get(Campaign, campaign_id)
                         if check_campaign.status != CampaignStatus.RUNNING:
                             break
 
-                    # Skip if already sent successfully
-                    if recipient.id in self._sent_recipients[campaign_id]:
-                        self.logger.debug(
-                            f"Skipping already sent recipient {recipient.get_display_name()}"
-                        )
-                        continue
-
                     try:
-                        # Select account
-                        account = self._select_account(accounts, campaign)
+                        # Pace before send (native schedule with Python fallback)
+                        if i < len(pace_slots) and pace_slots[i]["wait_before_ms"] > 0:
+                            await asyncio.sleep(pace_slots[i]["wait_before_ms"] / 1000.0)
+
+                        # Select account (prefer paced assignment)
+                        account = None
+                        if i < len(pace_slots):
+                            account = account_by_id.get(pace_slots[i]["account_id"])
+                        if not account:
+                            account = self._select_account(accounts, campaign)
                         if not account:
                             skipped_count += 1
                             continue
 
-                        # Prepare message
-                        message_text = self._prepare_message(campaign, recipient)
+                        # Prepare message (use pre-expanded spintax when available)
+                        pre_text = pre_expanded[i] if pre_expanded is not None else None
+                        message_text = self._prepare_message(
+                            campaign, recipient, preexpanded_text=pre_text
+                        )
 
                         # Skip if message was filtered out by plugins
                         if message_text is None:
@@ -648,14 +670,11 @@ class CampaignManager(QObject):
                         )
 
                         # Update campaign progress
-                        progress = ((i + 1) / len(recipients)) * 100
+                        done = len(already_sent) + i + 1
+                        progress = min(100.0, (done / total_for_progress) * 100)
                         await self._update_campaign_progress(
                             campaign_id, sent_count, failed_count, skipped_count, progress
                         )
-
-                        # Rate limiting
-                        if i < len(recipients) - 1:  # Don't sleep after last message
-                            await asyncio.sleep(60 / campaign.messages_per_minute)
 
                     except Exception as e:
                         self.logger.error(f"Error processing recipient {recipient.id}: {e}")
@@ -744,18 +763,59 @@ class CampaignManager(QObject):
         # Could be enhanced with weighted selection, random selection, etc.
         return accounts[0]  # For now, just return the first available account
 
-    def _prepare_message(self, campaign: Campaign, recipient: Recipient) -> Optional[str]:
-        """Prepare message text for sending, including plugin filtering."""
-        message_text = campaign.get_effective_message_text(recipient.id)
+    def _preexpand_campaign_messages(
+        self, campaign: Campaign, recipients: List[Recipient]
+    ) -> Optional[List[str]]:
+        """
+        Batch-expand spintax for all pending recipients (Rust rayon when available).
 
-        # Apply spintax if enabled
-        if campaign.use_spintax and message_text:
+        Returns one expanded base string per recipient (before name personalization),
+        or None when spintax is disabled.
+        """
+        if not campaign.use_spintax or not recipients:
+            return None
+
+        bases = [campaign.get_effective_message_text(r.id) or "" for r in recipients]
+        groups: Dict[str, List[int]] = {}
+        for idx, base in enumerate(bases):
+            if "{" in base and "}" in base:
+                groups.setdefault(base, []).append(idx)
+
+        expanded: List[Optional[str]] = list(bases)
+        for base, indices in groups.items():
             try:
-                spintax_result = self.spintax_processor.process(message_text)
-                message_text = spintax_result.text
-                self.logger.debug(f"Spintax processed: '{message_text}'")
+                batch = self.spintax_processor.expand_batch(base, len(indices))
+                for j, recip_idx in enumerate(indices):
+                    expanded[recip_idx] = batch[j]
             except Exception as e:
-                self.logger.warning(f"Error processing spintax: {e}")
+                self.logger.warning(f"Batch spintax failed, falling back per-message: {e}")
+                return None
+
+        return [t if t is not None else "" for t in expanded]
+
+    def _prepare_message(
+        self,
+        campaign: Campaign,
+        recipient: Recipient,
+        preexpanded_text: Optional[str] = None,
+    ) -> Optional[str]:
+        """Prepare message text for sending, including plugin filtering."""
+        if preexpanded_text is not None:
+            message_text = preexpanded_text
+        else:
+            message_text = campaign.get_effective_message_text(recipient.id)
+
+            # Apply spintax if enabled (single-message path)
+            if campaign.use_spintax and message_text:
+                try:
+                    spintax_result = self.spintax_processor.process(message_text)
+                    message_text = spintax_result.text
+                    self.logger.debug(f"Spintax processed: '{message_text}'")
+                except Exception as e:
+                    self.logger.warning(f"Error processing spintax: {e}")
+
+        if not message_text:
+            message_text = ""
 
         # Apply basic personalization
         message_text = message_text.replace("{name}", recipient.get_display_name())

@@ -95,6 +95,32 @@ If `app.gui.widgets.telegram_selector` is missing from the bundle:
 2. Confirm `hooks/hook-app.gui.widgets.telegram_selector.py` exists
 3. Delete `build/` and `dist/`, then rebuild
 
+## Optional: Rust native accelerator
+
+For lower memory use and faster parallel spintax / pacing on large campaigns, use the optional Rust sidecar.
+
+### Prebuilt binary (Linux x86_64)
+
+From the [GitHub Releases](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/releases) page, download `tmms_native-linux-x86_64`, then:
+
+```bash
+mkdir -p bin
+install -m 755 tmms_native-linux-x86_64 bin/tmms_native
+```
+
+Or set `TMMS_NATIVE_BIN` to the downloaded file path. Other platforms: build from source (below). Release assets currently include Linux x86_64; macOS/Windows binaries may be added later.
+
+### Build from source
+
+Requires [Rust](https://rustup.rs/) / `cargo`:
+
+```bash
+./native/build.sh
+# installs bin/tmms_native and prints a ping JSON response
+```
+
+The Python app auto-detects `bin/tmms_native` (or `TMMS_NATIVE_BIN`). If the binary is missing, it falls back to pure Python with the same behavior. Disable with `TMMS_NATIVE_ACCEL=0`. Details: [Architecture](architecture.md#native-accelerator-rust).
+
 ## Verify the install
 
 ```bash

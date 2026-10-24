@@ -222,8 +222,33 @@ jobs:
       run: |
         twine upload dist/* || echo "PyPI upload skipped (no token or already exists)"
 
+  build-native-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Build tmms_native
+      run: |
+        ./native/build.sh
+        cp bin/tmms_native tmms_native-linux-x86_64
+        ./tmms_native-linux-x86_64 <<'EOF'
+        {"op":"ping"}
+        EOF
+
+    - name: Upload native accelerator artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: tmms-native-linux
+        path: tmms_native-linux-x86_64
+        retention-days: 30
+        if-no-files-found: error
+
   create-release:
-    needs: [build-windows, build-linux, build-macos, build-pypi]
+    needs: [build-windows, build-linux, build-macos, build-pypi, build-native-linux]
     runs-on: ubuntu-latest
     if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || github.event_name == 'workflow_dispatch'
     permissions:
@@ -311,6 +336,9 @@ jobs:
           
           **macOS:**
           - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-macOS.dmg` - Disk image installer
+
+          **Optional native accelerator (Linux x86_64):**
+          - `tmms_native-linux-x86_64` — place as `bin/tmms_native` (see docs/installation.md)
           
           ### 🚀 Installation
           
@@ -340,6 +368,7 @@ jobs:
           windows-build/*
           linux-build/*
           macos-build/*
+          tmms-native-linux/*
         draft: false
         prerelease: false
       env:

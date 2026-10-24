@@ -426,10 +426,12 @@ settings = Settings()
 - `web_companion_enabled: bool`: Preference for the optional read-only web monitor (default `False`)
 - `web_companion_host: str`: Bind host (default `127.0.0.1`)
 - `web_companion_port: int`: Bind port (default `8765`)
+- `web_companion_token: Optional[str]`: Bearer token (optional on loopback; required for non-localhost binds)
 
 **Methods:**
 - `is_ai_copy_configured() -> bool`: True when `ai_api_key` is non-empty
-- `get_web_companion_url() -> str`: Local URL for the read-only companion
+- `get_web_companion_url() -> str`: Local URL for the read-only companion (appends `?token=` when configured)
+- `is_web_companion_token_configured() -> bool`: True when `web_companion_token` is non-empty
 
 #### `reload_settings() -> Settings`
 
@@ -449,13 +451,14 @@ Optional local HTTP monitor (`app.services.web_companion`) using stdlib `http.se
 from app.services.web_companion import WebCompanionServer, start_companion_from_settings
 
 server = start_companion_from_settings()  # background thread
-# or: WebCompanionServer(host="127.0.0.1", port=8765).start(background=False)
+# or: WebCompanionServer(host="127.0.0.1", port=8765, auth_token="…").start(background=False)
 ```
 
 **GET endpoints:** `/`, `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`.  
-**Mutating methods** (`POST`/`PUT`/`PATCH`/`DELETE`) return `405`.
+**Mutating methods** (`POST`/`PUT`/`PATCH`/`DELETE`) return `405`.  
+**Auth:** when a token is configured, missing/invalid credentials return `401` with `WWW-Authenticate: Bearer`. Accepted via `Authorization: Bearer`, `X-TMAS-Token`, or `?token=`. Non-loopback binds refuse to start without a token.
 
-CLI: `telegram-sender web-monitor`.
+CLI: `telegram-sender web-monitor [--token …]`. Reverse-proxy guidance: [Configuration](configuration.md).
 
 ### Plugin Registry / Marketplace
 

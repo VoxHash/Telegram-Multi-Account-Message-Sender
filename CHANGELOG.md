@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.25] - 2026-10-24
+
+### Added
+- **Web companion auth token**: `WEB_COMPANION_TOKEN` / Settings auth field / CLI `--token` (`-t`). When set, requests require `Authorization: Bearer`, `X-TMAS-Token`, or `?token=` (HTML dashboard stores token in `sessionStorage`).
+- **Non-localhost bind guard**: Binding beyond loopback refuses to start without a token.
+- **Reverse-proxy guidance**: Caddy/nginx TLS examples that preserve `Authorization` (docs/configuration.md); Settings help + FAQ/CLI/API/usage updated.
+- **Generate token** control in Settings; `Settings.is_web_companion_token_configured()` / URL helper appends `?token=` when configured.
+- **Unit tests** for Bearer / header / query auth, 401 responses, non-loopback refuse-without-token, and argv `--token` parsing.
+
+### Security
+- Companion status metadata is no longer served unauthenticated on non-loopback binds; prefer `127.0.0.1` behind a TLS reverse proxy.
+
 ## [1.2.24] - 2026-10-24
 
 ### Added

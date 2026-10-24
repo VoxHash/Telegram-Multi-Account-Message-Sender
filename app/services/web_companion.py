@@ -4,25 +4,28 @@ Optional read-only web companion for local monitoring.
 Uses the Python standard library only (``http.server``). Exposes JSON status
 endpoints and a minimal HTML dashboard. No write / control / send routes.
 
-Bind to localhost by default. Binding beyond loopback exposes campaign and
-account metadata to the network — only do that on a trusted LAN with awareness
-of the risk; there is no authentication layer in this MVP.
+Bind to localhost by default. Non-loopback binds require ``WEB_COMPANION_TOKEN``
+(Bearer / ``X-TMAS-Token`` / ``?token=``). Prefer keeping the process on
+``127.0.0.1`` and terminating TLS + forwarding at a reverse proxy that preserves
+the ``Authorization`` header.
 """
 
 from __future__ import annotations
 
+import hmac
 import json
+import secrets
 import threading
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 from sqlmodel import select
 
 from .. import __version__
 from ..core.analytics import AnalyticsCollector, CampaignAnalytics
-from ..models import Account, Campaign, SendLog
+from ..models import Campaign, SendLog
 from .account_health import AccountHealthMonitor
 from .db import get_session
 from .logger import get_logger
@@ -43,6 +46,8 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 DEFAULT_ACTIVITY_LIMIT = 50
 MAX_ACTIVITY_LIMIT = 200
+
+LOOPBACK_HOSTS: Set[str] = {"127.0.0.1", "localhost", "::1"}
 
 _HTML_PAGE = """<!DOCTYPE html>
 <html lang="en">
@@ -71,6 +76,7 @@ _HTML_PAGE = """<!DOCTYPE html>
     button { background:#2d6cdf; color:#fff; border:0; border-radius:6px; padding:.4rem .8rem; cursor:pointer; }
     button:hover { filter:brightness(1.08); }
     .bar { display:flex; gap:.75rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap; }
+    input[type=password] { background:var(--card); color:var(--fg); border:1px solid #2a3545; border-radius:6px; padding:.4rem .6rem; min-width:12rem; }
   </style>
 </head>
 <body>
@@ -79,6 +85,8 @@ _HTML_PAGE = """<!DOCTYPE html>
   <p class="sub">Read-only local companion. Desktop app remains the control surface.</p>
   <div class="bar">
     <button type="button" id="refresh">Refresh</button>
+    <input type="password" id="token" placeholder="Bearer token (if required)" autocomplete="off"/>
+    <button type="button" id="saveToken">Save token</button>
     <span class="sub" id="stamp">Loading…</span>
   </div>
   <div class="grid" id="summary"></div>
@@ -100,11 +108,26 @@ _HTML_PAGE = """<!DOCTYPE html>
   <p class="err" id="error" hidden></p>
 </main>
 <script>
+function getToken() {
+  const params = new URLSearchParams(location.search);
+  const q = params.get('token');
+  if (q) { try { sessionStorage.setItem('tmas_token', q); } catch (_) {} return q; }
+  try { return sessionStorage.getItem('tmas_token') || ''; } catch (_) { return ''; }
+}
+function authHeaders() {
+  const t = getToken();
+  const h = {};
+  if (t) h['Authorization'] = 'Bearer ' + t;
+  return h;
+}
 async function load() {
   const err = document.getElementById('error');
   err.hidden = true;
+  const tokenInput = document.getElementById('token');
+  if (tokenInput && !tokenInput.value) tokenInput.value = getToken();
   try {
-    const res = await fetch('/api/overview');
+    const res = await fetch('/api/overview', { headers: authHeaders() });
+    if (res.status === 401) throw new Error('Unauthorized — set the bearer token (Authorization / ?token=)');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const s = data.health_summary || {};
@@ -137,12 +160,90 @@ async function load() {
 function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function _status(s){ if (s && typeof s === 'object' && s.value) return s.value; return s; }
 document.getElementById('refresh').onclick = load;
+document.getElementById('saveToken').onclick = () => {
+  const t = (document.getElementById('token').value || '').trim();
+  try { if (t) sessionStorage.setItem('tmas_token', t); else sessionStorage.removeItem('tmas_token'); } catch (_) {}
+  load();
+};
 load();
 setInterval(load, 15000);
 </script>
 </body>
 </html>
 """
+
+
+def is_loopback_host(host: str) -> bool:
+    """Return True when *host* is a loopback bind (or empty → default loopback)."""
+    normalized = (host or DEFAULT_HOST).strip().lower()
+    return normalized in LOOPBACK_HOSTS
+
+
+def normalize_companion_token(token: Optional[str]) -> Optional[str]:
+    """Strip whitespace; empty becomes None."""
+    if token is None:
+        return None
+    cleaned = str(token).strip()
+    return cleaned or None
+
+
+def generate_companion_token() -> str:
+    """Generate a URL-safe companion bearer token."""
+    return secrets.token_urlsafe(32)
+
+
+def require_token_for_bind(host: str, token: Optional[str]) -> None:
+    """
+    Non-loopback binds must have a configured token.
+
+    Raises:
+        ValueError: when binding beyond loopback without a token.
+    """
+    if not is_loopback_host(host) and normalize_companion_token(token) is None:
+        raise ValueError(
+            "Non-localhost web companion bind requires WEB_COMPANION_TOKEN "
+            "(or --token). Prefer binding 127.0.0.1 behind a TLS reverse proxy "
+            "that preserves the Authorization header. See docs/configuration.md."
+        )
+
+
+def tokens_match(expected: Optional[str], provided: Optional[str]) -> bool:
+    """Constant-time compare of companion tokens."""
+    exp = normalize_companion_token(expected)
+    got = normalize_companion_token(provided)
+    if exp is None or got is None:
+        return False
+    return hmac.compare_digest(exp.encode("utf-8"), got.encode("utf-8"))
+
+
+def extract_request_token(
+    headers: Any,
+    query: str,
+) -> Optional[str]:
+    """
+    Pull a token from Authorization Bearer, X-TMAS-Token, or ``?token=``.
+
+    Args:
+        headers: mapping-like header object (case-insensitive preferred).
+        query: raw URL query string (no leading ``?``).
+    """
+    auth = ""
+    xtoken = ""
+    if headers is not None:
+        getter = getattr(headers, "get", None)
+        if callable(getter):
+            auth = str(getter("Authorization") or getter("authorization") or "")
+            xtoken = str(getter("X-TMAS-Token") or getter("x-tmas-token") or "")
+    if auth.lower().startswith("bearer "):
+        return normalize_companion_token(auth[7:])
+    if xtoken:
+        return normalize_companion_token(xtoken)
+    if query:
+        params = parse_qs(query, keep_blank_values=False)
+        values = params.get("token") or []
+        if values:
+            return normalize_companion_token(values[0])
+    return None
 
 
 def _enum_value(value: Any) -> str:
@@ -272,9 +373,24 @@ def build_analytics_overview() -> Dict[str, Any]:
     }
 
 
-def build_status_payload(settings: Optional[Settings] = None) -> Dict[str, Any]:
-    """Lightweight app / companion status."""
+def build_status_payload(
+    settings: Optional[Settings] = None,
+    *,
+    auth_required: bool = False,
+) -> Dict[str, Any]:
+    """Lightweight app / companion status (never includes the raw token)."""
     cfg = settings or get_settings()
+    host = cfg.web_companion_host or DEFAULT_HOST
+    loopback = is_loopback_host(host)
+    token_configured = bool(normalize_companion_token(cfg.web_companion_token))
+    bind_warning: Optional[str] = None
+    if not loopback:
+        bind_warning = (
+            "Bound beyond localhost — bearer token auth is required; "
+            "prefer 127.0.0.1 behind a TLS reverse proxy"
+        )
+    elif token_configured:
+        bind_warning = None
     return {
         "app": {
             "name": cfg.app_name,
@@ -283,13 +399,11 @@ def build_status_payload(settings: Optional[Settings] = None) -> Dict[str, Any]:
         },
         "companion": {
             "enabled": bool(cfg.web_companion_enabled),
-            "host": cfg.web_companion_host,
+            "host": host,
             "port": int(cfg.web_companion_port),
-            "bind_warning": (
-                "Bound beyond localhost exposes status metadata without authentication"
-                if cfg.web_companion_host not in ("127.0.0.1", "localhost", "::1")
-                else None
-            ),
+            "auth_required": bool(auth_required or token_configured),
+            "token_configured": token_configured,
+            "bind_warning": bind_warning,
         },
         "generated_at": datetime.utcnow().isoformat() + "Z",
     }
@@ -298,13 +412,15 @@ def build_status_payload(settings: Optional[Settings] = None) -> Dict[str, Any]:
 def build_overview_payload(
     settings: Optional[Settings] = None,
     activity_limit: int = DEFAULT_ACTIVITY_LIMIT,
+    *,
+    auth_required: bool = False,
 ) -> Dict[str, Any]:
     """Combined monitoring snapshot for the HTML dashboard."""
     accounts = build_accounts_payload()
     campaigns = build_campaigns_payload()
     activity = build_activity_payload(activity_limit)
     analytics = build_analytics_overview()
-    status = build_status_payload(settings)
+    status = build_status_payload(settings, auth_required=auth_required)
     return {
         **status,
         "health_summary": accounts["summary"],
@@ -334,6 +450,20 @@ class WebCompanionHandler(BaseHTTPRequestHandler):
         if isinstance(builders, dict):
             return builders
         return {}
+
+    def _expected_token(self) -> Optional[str]:
+        return normalize_companion_token(getattr(self.server, "auth_token", None))
+
+    def _auth_required(self) -> bool:
+        return self._expected_token() is not None
+
+    def _authorized(self) -> bool:
+        expected = self._expected_token()
+        if expected is None:
+            return True
+        parsed = urlparse(self.path)
+        provided = extract_request_token(self.headers, parsed.query or "")
+        return tokens_match(expected, provided)
 
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(204)
@@ -375,13 +505,39 @@ class WebCompanionHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _unauthorized(self, *, include_body: bool) -> None:
+        payload = {
+            "error": "unauthorized",
+            "detail": (
+                "Valid companion token required. Send Authorization: Bearer <token>, "
+                "X-TMAS-Token: <token>, or ?token=<token>."
+            ),
+        }
+        body = json.dumps(payload).encode("utf-8")
+        self.send_response(401)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("WWW-Authenticate", 'Bearer realm="tmms-web-companion"')
+        self.send_header("Cache-Control", "no-store")
+        self._cors_headers()
+        self.end_headers()
+        if include_body:
+            self.wfile.write(body)
+
     def _cors_headers(self) -> None:
         # Local companion only; permissive CORS is fine for localhost tooling.
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", ", ".join(sorted(ALLOWED_METHODS)))
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Content-Type, Authorization, X-TMAS-Token",
+        )
 
     def _handle_read(self, *, include_body: bool) -> None:
+        if self._auth_required() and not self._authorized():
+            self._unauthorized(include_body=include_body)
+            return
+
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/") or "/"
         if path == "/":
@@ -431,11 +587,13 @@ class WebCompanionHandler(BaseHTTPRequestHandler):
 def make_snapshot_builders(
     settings: Optional[Settings] = None,
     activity_limit: int = DEFAULT_ACTIVITY_LIMIT,
+    *,
+    auth_required: bool = False,
 ) -> Dict[str, SnapshotBuilder]:
     """Map API paths to snapshot callables (injectable for tests)."""
 
     def status() -> Dict[str, Any]:
-        return build_status_payload(settings)
+        return build_status_payload(settings, auth_required=auth_required)
 
     def accounts() -> Dict[str, Any]:
         return build_accounts_payload()
@@ -447,7 +605,7 @@ def make_snapshot_builders(
         return build_activity_payload(activity_limit)
 
     def overview() -> Dict[str, Any]:
-        return build_overview_payload(settings, activity_limit)
+        return build_overview_payload(settings, activity_limit, auth_required=auth_required)
 
     return {
         "/api/status": status,
@@ -467,37 +625,50 @@ class WebCompanionServer:
         port: int = DEFAULT_PORT,
         settings: Optional[Settings] = None,
         snapshot_builders: Optional[Dict[str, SnapshotBuilder]] = None,
+        auth_token: Optional[str] = None,
     ) -> None:
         self.host = host
         self.port = int(port)
         self.settings = settings
-        self.snapshot_builders = snapshot_builders or make_snapshot_builders(settings)
+        token_from_settings = None
+        if settings is not None:
+            token_from_settings = normalize_companion_token(settings.web_companion_token)
+        self.auth_token = normalize_companion_token(auth_token) or token_from_settings
+        auth_required = self.auth_token is not None
+        self.snapshot_builders = snapshot_builders or make_snapshot_builders(
+            settings, auth_required=auth_required
+        )
         self._httpd: Optional[ThreadingHTTPServer] = None
         self._thread: Optional[threading.Thread] = None
 
     @property
     def base_url(self) -> str:
         display_host = "127.0.0.1" if self.host in ("0.0.0.0", "::") else self.host
-        return f"http://{display_host}:{self.port}"
+        base = f"http://{display_host}:{self.port}"
+        if self.auth_token:
+            return f"{base}/?token={quote(self.auth_token, safe='')}"
+        return base
 
     @property
     def is_running(self) -> bool:
         return self._httpd is not None and self._thread is not None and self._thread.is_alive()
 
     def start(self, *, background: bool = True) -> str:
-        """Start the server; return the base URL."""
+        """Start the server; return the base URL (may include ``?token=``)."""
         if self.is_running:
             return self.base_url
 
-        if self.host not in ("127.0.0.1", "localhost", "::1"):
+        require_token_for_bind(self.host, self.auth_token)
+
+        if not is_loopback_host(self.host):
             get_logger().warning(
-                f"Web companion binding to {self.host}:{self.port} — status metadata "
-                "is exposed without authentication. Prefer 127.0.0.1 unless you trust "
-                "the network."
+                f"Web companion binding to {self.host}:{self.port} with bearer-token auth. "
+                "Prefer 127.0.0.1 behind a TLS reverse proxy that preserves Authorization."
             )
 
         httpd = ThreadingHTTPServer((self.host, self.port), WebCompanionHandler)
         setattr(httpd, "snapshot_builders", self.snapshot_builders)
+        setattr(httpd, "auth_token", self.auth_token)
         self._httpd = httpd
 
         if background:
@@ -511,7 +682,10 @@ class WebCompanionServer:
         else:
             self._thread = None
             httpd.serve_forever()
-        get_logger().info(f"Web companion listening at {self.base_url} (read-only)")
+        get_logger().info(
+            f"Web companion listening at {self.base_url.split('?', 1)[0]} "
+            f"(read-only{'; auth_required' if self.auth_token else ''})"
+        )
         return self.base_url
 
     def stop(self) -> None:
@@ -536,7 +710,7 @@ def start_companion_from_settings(
     *,
     background: bool = True,
 ) -> WebCompanionServer:
-    """Start (or return) the singleton companion using Settings host/port."""
+    """Start (or return) the singleton companion using Settings host/port/token."""
     global _runtime_server
     cfg = settings or get_settings()
     with _runtime_lock:
@@ -546,6 +720,7 @@ def start_companion_from_settings(
             host=cfg.web_companion_host or DEFAULT_HOST,
             port=int(cfg.web_companion_port or DEFAULT_PORT),
             settings=cfg,
+            auth_token=cfg.web_companion_token,
         )
         server.start(background=background)
         _runtime_server = server
@@ -563,25 +738,26 @@ def stop_companion() -> None:
 
 def companion_url_from_settings(settings: Optional[Settings] = None) -> str:
     cfg = settings or get_settings()
-    host = cfg.web_companion_host or DEFAULT_HOST
-    display = "127.0.0.1" if host in ("0.0.0.0", "::") else host
-    return f"http://{display}:{int(cfg.web_companion_port or DEFAULT_PORT)}"
+    return cfg.get_web_companion_url()
 
 
-def parse_web_monitor_argv(argv: Sequence[str]) -> Tuple[bool, Optional[str], Optional[int]]:
+def parse_web_monitor_argv(
+    argv: Sequence[str],
+) -> Tuple[bool, Optional[str], Optional[int], Optional[str]]:
     """
     Detect ``web-monitor`` / ``web-companion`` CLI mode.
 
-    Returns ``(is_web_mode, host_override, port_override)``.
+    Returns ``(is_web_mode, host_override, port_override, token_override)``.
     """
     tokens = list(argv[1:]) if argv else []
     if not tokens:
-        return False, None, None
+        return False, None, None, None
     cmd = tokens[0].lower().replace("_", "-")
     if cmd not in ("web-monitor", "web-companion", "serve-monitor"):
-        return False, None, None
+        return False, None, None, None
     host: Optional[str] = None
     port: Optional[int] = None
+    token: Optional[str] = None
     i = 1
     while i < len(tokens):
         tok = tokens[i]
@@ -593,6 +769,10 @@ def parse_web_monitor_argv(argv: Sequence[str]) -> Tuple[bool, Optional[str], Op
             port = int(tokens[i + 1])
             i += 2
             continue
+        if tok in ("--token", "-t") and i + 1 < len(tokens):
+            token = tokens[i + 1]
+            i += 2
+            continue
         if tok.startswith("--host="):
             host = tok.split("=", 1)[1]
             i += 1
@@ -601,8 +781,12 @@ def parse_web_monitor_argv(argv: Sequence[str]) -> Tuple[bool, Optional[str], Op
             port = int(tok.split("=", 1)[1])
             i += 1
             continue
+        if tok.startswith("--token="):
+            token = tok.split("=", 1)[1]
+            i += 1
+            continue
         i += 1
-    return True, host, port
+    return True, host, port, token
 
 
 def run_web_monitor_cli(argv: Sequence[str]) -> int:
@@ -613,8 +797,9 @@ def run_web_monitor_cli(argv: Sequence[str]) -> int:
 
         telegram-sender web-monitor
         telegram-sender web-monitor --host 127.0.0.1 --port 8765
+        telegram-sender web-monitor --host 0.0.0.0 --port 8765 --token "$(openssl rand -hex 32)"
     """
-    is_web, host_override, port_override = parse_web_monitor_argv(argv)
+    is_web, host_override, port_override, token_override = parse_web_monitor_argv(argv)
     if not is_web:
         raise ValueError("run_web_monitor_cli requires a web-monitor argv")
 
@@ -623,14 +808,24 @@ def run_web_monitor_cli(argv: Sequence[str]) -> int:
     settings = get_settings()
     host = host_override or settings.web_companion_host or DEFAULT_HOST
     port = port_override if port_override is not None else int(settings.web_companion_port or DEFAULT_PORT)
+    token = normalize_companion_token(token_override) or normalize_companion_token(
+        settings.web_companion_token
+    )
 
-    server = WebCompanionServer(host=host, port=port, settings=settings)
-    print(f"TMAS web companion (read-only) at {server.base_url}")
+    require_token_for_bind(host, token)
+
+    server = WebCompanionServer(host=host, port=port, settings=settings, auth_token=token)
+    listen = server.base_url.split("?", 1)[0]
+    print(f"TMAS web companion (read-only) at {listen}")
     print("Endpoints: /  /api/status  /api/accounts  /api/campaigns  /api/activity  /api/overview")
     print("No write/control routes. Ctrl+C to stop.")
-    if host not in ("127.0.0.1", "localhost", "::1"):
+    if token:
+        print("Auth: Authorization: Bearer <token> | X-TMAS-Token | ?token=")
+        print("Token is configured (value not printed). Open the dashboard with ?token=… or a reverse proxy that preserves Authorization.")
+    if not is_loopback_host(host):
         print(
-            "WARNING: Bound beyond localhost — status metadata is exposed without authentication."
+            "NOTE: Bound beyond localhost with token auth. "
+            "Recommended: bind 127.0.0.1 and put Caddy/nginx TLS in front — see docs/configuration.md."
         )
     try:
         server.start(background=False)

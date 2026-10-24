@@ -179,10 +179,19 @@ class SettingsWidget(QWidget):
         self.web_companion_port_spin.setValue(int(self.settings.web_companion_port or 8765))
         web_layout.addRow(f"{_('settings.web_companion_port')}:", self.web_companion_port_spin)
 
+        self.web_companion_token_edit = QLineEdit()
+        self.web_companion_token_edit.setText(self.settings.web_companion_token or "")
+        self.web_companion_token_edit.setEchoMode(QLineEdit.Password)
+        self.web_companion_token_edit.setPlaceholderText(_("settings.web_companion_token_placeholder"))
+        web_layout.addRow(f"{_('settings.web_companion_token')}:", self.web_companion_token_edit)
+
         web_btn_row = QHBoxLayout()
         self.web_companion_open_btn = QPushButton(_("settings.web_companion_open"))
         self.web_companion_open_btn.clicked.connect(self.open_web_companion)
         web_btn_row.addWidget(self.web_companion_open_btn)
+        self.web_companion_gen_token_btn = QPushButton(_("settings.web_companion_generate_token"))
+        self.web_companion_gen_token_btn.clicked.connect(self.generate_web_companion_token)
+        web_btn_row.addWidget(self.web_companion_gen_token_btn)
         web_btn_row.addStretch()
         web_layout.addRow(web_btn_row)
 
@@ -517,6 +526,9 @@ class SettingsWidget(QWidget):
                 self.web_companion_host_edit.text().strip() or "127.0.0.1"
             )
             self.settings.web_companion_port = int(self.web_companion_port_spin.value())
+            self.settings.web_companion_token = (
+                self.web_companion_token_edit.text().strip() or None
+            )
 
             # Database settings
             self.settings.database_url = self.db_url_edit.text().strip()
@@ -635,6 +647,7 @@ PLUGIN_REGISTRY_URL={self.settings.plugin_registry_url or ''}
 WEB_COMPANION_ENABLED={str(self.settings.web_companion_enabled).lower()}
 WEB_COMPANION_HOST={self.settings.web_companion_host or '127.0.0.1'}
 WEB_COMPANION_PORT={int(self.settings.web_companion_port or 8765)}
+WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
 """
 
             with open(".env", "w") as f:
@@ -642,6 +655,14 @@ WEB_COMPANION_PORT={int(self.settings.web_companion_port or 8765)}
 
         except Exception as e:
             self.logger.error(f"Error saving to .env file: {e}")
+
+    def generate_web_companion_token(self):
+        """Fill the companion token field with a fresh URL-safe secret."""
+        from ...services.web_companion import generate_companion_token
+
+        token = generate_companion_token()
+        self.web_companion_token_edit.setText(token)
+        self.status_label.setText(_("settings.web_companion_token_generated"))
 
     def open_web_companion(self):
         """Start the read-only web companion (if needed) and open it in a browser."""
@@ -659,13 +680,18 @@ WEB_COMPANION_PORT={int(self.settings.web_companion_port or 8765)}
                 self.web_companion_host_edit.text().strip() or "127.0.0.1"
             )
             self.settings.web_companion_port = int(self.web_companion_port_spin.value())
+            self.settings.web_companion_token = (
+                self.web_companion_token_edit.text().strip() or None
+            )
             self.web_companion_enabled_check.setChecked(True)
 
             server = start_companion_from_settings(self.settings, background=True)
             url = server.base_url or companion_url_from_settings(self.settings)
             webbrowser.open(url)
-            self.status_label.setText(_("settings.web_companion_opened").format(url=url))
-            self.logger.info(f"Web companion opened at {url}")
+            # Avoid echoing the raw token into the status bar.
+            display = url.split("?", 1)[0]
+            self.status_label.setText(_("settings.web_companion_opened").format(url=display))
+            self.logger.info(f"Web companion opened at {display}")
         except Exception as e:
             self.logger.error(f"Failed to open web companion: {e}")
             QMessageBox.critical(
@@ -714,6 +740,7 @@ WEB_COMPANION_PORT={int(self.settings.web_companion_port or 8765)}
             self.web_companion_enabled_check.setChecked(bool(self.settings.web_companion_enabled))
             self.web_companion_host_edit.setText(self.settings.web_companion_host or "127.0.0.1")
             self.web_companion_port_spin.setValue(int(self.settings.web_companion_port or 8765))
+            self.web_companion_token_edit.setText(self.settings.web_companion_token or "")
 
             # Database settings
             self.db_url_edit.setText(self.settings.database_url)

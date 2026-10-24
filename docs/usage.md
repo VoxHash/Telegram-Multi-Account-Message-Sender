@@ -67,10 +67,10 @@ Sideloading with **Load Plugin** remains available for local `.py` files that ar
 
 Monitor account health, campaign status, and recent activity in a browser without giving the companion send/control powers.
 
-1. Open **Settings → General → Web Companion**, keep host `127.0.0.1`, set a port if needed, then click **Start & Open in Browser**.
-2. Or run headless: `telegram-sender web-monitor` (see [CLI Reference](cli.md) and [Configuration](configuration.md)).
-3. Dashboard: `http://127.0.0.1:8765/`. JSON: `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`.
-4. Mutating HTTP methods (`POST`/`PUT`/`PATCH`/`DELETE`) return **405**. Do not bind beyond localhost unless you accept unauthenticated status exposure on that network.
+1. Open **Settings → General → Web Companion**, keep host `127.0.0.1`, optionally set/generate an auth token, then click **Start & Open in Browser**.
+2. Or run headless: `telegram-sender web-monitor` (add `--token` for non-localhost; see [CLI Reference](cli.md) and [Configuration](configuration.md)).
+3. Dashboard: `http://127.0.0.1:8765/` (append `?token=` when auth is enabled). JSON: `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`.
+4. Mutating HTTP methods (`POST`/`PUT`/`PATCH`/`DELETE`) return **405**. Non-localhost binds require a token; prefer localhost behind Caddy/nginx with TLS.
 
 ## AI Copy Tools (optional)
 

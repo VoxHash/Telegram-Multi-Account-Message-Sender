@@ -27,8 +27,15 @@ Start a local stdlib HTTP monitor (no extra dependencies). Desktop remains prima
 ```bash
 telegram-sender web-monitor
 telegram-sender web-monitor --host 127.0.0.1 --port 8765
+telegram-sender web-monitor --host 0.0.0.0 --port 8765 --token "$(openssl rand -hex 32)"
 python -m app.cli web-monitor
 ```
+
+| Flag | Description |
+| --- | --- |
+| `--host` / `-H` | Bind address (default from settings / `127.0.0.1`) |
+| `--port` / `-p` | Port (default `8765`) |
+| `--token` / `-t` | Bearer token (required for non-localhost binds) |
 
 | Path | Description |
 | --- | --- |
@@ -39,7 +46,7 @@ python -m app.cli web-monitor
 | `/api/activity` | Recent send-log activity |
 | `/api/overview` | Combined snapshot |
 
-Write methods are rejected (`405`). Prefer `127.0.0.1`; see [Configuration](configuration.md) for bind risks.
+Write methods are rejected (`405`). Prefer `127.0.0.1` behind a TLS reverse proxy; see [Configuration](configuration.md) for auth and proxy guidance.
 
 ## Python API
 

@@ -15,7 +15,7 @@ from app.services.web_companion import parse_web_monitor_argv, run_web_monitor_c
 
 def main() -> None:
     """Main entry point for the CLI."""
-    is_web, _, _ = parse_web_monitor_argv(sys.argv)
+    is_web, _, _, _ = parse_web_monitor_argv(sys.argv)
     if is_web:
         raise SystemExit(run_web_monitor_cli(sys.argv))
 

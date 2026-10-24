@@ -97,7 +97,7 @@ pyinstaller main.spec
 Linux release layout (after building the binary):
 
 ```bash
-./packaging/linux/assemble-dist.sh dist/telegram-multi-account-sender ./tmms-linux v1.2.24
+./packaging/linux/assemble-dist.sh dist/telegram-multi-account-sender ./tmms-linux v1.2.25
 ```
 
 Alternative (hook directory):

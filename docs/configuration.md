@@ -49,6 +49,7 @@ You can configure the application using environment variables. See `example_file
 - `WEB_COMPANION_ENABLED`: Start preference for the optional read-only web monitor (`true`/`false`, default `false`)
 - `WEB_COMPANION_HOST`: Bind address (default `127.0.0.1`)
 - `WEB_COMPANION_PORT`: Port (default `8765`)
+- `WEB_COMPANION_TOKEN`: Bearer token for companion auth (optional on loopback; **required** for non-localhost binds)
 
 ### Web Companion (read-only, optional)
 
@@ -58,13 +59,49 @@ Lightweight local HTTP monitor built with the Python standard library (no FastAP
 WEB_COMPANION_ENABLED=false
 WEB_COMPANION_HOST=127.0.0.1
 WEB_COMPANION_PORT=8765
+# WEB_COMPANION_TOKEN=  # optional on localhost; required when binding beyond loopback
 ```
 
-1. From the GUI: **Settings → General → Web Companion → Start & Open in Browser**.
-2. From the CLI (blocks until Ctrl+C): `telegram-sender web-monitor` or `python -m app.cli web-monitor`.
+1. From the GUI: **Settings → General → Web Companion → Start & Open in Browser** (optional **Generate token**).
+2. From the CLI (blocks until Ctrl+C): `telegram-sender web-monitor` or `python -m app.cli web-monitor [--token …]`.
 3. Open `http://127.0.0.1:8765/` for the dashboard, or `/api/overview` for JSON.
 
-**Security:** Keep the default localhost bind. Binding to `0.0.0.0` (or any non-loopback address) exposes campaign/account status metadata on the network **without authentication**. Only do that on a trusted LAN, and prefer a firewall or reverse proxy with auth if you must.
+**Auth:** When `WEB_COMPANION_TOKEN` is set (or `--token` is passed), every request must present the token via:
+
+- `Authorization: Bearer <token>`
+- `X-TMAS-Token: <token>`
+- `?token=<token>` (handy for the HTML dashboard; the page also stores it in `sessionStorage`)
+
+Non-loopback binds (`0.0.0.0`, LAN IPs, etc.) **refuse to start** without a token.
+
+**Recommended shape (reverse proxy):** Keep the companion on `127.0.0.1` and terminate TLS at Caddy or nginx. Preserve the `Authorization` header (do not put HTTP Basic auth in front of Bearer — browsers send only one `Authorization` header).
+
+Caddy example:
+
+```caddyfile
+monitor.example.com {
+    reverse_proxy 127.0.0.1:8765
+}
+```
+
+nginx example:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name monitor.example.com;
+    # ssl_certificate / ssl_certificate_key …
+    location / {
+        proxy_pass http://127.0.0.1:8765;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Authorization $http_authorization;
+    }
+}
+```
+
+Clients still send `Authorization: Bearer <WEB_COMPANION_TOKEN>` (or open `https://monitor.example.com/?token=…`).
 
 ### Plugin Registry (marketplace)
 

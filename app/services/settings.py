@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.2.24"
+    app_version: str = "1.2.25"
     app_env: AppEnvironment = AppEnvironment.DEVELOPMENT
     debug: bool = False
     start_with_windows: bool = False
@@ -147,6 +147,8 @@ class Settings(BaseSettings):
     web_companion_enabled: bool = False
     web_companion_host: str = "127.0.0.1"
     web_companion_port: int = 8765
+    # Bearer token for companion auth. Optional on loopback; required for non-localhost binds.
+    web_companion_token: Optional[str] = None
 
     # Optional: Additional settings
     custom_settings: Dict[str, Any] = Field(default_factory=dict)
@@ -258,7 +260,17 @@ class Settings(BaseSettings):
         """Local URL for the optional read-only web companion."""
         host = self.web_companion_host or "127.0.0.1"
         display = "127.0.0.1" if host in ("0.0.0.0", "::") else host
-        return f"http://{display}:{int(self.web_companion_port or 8765)}"
+        base = f"http://{display}:{int(self.web_companion_port or 8765)}"
+        token = (self.web_companion_token or "").strip()
+        if token:
+            from urllib.parse import quote
+
+            return f"{base}/?token={quote(token, safe='')}"
+        return base
+
+    def is_web_companion_token_configured(self) -> bool:
+        """True when a non-empty companion auth token is set."""
+        return bool(self.web_companion_token and str(self.web_companion_token).strip())
 
     def get_proxy_settings(self) -> Dict[str, Optional[str]]:
         """Get proxy settings as dictionary."""

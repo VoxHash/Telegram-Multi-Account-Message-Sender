@@ -56,13 +56,16 @@ TELEGRAM_API_HASH=your_api_hash_here
 # Official curated JSON catalog for Plugins → Browse Registry. Offline fallback is bundled.
 # PLUGIN_REGISTRY_URL=https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender/main/registry/catalog.json
 
-# Web companion — read-only local monitor (NON-SENSITIVE)
+# Web companion — read-only local monitor
 # Optional stdlib HTTP server (no extra dependency). Desktop app remains primary.
-# Default bind is localhost. Binding beyond 127.0.0.1 exposes status metadata without auth.
-# CLI: telegram-sender web-monitor   |   Settings → Start & Open in Browser
+# Default bind is localhost. Non-localhost binds REQUIRE WEB_COMPANION_TOKEN.
+# Auth: Authorization: Bearer <token> | X-TMAS-Token | ?token=
+# Prefer 127.0.0.1 behind Caddy/nginx TLS (see docs/configuration.md).
+# CLI: telegram-sender web-monitor [--token …]   |   Settings → Start & Open in Browser
 # WEB_COMPANION_ENABLED=false
 # WEB_COMPANION_HOST=127.0.0.1
 # WEB_COMPANION_PORT=8765
+# WEB_COMPANION_TOKEN=   # SENSITIVE — generate with: openssl rand -hex 32
 
 # Database Configuration (NON-SENSITIVE)
 # SQLite database file path (relative to app root)

@@ -31,6 +31,7 @@ from .network import (
     is_offline_error_message,
 )
 from .provider_base import CloudProvider, RemoteBackupItem
+from .s3_compatible import S3CompatibleError, S3CompatibleProvider
 from .token_store import DriveTokenStore
 
 __all__ = [
@@ -55,6 +56,8 @@ __all__ = [
     "GoogleDriveError",
     "GoogleDriveProvider",
     "RemoteBackupItem",
+    "S3CompatibleError",
+    "S3CompatibleProvider",
     "check_network_available",
     "collect_entities",
     "format_offline_error",

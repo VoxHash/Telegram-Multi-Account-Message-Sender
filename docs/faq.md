@@ -118,6 +118,10 @@ Open **Plugins → Browse Registry** to discover curated plugins from the offici
 
 An optional **read-only** local monitor (`telegram-sender web-monitor` or Settings → Start & Open). It serves account health, campaign status, recent activity, and **live SVG charts** (hourly activity, send-status and health donuts, campaign bars) over stdlib HTTP — no extra packages, no send/control APIs. Chart JSON is also at `/api/charts`. Enable **Auto-start with GUI** / `WEB_COMPANION_AUTO_START` to start it in the background when the desktop app launches (no browser popup; Status in Settings). Keep the default `127.0.0.1` bind. Set `WEB_COMPANION_TOKEN` (or `--token`) for Bearer / `X-TMAS-Token` / `?token=` auth; non-localhost binds require a token. Prefer a TLS reverse proxy in front of localhost — see [Configuration](configuration.md).
 
+### Can I back up to S3 instead of Google Drive?
+
+Yes. Install `pip install '.[cloud]'`, set `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `S3_BUCKET` (optional `S3_ENDPOINT_URL` for MinIO / R2 / Wasabi / B2), then choose **S3-Compatible** under **Settings → Cloud Backup** and click **Verify S3 Credentials**. Google Drive remains available as the other provider. See [Configuration](configuration.md) and [Usage](usage.md).
+
 ### How do I hand off my workspace to another machine?
 
 Desktop TMAS is **single-operator**. Use **Settings → Cloud Backup → Export for Handoff…** (or `telegram-sender handoff-export`) for a full `.tmas-backup.zip` (database, safe settings, Telethon sessions), or **Export Templates/Campaigns…** / `--entities templates,campaigns` for a selective package. Entity imports support **merge** (upsert by name) or **replace**. Prefer an encryption password for off-machine transfer. Multi-user roles belong to [SendGram](https://www.sendgram.pro).

@@ -513,7 +513,7 @@ from app.services.plugin_sdk import (
     check_min_app_version,
 )
 
-catalog, report = validate_catalog_file(Path("registry/catalog.json"), app_version="1.2.30")
+catalog, report = validate_catalog_file(Path("registry/catalog.json"), app_version="1.2.31")
 assert report.ok
 sha_report = validate_catalog_sha256(catalog, Path("registry/plugins"))
 plugin_report = validate_plugin_file(Path("registry/templates/sample_filter_plugin.py"))
@@ -886,9 +886,11 @@ service.restore_from_local_package(entities, mode="merge")
 | Piece | Role |
 | --- | --- |
 | `BackupPackageBuilder.build(..., include_sessions=, purpose=, entity_kinds=)` | Full DB package or selective `entities.json` |
-| `CloudBackupService.export_local_package` | Local handoff / entity export (no Google Drive) |
+| `CloudBackupService.export_local_package` | Local handoff / entity export (no cloud provider) |
 | `CloudBackupService.restore_from_local_package(..., mode=)` | Full replace, or entity merge/replace |
 | `CloudBackupService.inspect_local_package` | Detect `entities.json` vs `app.db` for UI prompts |
+| `CloudBackupService.backup_to_s3` / `list_s3_backups` / `restore_from_s3` | S3-compatible cloud backup (boto3; optional `[cloud]` extra) |
+| `S3CompatibleProvider` | `CloudProvider` for AWS S3 / MinIO / R2 / Wasabi / B2 |
 | `collect_entities` / `import_entities` | Build / apply selective payload |
 | `parse_handoff_argv` / `run_handoff_cli` | CLI: `handoff-export` / `handoff-import` |
 

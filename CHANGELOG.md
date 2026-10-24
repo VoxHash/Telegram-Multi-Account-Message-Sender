@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.31] - 2026-10-24
+
+### Added
+- **Phase 2: S3-compatible cloud backup**: `S3CompatibleProvider` (boto3) for Amazon S3 and compatible endpoints (MinIO, Cloudflare R2, Wasabi, Backblaze B2 S3 API). Settings env: `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, optional `S3_ENDPOINT_URL` / `S3_REGION` / `S3_PREFIX`.
+- **Settings → Cloud Backup** provider selector (Google Drive | S3-Compatible) with verify / backup / list / restore wired through `CloudBackupService`.
+- **Unit tests** for S3 helpers, mocked upload/list/download/delete, service backup/list/restore offline guards.
+
+### Changed
+- Optional `[cloud]` extra now includes `boto3`; docs (configuration, usage, architecture, API, FAQ, troubleshooting) and ROADMAP mark S3 as shipped; further non-S3 providers remain in progress.
+
 ## [1.2.30] - 2026-10-24
 
 ### Added

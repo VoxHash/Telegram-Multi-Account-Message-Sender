@@ -92,7 +92,7 @@ def format_offline_error(operation: str = "cloud operation") -> str:
     """Build a stable, parseable offline error message for service → GUI."""
     return (
         f"{OFFLINE_ERROR_MARKER}: Cannot complete {operation} while offline or "
-        "when Google Drive is unreachable. Check your internet connection, "
+        "when cloud storage is unreachable. Check your internet connection, "
         "VPN/firewall, and try again when online. Local data was not modified."
     )
 

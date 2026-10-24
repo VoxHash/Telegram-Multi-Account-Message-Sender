@@ -1,5 +1,5 @@
 """
-Orchestrates local backup packages and Google Drive upload/restore.
+Orchestrates local backup packages and cloud upload/restore (Drive + S3).
 """
 
 import json
@@ -36,6 +36,7 @@ from .entity_transfer import (
 from .google_drive import GoogleDriveError, GoogleDriveProvider
 from .network import check_network_available, format_offline_error
 from .provider_base import RemoteBackupItem
+from .s3_compatible import S3CompatibleError, S3CompatibleProvider
 
 
 class CloudBackupServiceError(Exception):
@@ -48,11 +49,13 @@ class CloudBackupService:
     def __init__(
         self,
         provider: Optional[GoogleDriveProvider] = None,
+        s3_provider: Optional[S3CompatibleProvider] = None,
         package_builder: Optional[BackupPackageBuilder] = None,
     ) -> None:
         self.logger = get_logger()
         self.settings = get_settings()
         self.provider = provider or GoogleDriveProvider()
+        self.s3_provider = s3_provider or S3CompatibleProvider()
         self.package_builder = package_builder or BackupPackageBuilder()
 
     def _require_online(self, operation: str) -> None:
@@ -351,4 +354,91 @@ class CloudBackupService:
                 package_path,
                 password=password,
                 source_label=f"Google Drive backup {remote_id}",
+            )
+
+    def connect_s3(self) -> None:
+        """Validate S3-compatible credentials (``head_bucket``)."""
+        self._require_online("S3 connect")
+        try:
+            if not self.s3_provider.authenticate():
+                raise CloudBackupServiceError("S3 authentication failed")
+        except S3CompatibleError as exc:
+            raise CloudBackupServiceError(str(exc)) from exc
+
+    def disconnect_s3(self) -> None:
+        """Clear the in-memory S3 client (``.env`` credentials are unchanged)."""
+        self.s3_provider.disconnect()
+
+    def is_s3_connected(self) -> bool:
+        """Return True when S3 credentials verify against the configured bucket."""
+        return self.s3_provider.is_authenticated()
+
+    def is_s3_configured(self) -> bool:
+        """Return True when required S3 settings are present in the environment."""
+        return S3CompatibleProvider.is_configured()
+
+    def backup_to_s3(self, password: Optional[str] = None) -> str:
+        """Build a backup package and upload it to S3-compatible storage."""
+        if not self.is_s3_connected():
+            raise CloudBackupServiceError(
+                "Verify S3 credentials before creating a backup"
+            )
+        self._require_online("cloud backup upload")
+
+        filename = BackupPackageBuilder.generate_filename()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package_path = Path(temp_dir) / filename
+            try:
+                self.package_builder.build(
+                    package_path,
+                    password=password,
+                    include_settings=True,
+                    include_sessions=False,
+                    purpose=PURPOSE_CLOUD_BACKUP,
+                )
+            except BackupPackageError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+            try:
+                remote_id = self.s3_provider.upload(package_path, filename)
+            except S3CompatibleError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+        self.logger.info(f"S3 cloud backup uploaded: {filename} ({remote_id})")
+        return remote_id
+
+    def list_s3_backups(self) -> List[RemoteBackupItem]:
+        """List backup packages stored in the configured S3 bucket/prefix."""
+        if not self.is_s3_connected():
+            raise CloudBackupServiceError("Verify S3 credentials to list backups")
+        self._require_online("listing cloud backups")
+        try:
+            return self.s3_provider.list_backups()
+        except S3CompatibleError as exc:
+            raise CloudBackupServiceError(str(exc)) from exc
+
+    def restore_from_s3(
+        self, remote_id: str, password: Optional[str] = None
+    ) -> Path:
+        """
+        Download an S3 backup, verify it, snapshot the current DB, and restore.
+
+        Returns the path to the pre-restore local database snapshot.
+        Raises before modifying the local database when offline / S3 unreachable.
+        """
+        if not self.is_s3_connected():
+            raise CloudBackupServiceError("Verify S3 credentials before restoring")
+        self._require_online("cloud restore")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package_path = Path(temp_dir) / "restore-package.tmas-backup.zip"
+            try:
+                self.s3_provider.download(remote_id, package_path)
+            except S3CompatibleError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+            return self._snapshot_and_restore_package(
+                package_path,
+                password=password,
+                source_label=f"S3 backup {remote_id}",
             )

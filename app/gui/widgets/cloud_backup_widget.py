@@ -1,5 +1,5 @@
 """
-Cloud backup settings widget (Google Drive).
+Cloud backup settings widget (Google Drive + S3-compatible).
 """
 
 from pathlib import Path
@@ -8,6 +8,7 @@ from typing import List, Optional
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QDialog,
     QDialogButtonBox,
     QGroupBox,
@@ -28,6 +29,9 @@ from ...services.cloud.cloud_backup_service import CloudBackupServiceError
 from ...services.cloud.network import is_offline_error_message
 from ...services.translation import _
 
+PROVIDER_GOOGLE_DRIVE = "google_drive"
+PROVIDER_S3 = "s3"
+
 
 class CloudBackupWorker(QThread):
     """Run cloud backup operations off the UI thread."""
@@ -41,26 +45,54 @@ class CloudBackupWorker(QThread):
 
     def run(self):
         service = CloudBackupService()
+        provider = self.kwargs.get("provider") or PROVIDER_GOOGLE_DRIVE
         try:
             if self.operation == "connect":
-                service.connect_google_drive()
-                self.finished.emit(True, _("settings.cloud_connect_success"), None)
+                if provider == PROVIDER_S3:
+                    service.connect_s3()
+                    self.finished.emit(True, _("settings.cloud_s3_connect_success"), None)
+                else:
+                    service.connect_google_drive()
+                    self.finished.emit(True, _("settings.cloud_connect_success"), None)
             elif self.operation == "disconnect":
-                service.disconnect_google_drive()
-                self.finished.emit(True, _("settings.cloud_disconnect_success"), None)
+                if provider == PROVIDER_S3:
+                    service.disconnect_s3()
+                    self.finished.emit(
+                        True, _("settings.cloud_s3_disconnect_success"), None
+                    )
+                else:
+                    service.disconnect_google_drive()
+                    self.finished.emit(True, _("settings.cloud_disconnect_success"), None)
             elif self.operation == "backup":
-                remote_id = service.backup_to_google_drive(
-                    password=self.kwargs.get("password") or None
-                )
-                self.finished.emit(True, _("settings.cloud_backup_success"), remote_id)
+                if provider == PROVIDER_S3:
+                    remote_id = service.backup_to_s3(
+                        password=self.kwargs.get("password") or None
+                    )
+                    self.finished.emit(
+                        True, _("settings.cloud_s3_backup_success"), remote_id
+                    )
+                else:
+                    remote_id = service.backup_to_google_drive(
+                        password=self.kwargs.get("password") or None
+                    )
+                    self.finished.emit(True, _("settings.cloud_backup_success"), remote_id)
             elif self.operation == "list":
-                backups = service.list_google_drive_backups()
+                if provider == PROVIDER_S3:
+                    backups = service.list_s3_backups()
+                else:
+                    backups = service.list_google_drive_backups()
                 self.finished.emit(True, _("settings.cloud_list_success"), backups)
             elif self.operation == "restore":
-                pre_restore = service.restore_from_google_drive(
-                    self.kwargs["remote_id"],
-                    password=self.kwargs.get("password") or None,
-                )
+                if provider == PROVIDER_S3:
+                    pre_restore = service.restore_from_s3(
+                        self.kwargs["remote_id"],
+                        password=self.kwargs.get("password") or None,
+                    )
+                else:
+                    pre_restore = service.restore_from_google_drive(
+                        self.kwargs["remote_id"],
+                        password=self.kwargs.get("password") or None,
+                    )
                 self.finished.emit(
                     True,
                     _("settings.cloud_restore_success").format(path=str(pre_restore)),
@@ -103,7 +135,7 @@ class CloudBackupWorker(QThread):
 
 
 class CloudBackupWidget(QWidget):
-    """Settings tab for Google Drive cloud backup and restore."""
+    """Settings tab for Google Drive / S3 cloud backup and restore."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -119,17 +151,29 @@ class CloudBackupWidget(QWidget):
 
         status_group = QGroupBox(_("settings.cloud_backup"))
         status_layout = QVBoxLayout(status_group)
+
+        provider_row = QHBoxLayout()
+        provider_row.addWidget(QLabel(_("settings.cloud_provider")))
+        self.provider_combo = QComboBox()
+        self.provider_combo.addItem(
+            _("settings.cloud_provider_google_drive"), PROVIDER_GOOGLE_DRIVE
+        )
+        self.provider_combo.addItem(_("settings.cloud_provider_s3"), PROVIDER_S3)
+        self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
+        provider_row.addWidget(self.provider_combo)
+        status_layout.addLayout(provider_row)
+
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
         status_layout.addWidget(self.status_label)
 
         connect_layout = QHBoxLayout()
         self.connect_button = QPushButton(_("settings.cloud_connect_drive"))
-        self.connect_button.clicked.connect(self.connect_google_drive)
+        self.connect_button.clicked.connect(self.connect_provider)
         connect_layout.addWidget(self.connect_button)
 
         self.disconnect_button = QPushButton(_("settings.cloud_disconnect"))
-        self.disconnect_button.clicked.connect(self.disconnect_google_drive)
+        self.disconnect_button.clicked.connect(self.disconnect_provider)
         connect_layout.addWidget(self.disconnect_button)
         status_layout.addLayout(connect_layout)
         layout.addWidget(status_group)
@@ -186,12 +230,33 @@ class CloudBackupWidget(QWidget):
 
         layout.addStretch()
 
+    def _selected_provider(self) -> str:
+        data = self.provider_combo.currentData()
+        return str(data) if data else PROVIDER_GOOGLE_DRIVE
+
+    def _on_provider_changed(self, _index: int = 0) -> None:
+        self.backups_list.clear()
+        self._remote_backups = []
+        self.refresh_connection_status()
+
     def refresh_connection_status(self):
-        connected = self.service.is_google_drive_connected()
-        if connected:
-            self.status_label.setText(_("settings.cloud_status_connected"))
+        provider = self._selected_provider()
+        if provider == PROVIDER_S3:
+            self.connect_button.setText(_("settings.cloud_connect_s3"))
+            connected = self.service.is_s3_connected()
+            if connected:
+                self.status_label.setText(_("settings.cloud_s3_status_connected"))
+            elif self.service.is_s3_configured():
+                self.status_label.setText(_("settings.cloud_s3_status_configured"))
+            else:
+                self.status_label.setText(_("settings.cloud_s3_status_disconnected"))
         else:
-            self.status_label.setText(_("settings.cloud_status_disconnected"))
+            self.connect_button.setText(_("settings.cloud_connect_drive"))
+            connected = self.service.is_google_drive_connected()
+            if connected:
+                self.status_label.setText(_("settings.cloud_status_connected"))
+            else:
+                self.status_label.setText(_("settings.cloud_status_disconnected"))
         self._set_actions_enabled(connected)
 
     def _set_actions_enabled(self, connected: bool):
@@ -200,7 +265,7 @@ class CloudBackupWidget(QWidget):
         self.refresh_button.setEnabled(connected)
         self.restore_button.setEnabled(connected)
         self.backups_list.setEnabled(connected)
-        # Local package restore / handoff export work offline without Drive.
+        # Local package restore / handoff export work offline without cloud.
         self.restore_local_button.setEnabled(True)
         self.export_handoff_button.setEnabled(True)
         self.export_entities_button.setEnabled(True)
@@ -218,6 +283,7 @@ class CloudBackupWidget(QWidget):
             )
             return
 
+        kwargs.setdefault("provider", self._selected_provider())
         self._set_busy(True)
         self._worker = CloudBackupWorker(operation, **kwargs)
         self._worker.finished.connect(self._on_worker_finished)
@@ -225,6 +291,7 @@ class CloudBackupWidget(QWidget):
 
     def _set_busy(self, busy: bool):
         for widget in (
+            self.provider_combo,
             self.connect_button,
             self.disconnect_button,
             self.backup_button,
@@ -273,11 +340,21 @@ class CloudBackupWidget(QWidget):
             return
         QMessageBox.critical(self, _("common.error"), message)
 
-    def connect_google_drive(self):
+    def connect_provider(self):
         self._start_worker("connect")
 
-    def disconnect_google_drive(self):
+    def disconnect_provider(self):
         self._start_worker("disconnect")
+
+    # Backwards-compatible aliases used by older call sites / tests
+    def connect_google_drive(self):
+        self.provider_combo.setCurrentIndex(
+            self.provider_combo.findData(PROVIDER_GOOGLE_DRIVE)
+        )
+        self._start_worker("connect", provider=PROVIDER_GOOGLE_DRIVE)
+
+    def disconnect_google_drive(self):
+        self._start_worker("disconnect", provider=PROVIDER_GOOGLE_DRIVE)
 
     def backup_now(self):
         self._start_worker("backup", password=self._password())
@@ -317,11 +394,18 @@ class CloudBackupWidget(QWidget):
         if confirm != QMessageBox.Yes:
             return
 
-        if not self.service.is_google_drive_connected():
+        provider = self._selected_provider()
+        if provider == PROVIDER_S3:
+            connected = self.service.is_s3_connected()
+            disconnected_msg = _("settings.cloud_s3_status_disconnected")
+        else:
+            connected = self.service.is_google_drive_connected()
+            disconnected_msg = _("settings.cloud_status_disconnected")
+        if not connected:
             QMessageBox.warning(
                 self,
                 _("common.warning"),
-                _("settings.cloud_status_disconnected"),
+                disconnected_msg,
             )
             return
 
@@ -381,7 +465,7 @@ class CloudBackupWidget(QWidget):
         )
 
     def export_handoff_package(self):
-        """Export a local handoff package (DB + sessions) without Google Drive."""
+        """Export a local handoff package (DB + sessions) without cloud upload."""
         from PyQt5.QtWidgets import QFileDialog
 
         from ...services.cloud import BackupPackageBuilder

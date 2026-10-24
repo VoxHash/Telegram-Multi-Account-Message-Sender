@@ -42,7 +42,11 @@ You can configure the application using environment variables. See `example_file
 - `TMMS_NATIVE_BIN`: Absolute path to the `tmms_native` binary if not under `bin/`
 - `GOOGLE_DRIVE_CLIENT_ID`: OAuth client ID for Google Drive cloud backups
 - `GOOGLE_DRIVE_CLIENT_SECRET`: OAuth client secret for Google Drive cloud backups
-- Operator handoff (no Drive): Settings → **Export for Handoff…** / **Export Templates/Campaigns…**, or CLI `telegram-sender handoff-export` / `handoff-import` (`--entities`, `--mode`) — see [CLI](cli.md) and [Usage](usage.md)
+- `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_BUCKET`: S3-compatible cloud backup credentials
+- `S3_ENDPOINT_URL`: Optional custom endpoint (MinIO, Cloudflare R2, Wasabi, Backblaze B2 S3 API, …); leave empty for AWS S3
+- `S3_REGION`: Region name (default `us-east-1`)
+- `S3_PREFIX`: Object key prefix for backups (default `tmas/backups/`)
+- Operator handoff (no cloud): Settings → **Export for Handoff…** / **Export Templates/Campaigns…**, or CLI `telegram-sender handoff-export` / `handoff-import` (`--entities`, `--mode`) — see [CLI](cli.md) and [Usage](usage.md)
 - `AI_API_KEY`: Optional OpenAI-compatible API key for AI copy tools (leave unset to disable)
 - `AI_BASE_URL`: Chat Completions base URL (default `https://api.openai.com/v1`)
 - `AI_MODEL`: Model id (default `gpt-4o-mini`)
@@ -148,8 +152,27 @@ GOOGLE_DRIVE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_DRIVE_CLIENT_SECRET=your-client-secret
 ```
 
-3. In the app, open **Settings → Cloud Backup** and click **Connect Google Drive**.
+3. In the app, open **Settings → Cloud Backup**, select **Google Drive**, and click **Connect Google Drive**.
 4. Complete the browser OAuth flow; tokens are stored encrypted under `app_data/cloud/`.
+
+### S3-Compatible Cloud Backup (optional)
+
+Same optional extra (`pip install '.[cloud]'`) includes `boto3`. Works with Amazon S3 and S3-compatible APIs (MinIO, Cloudflare R2, Wasabi, Backblaze B2 S3 API, and similar).
+
+```env
+S3_ACCESS_KEY_ID=your-access-key
+S3_SECRET_ACCESS_KEY=your-secret-key
+S3_BUCKET=your-bucket-name
+# Optional:
+S3_REGION=us-east-1
+S3_ENDPOINT_URL=https://s3.example.com
+S3_PREFIX=tmas/backups/
+```
+
+1. Create a bucket and access keys in your provider console.
+2. For AWS S3, leave `S3_ENDPOINT_URL` empty. For MinIO/R2/Wasabi/B2, set the provider’s S3 API endpoint.
+3. In the app, open **Settings → Cloud Backup**, select **S3-Compatible**, and click **Verify S3 Credentials**.
+4. Use **Backup Now** / **Refresh List** / **Restore Selected Backup** as with Drive. Disconnect clears the in-memory client only (`.env` keys stay).
 
 ## Account Configuration
 

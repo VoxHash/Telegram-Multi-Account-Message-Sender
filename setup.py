@@ -16,7 +16,7 @@ with open("requirements.txt", "r", encoding="utf-8") as f:
     requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 # Read version
-version = "1.2.30"
+version = "1.2.31"
 
 setup(
     name="telegram-multi-account-sender",
@@ -73,6 +73,12 @@ setup(
             "sphinx>=6.0.0",
             "sphinx-rtd-theme>=1.2.0",
             "myst-parser>=1.0.0",
+        ],
+        "cloud": [
+            "google-api-python-client>=2.100.0",
+            "google-auth-oauthlib>=1.1.0",
+            "google-auth-httplib2>=0.1.1",
+            "boto3>=1.34.0",
         ],
     },
     entry_points={

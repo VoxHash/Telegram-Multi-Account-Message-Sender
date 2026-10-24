@@ -27,7 +27,7 @@ Common issues and solutions for Telegram Multi-Account Message Sender.
 
 ### Cloud backup / Google Drive connect fails
 
-**Problem:** Settings → Cloud Backup cannot connect or upload
+**Problem:** Settings → Cloud Backup cannot connect or upload (Google Drive)
 
 **Solutions:**
 1. Install optional deps: `pip install '.[cloud]'`
@@ -36,12 +36,23 @@ Common issues and solutions for Telegram Multi-Account Message Sender.
 4. Complete the browser OAuth consent when prompted
 5. After restore, restart the app so the database connection reloads
 
-### Cloud restore fails while offline
+### Cloud backup / S3 verify fails
 
-**Problem:** Restore (or list/backup) shows “Offline or Drive unreachable” / “Cannot restore while offline”
+**Problem:** Settings → Cloud Backup → S3-Compatible cannot verify credentials or upload
 
 **Solutions:**
-1. Confirm internet connectivity (and that VPN/firewall allows `googleapis.com`)
+1. Install optional deps: `pip install '.[cloud]'` (includes `boto3`)
+2. Set `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `S3_BUCKET` in `.env`
+3. For MinIO / Cloudflare R2 / Wasabi / Backblaze B2, set `S3_ENDPOINT_URL` to the provider’s S3 API URL; leave empty for AWS S3
+4. Confirm the bucket exists and the key pair can `s3:ListBucket` / `s3:PutObject` / `s3:GetObject` under `S3_PREFIX` (default `tmas/backups/`)
+5. After restore, restart the app so the database connection reloads
+
+### Cloud restore fails while offline
+
+**Problem:** Restore (or list/backup) shows “Offline or cloud unreachable” / “Cannot restore while offline”
+
+**Solutions:**
+1. Confirm internet connectivity (and that VPN/firewall allows `googleapis.com` or your S3 endpoint)
 2. Retry **Refresh List**, then restore when online
 3. Local data is left unchanged until a download succeeds; if a pre-restore snapshot path is shown after a mid-flight failure, keep that file under `app_data/`
 4. You can continue using the app fully offline; only cloud sync needs the network

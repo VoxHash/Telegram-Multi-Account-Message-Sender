@@ -88,18 +88,18 @@ Monitor account health, campaign status, and recent activity in a browser withou
 4. Review the result before saving. Placeholders like `{name}` are preserved when the model follows instructions.
 5. With no API key configured, the buttons show a setup message and make no network calls.
 
-## Cloud Backup (Google Drive)
+## Cloud Backup (Google Drive + S3-compatible)
 
-1. Configure `GOOGLE_DRIVE_CLIENT_ID` and `GOOGLE_DRIVE_CLIENT_SECRET` in `.env` (see [Configuration Guide](configuration.md)).
-2. Install optional cloud packages: `pip install '.[cloud]'`.
-3. Open **Settings → Cloud Backup**.
-4. Click **Connect Google Drive** and approve access in your browser.
-5. Optionally set an encryption password, then click **Backup Now** to upload a `.tmas-backup.zip` to Drive.
+1. Install optional cloud packages: `pip install '.[cloud]'`.
+2. Configure either Google Drive OAuth (`GOOGLE_DRIVE_CLIENT_ID` / `GOOGLE_DRIVE_CLIENT_SECRET`) or S3 credentials (`S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_BUCKET`, optional `S3_ENDPOINT_URL` / `S3_REGION` / `S3_PREFIX`) in `.env` — see [Configuration Guide](configuration.md).
+3. Open **Settings → Cloud Backup** and choose the provider (Google Drive or S3-Compatible).
+4. **Google Drive**: click **Connect Google Drive** and approve access in your browser. **S3**: click **Verify S3 Credentials**.
+5. Optionally set an encryption password, then click **Backup Now** to upload a `.tmas-backup.zip`.
 6. Use **Refresh List** to see remote backups; select one and click **Restore Selected Backup** to replace the local database (a pre-restore snapshot is saved under `app_data/`).
-7. **Offline / local restore**: use **Restore from Local File…**, or open a `.tmas-backup.zip` via OS file association (Linux MIME / macOS UTI after packaging install). No Google Drive connection required.
-8. **Operator handoff (no Drive)**: click **Export for Handoff…** for a full `.tmas-backup.zip` (database, safe settings, Telethon sessions), or **Export Templates/Campaigns…** for a selective `entities.json` package. On restore, entity-only packages prompt for **merge** (upsert by name) or **replace** (soft-delete those kinds, then import). CLI: `handoff-export --entities …` and `handoff-import --mode merge|replace`. Desktop remains single-operator; multi-user roles belong to [SendGram](https://www.sendgram.pro). Prefer an encryption password for off-machine transfer.
+7. **Offline / local restore**: use **Restore from Local File…**, or open a `.tmas-backup.zip` via OS file association (Linux MIME / macOS UTI after packaging install). No cloud connection required.
+8. **Operator handoff (no cloud)**: click **Export for Handoff…** for a full `.tmas-backup.zip` (database, safe settings, Telethon sessions), or **Export Templates/Campaigns…** for a selective `entities.json` package. On restore, entity-only packages prompt for **merge** (upsert by name) or **replace** (soft-delete those kinds, then import). CLI: `handoff-export --entities …` and `handoff-import --mode merge|replace`. Desktop remains single-operator; multi-user roles belong to [SendGram](https://www.sendgram.pro). Prefer an encryption password for off-machine transfer.
 9. **Restart the application** after a restore so all components reload the database.
-10. Cloud restore and list/upload require network access to Google Drive. If you are offline or Drive is unreachable, the app shows a clear warning and **does not** replace the local database (local-file restore / handoff still work).
+10. Cloud restore and list/upload require network access to the selected provider. If you are offline or the provider is unreachable, the app shows a clear warning and **does not** replace the local database (local-file restore / handoff still work).
 
 ## Analytics export (Dashboard)
 

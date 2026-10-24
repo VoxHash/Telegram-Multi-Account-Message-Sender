@@ -132,6 +132,14 @@ class Settings(BaseSettings):
     google_drive_client_id: Optional[str] = None
     google_drive_client_secret: Optional[str] = None
 
+    # Cloud backup (S3-compatible: AWS S3, MinIO, R2, Wasabi, B2 S3 API, …)
+    s3_access_key_id: Optional[str] = None
+    s3_secret_access_key: Optional[str] = None
+    s3_bucket: Optional[str] = None
+    s3_region: str = "us-east-1"
+    s3_endpoint_url: Optional[str] = None
+    s3_prefix: str = "tmas/backups/"
+
     # Optional AI copy tools (OpenAI-compatible; user-supplied key, no SDK dependency)
     ai_api_key: Optional[str] = None
     ai_base_url: str = "https://api.openai.com/v1"

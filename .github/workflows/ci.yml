@@ -85,14 +85,40 @@ jobs:
     - name: Type check with mypy
       continue-on-error: true
       run: |
-        mypy app/ --ignore-missing-imports || true
+        mypy app/core app/services app/models --ignore-missing-imports || true
 
     - name: Test with pytest
+      if: ${{ !(matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11') }}
       run: |
-        pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -v || echo "Some tests may have failed"
+        pytest tests/ --cov=app --cov-report=term-missing -v
       env:
         QT_QPA_PLATFORM: offscreen
-      continue-on-error: true
+
+    # Coverage job summary + modest fail-under baseline (documented in ROADMAP / CHANGELOG).
+    # Current suite sits ~25% overall (GUI-heavy); baseline is 20% to catch regressions only.
+    - name: Test with pytest and coverage summary
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+      id: coverage
+      run: |
+        pytest tests/ --cov=app --cov-report=term-missing --cov-report=xml --cov-report=json --cov-fail-under=20 --junitxml=junit.xml -v
+        {
+          echo "## Coverage summary"
+          echo ""
+          echo "Baseline: fail-under **20%** line coverage on \`app\` (ubuntu / Python 3.11)."
+          echo ""
+          python -m coverage report --format=markdown --skip-empty || python -m coverage report --skip-empty
+        } >> "$GITHUB_STEP_SUMMARY"
+      env:
+        QT_QPA_PLATFORM: offscreen
+
+    - name: Upload coverage XML
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-xml
+        path: coverage.xml
+        if-no-files-found: warn
+        retention-days: 14
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'

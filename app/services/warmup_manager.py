@@ -22,7 +22,7 @@ class WarmupManager(QObject):
     warmup_progress = pyqtSignal(int, int, int)  # account_id, sent, target
     warmup_error = pyqtSignal(int, str)  # account_id, error_message
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.logger = get_logger()
         self.client_manager = TelegramClientManager()

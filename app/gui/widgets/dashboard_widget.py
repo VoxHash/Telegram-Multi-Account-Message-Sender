@@ -3,6 +3,8 @@ Dashboard widget with analytics and overview.
 """
 
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -16,6 +18,8 @@ from PyQt5.QtWidgets import (
     QFrame,
     QHeaderView,
     QAbstractItemView,
+    QFileDialog,
+    QMessageBox,
 )
 from PyQt5.QtCore import QTimer, pyqtSignal, Qt
 from PyQt5.QtGui import QFont, QColor, QBrush
@@ -98,13 +102,13 @@ class DashboardWidget(QWidget):
         self.analytics_collector = AnalyticsCollector()
         self.campaign_analytics = CampaignAnalytics(self.analytics_collector)
         self.health_monitor = AccountHealthMonitor()
-        self._health_rows: list = []
+        self._health_rows: List[Dict[str, Any]] = []
 
         self.setup_ui()
         self.setup_timer()
         self.refresh_data()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dashboard UI."""
         layout = QVBoxLayout(self)
         layout.setSpacing(16)
@@ -118,6 +122,14 @@ class DashboardWidget(QWidget):
         title_label.setFont(title_font)
         header_layout.addWidget(title_label)
         header_layout.addStretch()
+
+        export_csv_btn = QPushButton(_("dashboard.export_csv"))
+        export_csv_btn.clicked.connect(lambda: self.export_analytics("csv"))
+        header_layout.addWidget(export_csv_btn)
+
+        export_json_btn = QPushButton(_("dashboard.export_json"))
+        export_json_btn.clicked.connect(lambda: self.export_analytics("json"))
+        header_layout.addWidget(export_json_btn)
 
         refresh_btn = QPushButton(_("common.refresh"))
         refresh_btn.clicked.connect(self.refresh_data)
@@ -246,13 +258,13 @@ class DashboardWidget(QWidget):
 
         layout.addStretch()
 
-    def setup_timer(self):
+    def setup_timer(self) -> None:
         """Set up auto-refresh timer."""
         self.refresh_timer = QTimer()
         self.refresh_timer.timeout.connect(self.refresh_data)
         self.refresh_timer.start(30000)  # Refresh every 30 seconds
 
-    def refresh_data(self):
+    def refresh_data(self) -> None:
         """Refresh dashboard data."""
         try:
             self.update_stats_cards()
@@ -260,6 +272,100 @@ class DashboardWidget(QWidget):
             self.update_health_table()
         except Exception as e:
             self.logger.error(f"Error refreshing dashboard: {e}")
+
+    def _collect_analytics_export_payload(self) -> Optional[Dict[str, Any]]:
+        """Load campaigns and related send logs for CSV/JSON export."""
+        with get_session() as session:
+            campaigns = list(
+                session.exec(
+                    select(Campaign)
+                    .where(Campaign.is_deleted.is_(False))
+                    .order_by(Campaign.updated_at.desc())
+                ).all()
+            )
+            if not campaigns:
+                return None
+
+            campaign_ids = [c.id for c in campaigns if c.id is not None]
+            logs_by_campaign: Dict[int, List[SendLog]] = {cid: [] for cid in campaign_ids}
+            if campaign_ids:
+                logs = session.exec(
+                    select(SendLog).where(SendLog.campaign_id.in_(campaign_ids))
+                ).all()
+                for log in logs:
+                    if log.campaign_id in logs_by_campaign:
+                        logs_by_campaign[log.campaign_id].append(log)
+
+            return self.campaign_analytics.build_overview_export(campaigns, logs_by_campaign)
+
+    def export_analytics(self, fmt: str) -> None:
+        """Export campaign analytics to CSV or JSON via a save dialog."""
+        fmt = (fmt or "").lower().strip()
+        if fmt not in ("csv", "json"):
+            QMessageBox.warning(self, _("common.warning"), _("dashboard.export_failed").format(error="unsupported format"))
+            return
+
+        try:
+            payload = self._collect_analytics_export_payload()
+        except Exception as exc:
+            self.logger.error(f"Failed to collect analytics for export: {exc}")
+            QMessageBox.critical(
+                self,
+                _("common.error"),
+                _("dashboard.export_failed").format(error=str(exc)),
+            )
+            return
+
+        if not payload:
+            QMessageBox.information(self, _("dashboard.export_analytics"), _("dashboard.export_no_data"))
+            return
+
+        stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        if fmt == "csv":
+            title = _("dashboard.export_csv_title")
+            file_filter = _("dashboard.export_filter_csv")
+            default_name = f"tmms_analytics_{stamp}.csv"
+        else:
+            title = _("dashboard.export_json_title")
+            file_filter = _("dashboard.export_filter_json")
+            default_name = f"tmms_analytics_{stamp}.json"
+
+        path, _selected = QFileDialog.getSaveFileName(self, title, default_name, file_filter)
+        if not path:
+            return
+
+        if fmt == "csv" and not path.lower().endswith(".csv"):
+            path = f"{path}.csv"
+        if fmt == "json" and not path.lower().endswith(".json"):
+            path = f"{path}.json"
+
+        try:
+            if fmt == "csv":
+                ok = self.campaign_analytics.export_analytics_csv(payload, path)
+            else:
+                ok = self.campaign_analytics.export_analytics_json(payload, path)
+        except Exception as exc:
+            ok = False
+            self.logger.error(f"Analytics export failed: {exc}")
+            QMessageBox.critical(
+                self,
+                _("common.error"),
+                _("dashboard.export_failed").format(error=str(exc)),
+            )
+            return
+
+        if ok:
+            QMessageBox.information(
+                self,
+                _("common.success"),
+                _("dashboard.export_success").format(path=path),
+            )
+        else:
+            QMessageBox.critical(
+                self,
+                _("common.error"),
+                _("dashboard.export_failed").format(error="write failed"),
+            )
 
     def update_stats_cards(self):
         """Update statistics cards."""

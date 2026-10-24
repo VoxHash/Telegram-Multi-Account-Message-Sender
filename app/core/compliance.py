@@ -2,12 +2,16 @@
 Compliance and safety features.
 """
 
-from typing import Dict, List, Any
-from datetime import datetime
+from __future__ import annotations
+
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Set
 
 from ..models import Account, Campaign
 from ..services.logger import get_logger
+
+ComplianceCheckFn = Callable[[Campaign], Dict[str, Any]]
 
 
 @dataclass
@@ -16,7 +20,7 @@ class ComplianceRule:
 
     name: str
     description: str
-    check_function: callable
+    check_function: ComplianceCheckFn
     severity: str  # "warning", "error", "block"
     auto_fix: bool = False
 
@@ -24,10 +28,10 @@ class ComplianceRule:
 class ComplianceChecker:
     """Checks compliance with safety rules and regulations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize compliance checker."""
         self.logger = get_logger()
-        self.rules = self._setup_rules()
+        self.rules: List[ComplianceRule] = self._setup_rules()
 
     def _setup_rules(self) -> List[ComplianceRule]:
         """Set up compliance rules."""
@@ -201,12 +205,12 @@ class ComplianceChecker:
 class SafetyGuard:
     """Safety guard for preventing abuse and ensuring compliance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize safety guard."""
         self.logger = get_logger()
         self.compliance_checker = ComplianceChecker()
-        self.blocked_accounts: set = set()
-        self.blocked_campaigns: set = set()
+        self.blocked_accounts: Set[int] = set()
+        self.blocked_campaigns: Set[int] = set()
 
     def check_send_permission(self, account_id: int, campaign_id: int) -> bool:
         """Check if sending is permitted."""
@@ -220,24 +224,24 @@ class SafetyGuard:
 
         return True
 
-    def block_account(self, account_id: int, reason: str):
+    def block_account(self, account_id: int, reason: str) -> None:
         """Block an account from sending."""
         self.blocked_accounts.add(account_id)
         self.logger.log_safety_event("account_blocked", f"Account {account_id} blocked: {reason}")
 
-    def unblock_account(self, account_id: int):
+    def unblock_account(self, account_id: int) -> None:
         """Unblock an account."""
         self.blocked_accounts.discard(account_id)
         self.logger.log_safety_event("account_unblocked", f"Account {account_id} unblocked")
 
-    def block_campaign(self, campaign_id: int, reason: str):
+    def block_campaign(self, campaign_id: int, reason: str) -> None:
         """Block a campaign from running."""
         self.blocked_campaigns.add(campaign_id)
         self.logger.log_safety_event(
             "campaign_blocked", f"Campaign {campaign_id} blocked: {reason}"
         )
 
-    def unblock_campaign(self, campaign_id: int):
+    def unblock_campaign(self, campaign_id: int) -> None:
         """Unblock a campaign."""
         self.blocked_campaigns.discard(campaign_id)
         self.logger.log_safety_event("campaign_unblocked", f"Campaign {campaign_id} unblocked")

@@ -61,6 +61,15 @@ The application provides a graphical interface for managing multiple Telegram ac
 5. Optionally set an encryption password, then click **Backup Now** to upload a `.tmas-backup.zip` to Drive.
 6. Use **Refresh List** to see remote backups; select one and click **Restore Selected Backup** to replace the local database (a pre-restore snapshot is saved under `app_data/`).
 7. **Restart the application** after a restore so all components reload the database.
+8. Restore and list/upload require network access to Google Drive. If you are offline or Drive is unreachable, the app shows a clear warning and **does not** replace the local database.
+
+## Analytics export (Dashboard)
+
+From the **Dashboard** header:
+
+1. Click **Export CSV…** or **Export JSON…**.
+2. Choose a save path. The export includes a campaign summary table plus flattened metrics (CSV) or a structured overview with per-campaign reports (JSON).
+3. Empty databases (no campaigns) show a notice instead of writing a file.
 
 ## Advanced Features
 

@@ -45,7 +45,7 @@ class CampaignManager(QObject):
         self._campaign_status: Dict[int, str] = {}
 
         # Track sent recipients per campaign to avoid resending
-        self._sent_recipients: Dict[int, set] = {}  # campaign_id -> set of recipient_ids
+        self._sent_recipients: Dict[int, set[int]] = {}  # campaign_id -> set of recipient_ids
         self._campaign_recipient_hashes: Dict[int, str] = {}  # campaign_id -> recipient_list_hash
 
         # Setup timer for status updates

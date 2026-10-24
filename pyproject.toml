@@ -1,6 +1,6 @@
 [project]
 name = "telegram-multi-account-sender"
-version = "1.2.18"
+version = "1.2.19"
 description = "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"
 readme = "README.md"
 license = {text = "Eclipse Public License 2.0"}
@@ -214,6 +214,8 @@ omit = [
 ]
 
 [tool.coverage.report]
+# Modest CI baseline is enforced only in .github/workflows/ci.yml (ubuntu/3.11 --cov-fail-under=20).
+# Do not set fail_under here — subset local runs would under-report and fail spuriously.
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

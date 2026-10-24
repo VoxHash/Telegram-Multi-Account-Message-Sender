@@ -10,6 +10,11 @@ from .backup_package import (
 )
 from .cloud_backup_service import CloudBackupService, CloudBackupServiceError
 from .google_drive import GoogleDriveError, GoogleDriveProvider
+from .network import (
+    check_network_available,
+    format_offline_error,
+    is_offline_error_message,
+)
 from .provider_base import CloudProvider, RemoteBackupItem
 from .token_store import DriveTokenStore
 
@@ -25,4 +30,7 @@ __all__ = [
     "GoogleDriveError",
     "GoogleDriveProvider",
     "RemoteBackupItem",
+    "check_network_available",
+    "format_offline_error",
+    "is_offline_error_message",
 ]

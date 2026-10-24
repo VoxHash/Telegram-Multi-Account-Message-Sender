@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import (
 from ...services import get_logger
 from ...services.cloud import CloudBackupService, RemoteBackupItem
 from ...services.cloud.cloud_backup_service import CloudBackupServiceError
+from ...services.cloud.network import is_offline_error_message
 from ...services.translation import _
 
 
@@ -196,7 +197,24 @@ class CloudBackupWidget(QWidget):
                 if self._worker.operation == "connect":
                     self.refresh_backup_list()
         else:
-            QMessageBox.critical(self, _("common.error"), message)
+            self._show_cloud_error(message)
+
+    def _show_cloud_error(self, message: str) -> None:
+        """Show offline-aware restore/list/backup errors with actionable guidance."""
+        operation = self._worker.operation if self._worker else ""
+        if is_offline_error_message(message):
+            if operation == "restore":
+                title = _("settings.cloud_offline_restore_title")
+                body = _("settings.cloud_offline_restore_message")
+            else:
+                title = _("settings.cloud_offline_title")
+                body = _("settings.cloud_offline_message")
+            detail = message.strip()
+            if detail:
+                body = f"{body}\n\n{detail}"
+            QMessageBox.warning(self, title, body)
+            return
+        QMessageBox.critical(self, _("common.error"), message)
 
     def connect_google_drive(self):
         self._start_worker("connect")
@@ -240,6 +258,14 @@ class CloudBackupWidget(QWidget):
             QMessageBox.No,
         )
         if confirm != QMessageBox.Yes:
+            return
+
+        if not self.service.is_google_drive_connected():
+            QMessageBox.warning(
+                self,
+                _("common.warning"),
+                _("settings.cloud_status_disconnected"),
+            )
             return
 
         self._start_worker("restore", remote_id=remote_id, password=self._password())

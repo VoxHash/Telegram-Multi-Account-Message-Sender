@@ -10,6 +10,11 @@ from app.services import get_logger
 from app.services.settings import get_settings
 
 from .backup_package import BACKUP_FILE_EXTENSION
+from .network import (
+    format_drive_unavailable_error,
+    format_offline_error,
+    is_network_exception,
+)
 from .provider_base import CloudProvider, RemoteBackupItem
 from .token_store import DriveTokenStore
 
@@ -47,32 +52,38 @@ class GoogleDriveProvider(CloudProvider):
                 "Set GOOGLE_DRIVE_CLIENT_ID and GOOGLE_DRIVE_CLIENT_SECRET in .env"
             )
 
-        credentials = None
-        token_data = self.token_store.load()
-        if token_data:
-            credentials = Credentials.from_authorized_user_info(token_data, GOOGLE_DRIVE_SCOPES)
+        try:
+            credentials = None
+            token_data = self.token_store.load()
+            if token_data:
+                credentials = Credentials.from_authorized_user_info(token_data, GOOGLE_DRIVE_SCOPES)
 
-        if credentials and credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
-        elif not credentials or not credentials.valid:
-            flow = InstalledAppFlow.from_client_config(
-                {
-                    "installed": {
-                        "client_id": settings.google_drive_client_id,
-                        "client_secret": settings.google_drive_client_secret,
-                        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                        "token_uri": "https://oauth2.googleapis.com/token",
-                        "redirect_uris": ["http://localhost"],
-                    }
-                },
-                GOOGLE_DRIVE_SCOPES,
-            )
-            credentials = flow.run_local_server(port=0)
+            if credentials and credentials.expired and credentials.refresh_token:
+                credentials.refresh(Request())
+            elif not credentials or not credentials.valid:
+                flow = InstalledAppFlow.from_client_config(
+                    {
+                        "installed": {
+                            "client_id": settings.google_drive_client_id,
+                            "client_secret": settings.google_drive_client_secret,
+                            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                            "redirect_uris": ["http://localhost"],
+                        }
+                    },
+                    GOOGLE_DRIVE_SCOPES,
+                )
+                credentials = flow.run_local_server(port=0)
 
-        self.token_store.save(_credentials_to_dict(credentials))
-        self._credentials = credentials
-        self._service = build("drive", "v3", credentials=credentials, cache_discovery=False)
-        self._backup_folder_id = self._ensure_backup_folder_id()
+            self.token_store.save(_credentials_to_dict(credentials))
+            self._credentials = credentials
+            self._service = build("drive", "v3", credentials=credentials, cache_discovery=False)
+            self._backup_folder_id = self._ensure_backup_folder_id()
+        except GoogleDriveError:
+            raise
+        except Exception as exc:
+            raise _map_drive_exception(exc, operation="authentication") from exc
+
         self.logger.info("Google Drive authentication successful")
         return True
 
@@ -94,13 +105,17 @@ class GoogleDriveProvider(CloudProvider):
         folder_id = self._require_backup_folder_id()
         MediaFileUpload = _import_google_deps()[-1]
 
-        media = MediaFileUpload(str(local_path), resumable=True)
-        metadata = {"name": remote_name, "parents": [folder_id]}
-        created = (
-            service.files()
-            .create(body=metadata, media_body=media, fields="id,name,size,createdTime")
-            .execute()
-        )
+        try:
+            media = MediaFileUpload(str(local_path), resumable=True)
+            metadata = {"name": remote_name, "parents": [folder_id]}
+            created = (
+                service.files()
+                .create(body=metadata, media_body=media, fields="id,name,size,createdTime")
+                .execute()
+            )
+        except Exception as exc:
+            raise _map_drive_exception(exc, operation="backup upload") from exc
+
         file_id = created["id"]
         self.logger.info(f"Uploaded backup to Google Drive: {remote_name} ({file_id})")
         return file_id
@@ -111,9 +126,13 @@ class GoogleDriveProvider(CloudProvider):
         local_path = Path(local_path)
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
-        request = service.files().get_media(fileId=remote_id)
-        content = request.execute()
-        local_path.write_bytes(content)
+        try:
+            request = service.files().get_media(fileId=remote_id)
+            content = request.execute()
+            local_path.write_bytes(content)
+        except Exception as exc:
+            raise _map_drive_exception(exc, operation="backup download") from exc
+
         self.logger.info(f"Downloaded Google Drive backup {remote_id} to {local_path}")
         return local_path
 
@@ -126,16 +145,19 @@ class GoogleDriveProvider(CloudProvider):
             f"'{folder_id}' in parents and trashed=false "
             f"and name contains '{BACKUP_FILE_EXTENSION}'"
         )
-        response = (
-            service.files()
-            .list(
-                q=query,
-                spaces="drive",
-                fields="files(id,name,size,createdTime)",
-                orderBy="createdTime desc",
+        try:
+            response = (
+                service.files()
+                .list(
+                    q=query,
+                    spaces="drive",
+                    fields="files(id,name,size,createdTime)",
+                    orderBy="createdTime desc",
+                )
+                .execute()
             )
-            .execute()
-        )
+        except Exception as exc:
+            raise _map_drive_exception(exc, operation="listing backups") from exc
 
         items: List[RemoteBackupItem] = []
         for file_meta in response.get("files", []):
@@ -153,7 +175,10 @@ class GoogleDriveProvider(CloudProvider):
     def delete(self, remote_id: str) -> bool:
         """Permanently delete a remote backup file."""
         service = self._require_service()
-        service.files().delete(fileId=remote_id).execute()
+        try:
+            service.files().delete(fileId=remote_id).execute()
+        except Exception as exc:
+            raise _map_drive_exception(exc, operation="deleting backup") from exc
         self.logger.info(f"Deleted Google Drive backup {remote_id}")
         return True
 
@@ -232,3 +257,17 @@ def _parse_drive_timestamp(value: Optional[str]) -> datetime:
         return datetime.now(timezone.utc)
     normalized = value.replace("Z", "+00:00")
     return datetime.fromisoformat(normalized)
+
+
+def _map_drive_exception(exc: BaseException, *, operation: str) -> GoogleDriveError:
+    """Map low-level network/API failures to clear GoogleDriveError messages."""
+    if isinstance(exc, GoogleDriveError):
+        return exc
+    if is_network_exception(exc):
+        return GoogleDriveError(format_offline_error(operation))
+    detail = str(exc).strip() or exc.__class__.__name__
+    # HTTP 5xx / transport failures from the API client often surface as generic Exception
+    lowered = detail.lower()
+    if any(token in lowered for token in ("503", "500", "502", "504", "backend error", "unavailable")):
+        return GoogleDriveError(format_drive_unavailable_error(detail))
+    return GoogleDriveError(f"Google Drive {operation} failed: {detail}")

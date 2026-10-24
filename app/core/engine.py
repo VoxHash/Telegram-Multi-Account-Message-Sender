@@ -3,7 +3,7 @@ Message engine for handling campaign execution.
 """
 
 import asyncio
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 from ..models import Campaign, Account, Recipient
@@ -16,13 +16,13 @@ from .spintax import SpintaxProcessor
 class MessageEngine:
     """Core message sending engine."""
 
-    def __init__(self, client_manager: TelegramClientManager):
+    def __init__(self, client_manager: TelegramClientManager) -> None:
         """Initialize message engine."""
         self.client_manager = client_manager
         self.throttler = Throttler()
         self.spintax_processor = SpintaxProcessor()
         self.logger = get_logger()
-        self._running_campaigns: Dict[int, asyncio.Task] = {}
+        self._running_campaigns: Dict[int, asyncio.Task[Any]] = {}
 
     async def send_message(
         self,
@@ -58,7 +58,7 @@ class MessageEngine:
 class CampaignRunner:
     """Runs campaigns and manages message sending."""
 
-    def __init__(self, message_engine: MessageEngine):
+    def __init__(self, message_engine: MessageEngine) -> None:
         """Initialize campaign runner."""
         self.message_engine = message_engine
         self.logger = get_logger()
@@ -120,7 +120,7 @@ class CampaignRunner:
 
     async def _send_campaign_message(
         self, campaign: Campaign, account: Account, recipient: Recipient
-    ):
+    ) -> None:
         """Send a campaign message."""
         try:
             # Get message content

@@ -12,7 +12,7 @@ from ..services.logger import get_logger
 class MessageForwarder:
     """Handles forwarding messages from Telegram chats/channels."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize message forwarder."""
         self.logger = get_logger()
 

@@ -36,6 +36,16 @@ Common issues and solutions for Telegram Multi-Account Message Sender.
 4. Complete the browser OAuth consent when prompted
 5. After restore, restart the app so the database connection reloads
 
+### Cloud restore fails while offline
+
+**Problem:** Restore (or list/backup) shows “Offline or Drive unreachable” / “Cannot restore while offline”
+
+**Solutions:**
+1. Confirm internet connectivity (and that VPN/firewall allows `googleapis.com`)
+2. Retry **Refresh List**, then restore when online
+3. Local data is left unchanged until a download succeeds; if a pre-restore snapshot path is shown after a mid-flight failure, keep that file under `app_data/`
+4. You can continue using the app fully offline; only cloud sync needs the network
+
 ### Dependencies Installation Fails
 
 **Problem:** `pip install` fails with errors

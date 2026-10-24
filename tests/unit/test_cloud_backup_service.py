@@ -47,10 +47,14 @@ class TestCloudBackupService:
         service = CloudBackupService(provider=mock_provider, package_builder=mock_builder)
 
         with patch(
-            "app.services.cloud.cloud_backup_service.BackupPackageBuilder.generate_filename",
-            return_value="telegram-sender-backup-test.tmas-backup.zip",
+            "app.services.cloud.cloud_backup_service.check_network_available",
+            return_value=True,
         ):
-            remote_id = service.backup_to_google_drive(password="secret")
+            with patch(
+                "app.services.cloud.cloud_backup_service.BackupPackageBuilder.generate_filename",
+                return_value="telegram-sender-backup-test.tmas-backup.zip",
+            ):
+                remote_id = service.backup_to_google_drive(password="secret")
 
         assert remote_id == "remote-123"
         mock_builder.build.assert_called_once()
@@ -84,16 +88,22 @@ class TestCloudBackupService:
             return path
 
         with patch(
-            "app.services.cloud.cloud_backup_service.backup_database",
-            side_effect=_fake_backup_database,
+            "app.services.cloud.cloud_backup_service.check_network_available",
+            return_value=True,
         ):
-            with patch("app.services.cloud.cloud_backup_service.restore_database") as mock_restore:
-                def _fake_download(_remote_id, local_path):
-                    Path(local_path).write_bytes(b"zip")
-                    return Path(local_path)
+            with patch(
+                "app.services.cloud.cloud_backup_service.backup_database",
+                side_effect=_fake_backup_database,
+            ):
+                with patch(
+                    "app.services.cloud.cloud_backup_service.restore_database"
+                ) as mock_restore:
+                    def _fake_download(_remote_id, local_path):
+                        Path(local_path).write_bytes(b"zip")
+                        return Path(local_path)
 
-                mock_provider.download.side_effect = _fake_download
-                pre_restore = service.restore_from_google_drive("remote-123")
+                    mock_provider.download.side_effect = _fake_download
+                    pre_restore = service.restore_from_google_drive("remote-123")
 
         assert pre_restore.exists()
         assert pre_restore.parent == app_data

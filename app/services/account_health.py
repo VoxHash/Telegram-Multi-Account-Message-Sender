@@ -32,7 +32,7 @@ def _status_value(status: Any) -> str:
 class AccountHealthMonitor:
     """Monitors account health and performance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize account health monitor."""
         self.logger = get_logger()
 

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.19] - 2026-10-24
+
+### Added
+- **CI coverage summary**: Ubuntu / Python 3.11 job publishes a markdown coverage report to the GitHub Actions job summary, uploads `coverage.xml`, and enforces a modest **20%** `--cov-fail-under` baseline (suite currently ~25% overall; GUI remains lightly covered).
+- **Offline-friendly cloud restore messaging**: Network probe before connect/list/backup/restore; clear Settings → Cloud Backup warnings when offline or Google Drive is unreachable; local DB left unchanged until download succeeds; failed downloads keep the pre-restore snapshot path in the error.
+- **Analytics CSV/JSON export**: Dashboard **Export CSV…** / **Export JSON…** writes real campaign overview analytics (summary table + per-campaign reports).
+- **Unit tests** for analytics export and offline cloud restore fail-fast paths.
+
+### Changed
+- **Type hints**: Incremental annotations on high-value `app.core` / `app.services` modules (analytics, compliance, engine, message forwarder, campaign/warmup managers, account health).
+- **CI**: pytest failures are no longer swallowed with `continue-on-error`; mypy scoped to `app/core`, `app/services`, `app/models` (still non-blocking).
+
 ## [1.2.18] - 2026-10-24
 
 ### Changed

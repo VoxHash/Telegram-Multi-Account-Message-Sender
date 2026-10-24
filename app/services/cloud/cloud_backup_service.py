@@ -17,6 +17,7 @@ from .backup_package import (
     BackupPackageError,
 )
 from .google_drive import GoogleDriveError, GoogleDriveProvider
+from .network import check_network_available, format_offline_error
 from .provider_base import RemoteBackupItem
 
 
@@ -31,14 +32,20 @@ class CloudBackupService:
         self,
         provider: Optional[GoogleDriveProvider] = None,
         package_builder: Optional[BackupPackageBuilder] = None,
-    ):
+    ) -> None:
         self.logger = get_logger()
         self.settings = get_settings()
         self.provider = provider or GoogleDriveProvider()
         self.package_builder = package_builder or BackupPackageBuilder()
 
+    def _require_online(self, operation: str) -> None:
+        """Fail fast with offline-friendly messaging when the network is down."""
+        if not check_network_available():
+            raise CloudBackupServiceError(format_offline_error(operation))
+
     def connect_google_drive(self) -> None:
         """Authenticate with Google Drive."""
+        self._require_online("Google Drive connect")
         try:
             if not self.provider.authenticate():
                 raise CloudBackupServiceError("Google Drive authentication failed")
@@ -57,6 +64,7 @@ class CloudBackupService:
         """Build a backup package and upload it to Google Drive."""
         if not self.is_google_drive_connected():
             raise CloudBackupServiceError("Connect to Google Drive before creating a backup")
+        self._require_online("cloud backup upload")
 
         filename = BackupPackageBuilder.generate_filename()
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -78,6 +86,7 @@ class CloudBackupService:
         """List backup packages stored on Google Drive."""
         if not self.is_google_drive_connected():
             raise CloudBackupServiceError("Connect to Google Drive to list backups")
+        self._require_online("listing cloud backups")
         try:
             return self.provider.list_backups()
         except GoogleDriveError as exc:
@@ -90,9 +99,12 @@ class CloudBackupService:
         Download a remote backup, verify it, snapshot the current DB, and restore.
 
         Returns the path to the pre-restore local database snapshot.
+        Raises before modifying the local database when offline / Drive unreachable.
         """
         if not self.is_google_drive_connected():
             raise CloudBackupServiceError("Connect to Google Drive before restoring")
+        # Probe network before any local snapshot so offline restores leave DB untouched.
+        self._require_online("cloud restore")
 
         app_data = Path(self.settings.app_data_dir)
         app_data.mkdir(parents=True, exist_ok=True)
@@ -113,7 +125,9 @@ class CloudBackupService:
             try:
                 self.provider.download(remote_id, package_path)
             except GoogleDriveError as exc:
-                raise CloudBackupServiceError(str(exc)) from exc
+                raise CloudBackupServiceError(
+                    f"{exc} Pre-restore snapshot kept at: {pre_restore_path}"
+                ) from exc
 
             try:
                 self.package_builder.verify(package_path, password=password)
@@ -121,16 +135,24 @@ class CloudBackupService:
                     package_path, extract_dir, password=password
                 )
             except BackupPackageError as exc:
-                raise CloudBackupServiceError(str(exc)) from exc
+                raise CloudBackupServiceError(
+                    f"{exc} Pre-restore snapshot kept at: {pre_restore_path}"
+                ) from exc
 
             database_file = extracted.get(DATABASE_FILENAME)
             if not database_file or not database_file.exists():
-                raise CloudBackupServiceError("Backup package does not contain app.db")
+                raise CloudBackupServiceError(
+                    "Backup package does not contain app.db. "
+                    f"Pre-restore snapshot kept at: {pre_restore_path}"
+                )
 
             try:
                 restore_database(database_file)
             except Exception as exc:
-                raise CloudBackupServiceError(f"Database restore failed: {exc}") from exc
+                raise CloudBackupServiceError(
+                    f"Database restore failed: {exc}. "
+                    f"Pre-restore snapshot kept at: {pre_restore_path}"
+                ) from exc
 
         self.logger.info(f"Restored database from Google Drive backup {remote_id}")
         return pre_restore_path

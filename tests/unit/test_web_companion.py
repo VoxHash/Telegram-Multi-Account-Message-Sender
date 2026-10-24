@@ -6,7 +6,9 @@ from __future__ import annotations
 
 import json
 import threading
+from datetime import datetime
 from http.client import HTTPConnection
+from types import SimpleNamespace
 from typing import Any, Dict, Optional
 from unittest.mock import patch
 
@@ -18,6 +20,10 @@ from app.services.web_companion import (
     READ_ONLY_API_PATHS,
     WebCompanionHandler,
     WebCompanionServer,
+    aggregate_campaign_bars,
+    aggregate_health_breakdown,
+    aggregate_hourly_activity,
+    aggregate_status_breakdown,
     extract_request_token,
     generate_companion_token,
     is_loopback_host,
@@ -34,7 +40,18 @@ def _builders() -> Dict[str, Any]:
         "/api/accounts": lambda: {"summary": {"total": 0}, "accounts": []},
         "/api/campaigns": lambda: {"summary": {"campaign_count": 0}, "campaigns": []},
         "/api/activity": lambda: {"limit": 50, "activity": []},
-        "/api/overview": lambda: {"generated_at": "2026-10-24T00:00:00Z", "accounts": []},
+        "/api/overview": lambda: {
+            "generated_at": "2026-10-24T00:00:00Z",
+            "accounts": [],
+            "charts": {"activity_hourly": [], "status_breakdown": []},
+        },
+        "/api/charts": lambda: {
+            "window_hours": 24,
+            "activity_hourly": [],
+            "status_breakdown": [],
+            "campaign_bars": [],
+            "health_breakdown": [],
+        },
     }
 
 
@@ -173,6 +190,7 @@ class TestReadOnlyApiPaths:
         assert "/api/campaigns" in READ_ONLY_API_PATHS
         assert "/api/activity" in READ_ONLY_API_PATHS
         assert "/api/overview" in READ_ONLY_API_PATHS
+        assert "/api/charts" in READ_ONLY_API_PATHS
         # No mutating pseudo-paths registered
         for banned in ("/api/send", "/api/campaigns/start", "/api/control", "/api/write"):
             assert banned not in READ_ONLY_API_PATHS
@@ -197,6 +215,17 @@ class TestWebCompanionHttp:
         assert status == 200
         assert "text/html" in headers.get("Content-Type", "")
         assert b"Read-only" in body or b"read-only" in body.lower()
+        assert b"Live charts" in body or b"chart-activity" in body
+
+    def test_get_charts_json(self, companion_server):
+        status, headers, body = _request(companion_server, "GET", "/api/charts")
+        assert status == 200
+        assert "application/json" in headers.get("Content-Type", "")
+        payload = json.loads(body.decode("utf-8"))
+        assert "activity_hourly" in payload
+        assert "status_breakdown" in payload
+        assert "campaign_bars" in payload
+        assert "health_breakdown" in payload
 
     def test_post_rejected(self, companion_server):
         status, headers, body = _request(
@@ -335,6 +364,64 @@ class TestSettingsWebCompanion:
     def test_make_snapshot_builders_keys(self):
         builders = make_snapshot_builders()
         assert set(builders.keys()) == READ_ONLY_API_PATHS
+
+
+class TestChartAggregators:
+    def test_hourly_activity_buckets(self):
+        now = datetime(2026, 10, 24, 15, 30, 0)
+        logs = [
+            SimpleNamespace(status="sent", sent_at=datetime(2026, 10, 24, 15, 10, 0)),
+            SimpleNamespace(status="sent", sent_at=datetime(2026, 10, 24, 15, 20, 0)),
+            SimpleNamespace(status="failed", sent_at=datetime(2026, 10, 24, 14, 5, 0)),
+            SimpleNamespace(status="skipped", completed_at=datetime(2026, 10, 24, 14, 40, 0)),
+            SimpleNamespace(status="sent", sent_at=datetime(2026, 10, 23, 10, 0, 0)),  # outside
+        ]
+        series = aggregate_hourly_activity(logs, hours=3, now=now)
+        assert len(series) == 3
+        by_label = {row["label"]: row for row in series}
+        assert by_label["15:00"]["sent"] == 2
+        assert by_label["14:00"]["failed"] == 1
+        assert by_label["14:00"]["other"] == 1
+        assert by_label["13:00"]["total"] == 0
+
+    def test_status_breakdown_sorted(self):
+        logs = [
+            SimpleNamespace(status="sent"),
+            SimpleNamespace(status="sent"),
+            SimpleNamespace(status="failed"),
+        ]
+        items = aggregate_status_breakdown(logs)
+        assert items[0]["key"] == "sent"
+        assert items[0]["count"] == 2
+        assert items[1]["key"] == "failed"
+        assert items[1]["count"] == 1
+        assert items[0]["color"]
+
+    def test_campaign_bars_top_by_attempted(self):
+        campaigns = [
+            SimpleNamespace(id=1, name="low", sent_count=1, failed_count=0),
+            SimpleNamespace(id=2, name="high", sent_count=10, failed_count=2),
+            SimpleNamespace(id=3, name="mid", sent_count=3, failed_count=1),
+        ]
+        bars = aggregate_campaign_bars(campaigns, limit=2)
+        assert len(bars) == 2
+        assert bars[0]["label"] == "high"
+        assert bars[0]["sent"] == 10
+        assert bars[0]["failed"] == 2
+        assert bars[1]["label"] == "mid"
+
+    def test_health_breakdown(self):
+        accounts = [
+            {"health_status": "good"},
+            {"health_status": "good"},
+            {"health_status": "warning"},
+            {"health_status": "offline"},
+        ]
+        items = aggregate_health_breakdown(accounts)
+        by_key = {row["key"]: row["count"] for row in items}
+        assert by_key["good"] == 2
+        assert by_key["warning"] == 1
+        assert by_key["offline"] == 1
 
 
 class TestCliWebMonitorDispatch:

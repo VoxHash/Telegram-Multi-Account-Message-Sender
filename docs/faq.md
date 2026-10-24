@@ -109,7 +109,7 @@ Open **Plugins → Browse Registry** to discover curated plugins from the offici
 
 ### What is the web companion?
 
-An optional **read-only** local monitor (`telegram-sender web-monitor` or Settings → Start & Open). It serves account health, campaign status, and recent activity over stdlib HTTP — no extra packages, no send/control APIs. Keep the default `127.0.0.1` bind. Set `WEB_COMPANION_TOKEN` (or `--token`) for Bearer / `X-TMAS-Token` / `?token=` auth; non-localhost binds require a token. Prefer a TLS reverse proxy in front of localhost — see [Configuration](configuration.md).
+An optional **read-only** local monitor (`telegram-sender web-monitor` or Settings → Start & Open). It serves account health, campaign status, recent activity, and **live SVG charts** (hourly activity, send-status and health donuts, campaign bars) over stdlib HTTP — no extra packages, no send/control APIs. Chart JSON is also at `/api/charts`. Keep the default `127.0.0.1` bind. Set `WEB_COMPANION_TOKEN` (or `--token`) for Bearer / `X-TMAS-Token` / `?token=` auth; non-localhost binds require a token. Prefer a TLS reverse proxy in front of localhost — see [Configuration](configuration.md).
 
 ### How do I schedule a campaign?
 

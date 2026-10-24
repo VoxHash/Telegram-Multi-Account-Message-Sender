@@ -16,7 +16,7 @@ import hmac
 import json
 import secrets
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
 from urllib.parse import parse_qs, quote, urlparse
@@ -38,6 +38,7 @@ READ_ONLY_API_PATHS: Set[str] = {
     "/api/campaigns",
     "/api/activity",
     "/api/overview",
+    "/api/charts",
 }
 
 ALLOWED_METHODS: Set[str] = {"GET", "HEAD", "OPTIONS"}
@@ -46,6 +47,10 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 DEFAULT_ACTIVITY_LIMIT = 50
 MAX_ACTIVITY_LIMIT = 200
+DEFAULT_CHART_HOURS = 24
+MAX_CHART_HOURS = 168
+DEFAULT_CHART_LOG_LIMIT = 2000
+MAX_CHART_CAMPAIGNS = 8
 
 LOOPBACK_HOSTS: Set[str] = {"127.0.0.1", "localhost", "::1"}
 
@@ -56,15 +61,21 @@ _HTML_PAGE = """<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>TMAS Monitor</title>
   <style>
-    :root { color-scheme: light dark; --bg:#0f1419; --card:#1a2332; --fg:#e7ecf3; --muted:#9aa7b8; --ok:#3dcc91; --warn:#e6b84d; --bad:#e85d5d; }
+    :root { color-scheme: light dark; --bg:#0f1419; --card:#1a2332; --fg:#e7ecf3; --muted:#9aa7b8; --ok:#3dcc91; --warn:#e6b84d; --bad:#e85d5d; --accent:#2d6cdf; --sent:#3dcc91; --fail:#e85d5d; --skip:#9aa7b8; }
     body { margin:0; font-family: ui-sans-serif, system-ui, sans-serif; background:var(--bg); color:var(--fg); }
-    main { max-width:960px; margin:0 auto; padding:1.5rem; }
+    main { max-width:1100px; margin:0 auto; padding:1.5rem; }
     h1 { font-size:1.35rem; margin:0 0 .25rem; }
     .sub { color:var(--muted); margin:0 0 1.25rem; font-size:.9rem; }
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.75rem; margin-bottom:1.25rem; }
     .card { background:var(--card); border-radius:8px; padding:.9rem 1rem; }
     .card .n { font-size:1.4rem; font-weight:600; }
     .card .l { color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+    .charts { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:.75rem; margin-bottom:1.5rem; }
+    .chart-card { background:var(--card); border-radius:8px; padding:.9rem 1rem; }
+    .chart-card h3 { margin:0 0 .5rem; font-size:.85rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .chart-card svg { width:100%; height:auto; display:block; }
+    .legend { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:.5rem; font-size:.75rem; color:var(--muted); }
+    .legend span::before { content:''; display:inline-block; width:.55rem; height:.55rem; border-radius:2px; margin-right:.3rem; vertical-align:middle; background:currentColor; }
     section { margin-bottom:1.5rem; }
     h2 { font-size:1rem; margin:0 0 .6rem; color:var(--muted); font-weight:600; }
     table { width:100%; border-collapse:collapse; font-size:.85rem; }
@@ -82,7 +93,7 @@ _HTML_PAGE = """<!DOCTYPE html>
 <body>
 <main>
   <h1>Telegram Multi-Account Sender — Monitor</h1>
-  <p class="sub">Read-only local companion. Desktop app remains the control surface.</p>
+  <p class="sub">Read-only local companion with live charts. Desktop app remains the control surface.</p>
   <div class="bar">
     <button type="button" id="refresh">Refresh</button>
     <input type="password" id="token" placeholder="Bearer token (if required)" autocomplete="off"/>
@@ -90,6 +101,17 @@ _HTML_PAGE = """<!DOCTYPE html>
     <span class="sub" id="stamp">Loading…</span>
   </div>
   <div class="grid" id="summary"></div>
+  <section>
+    <h2>Live charts</h2>
+    <div class="charts">
+      <div class="chart-card"><h3>Activity (24h)</h3><div id="chart-activity"></div>
+        <div class="legend"><span style="color:var(--sent)">Sent</span><span style="color:var(--fail)">Failed</span><span style="color:var(--skip)">Other</span></div>
+      </div>
+      <div class="chart-card"><h3>Send status</h3><div id="chart-status"></div></div>
+      <div class="chart-card"><h3>Campaigns (sent vs failed)</h3><div id="chart-campaigns"></div></div>
+      <div class="chart-card"><h3>Account health</h3><div id="chart-health"></div></div>
+    </div>
+  </section>
   <section>
     <h2>Accounts</h2>
     <table><thead><tr><th>Name</th><th>Health</th><th>Score</th><th>Status</th></tr></thead>
@@ -108,6 +130,7 @@ _HTML_PAGE = """<!DOCTYPE html>
   <p class="err" id="error" hidden></p>
 </main>
 <script>
+const COLORS = {sent:'#3dcc91',failed:'#e85d5d',other:'#9aa7b8',excellent:'#3dcc91',good:'#5bb8a0',warning:'#e6b84d',critical:'#e85d5d',offline:'#6b7785',accent:'#2d6cdf'};
 function getToken() {
   const params = new URLSearchParams(location.search);
   const q = params.get('token');
@@ -119,6 +142,89 @@ function authHeaders() {
   const h = {};
   if (t) h['Authorization'] = 'Bearer ' + t;
   return h;
+}
+function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function _status(s){ if (s && typeof s === 'object' && s.value) return s.value; return s; }
+function emptyChart(msg){ return `<svg viewBox="0 0 320 120" role="img"><text x="160" y="64" text-anchor="middle" fill="#9aa7b8" font-size="12">${esc(msg)}</text></svg>`; }
+function renderActivity(series) {
+  const el = document.getElementById('chart-activity');
+  if (!series || !series.length) { el.innerHTML = emptyChart('No activity in window'); return; }
+  const w=320,h=140,padL=28,padR=8,padT=12,padB=28;
+  const max = Math.max(1, ...series.map(p => (p.sent||0)+(p.failed||0)+(p.other||0)));
+  const iw=w-padL-padR, ih=h-padT-padB;
+  const x = (i) => padL + (series.length<=1 ? iw/2 : (i/(series.length-1))*iw);
+  const y = (v) => padT + ih - (v/max)*ih;
+  const path = (key, color) => {
+    const pts = series.map((p,i) => `${i?'L':'M'}${x(i).toFixed(1)},${y(p[key]||0).toFixed(1)}`).join(' ');
+    return `<path d="${pts}" fill="none" stroke="${color}" stroke-width="2"/>`;
+  };
+  const labels = [0, Math.floor(series.length/2), series.length-1].filter((v,i,a)=>a.indexOf(v)===i);
+  const labelEls = labels.map(i => {
+    const lab = (series[i].label || series[i].hour || '').toString().slice(-5);
+    return `<text x="${x(i).toFixed(1)}" y="${h-6}" text-anchor="middle" fill="#9aa7b8" font-size="9">${esc(lab)}</text>`;
+  }).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Hourly activity">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+ih}" stroke="#2a3545"/>
+    <line x1="${padL}" y1="${padT+ih}" x2="${padL+iw}" y2="${padT+ih}" stroke="#2a3545"/>
+    ${path('sent', COLORS.sent)}${path('failed', COLORS.failed)}${path('other', COLORS.other)}
+    ${labelEls}
+  </svg>`;
+}
+function renderDonut(items, targetId) {
+  const el = document.getElementById(targetId);
+  const rows = (items || []).filter(r => (r.count||0) > 0);
+  if (!rows.length) { el.innerHTML = emptyChart('No data'); return; }
+  const total = rows.reduce((s,r)=>s+(r.count||0),0);
+  const cx=90,cy=70,r=48,stroke=16;
+  let angle = -Math.PI/2;
+  const arcs = rows.map(row => {
+    const frac = (row.count||0)/total;
+    const sweep = frac * Math.PI * 2;
+    const x1 = cx + r*Math.cos(angle), y1 = cy + r*Math.sin(angle);
+    angle += sweep;
+    const x2 = cx + r*Math.cos(angle), y2 = cy + r*Math.sin(angle);
+    const large = sweep > Math.PI ? 1 : 0;
+    const color = row.color || COLORS[row.key] || COLORS[row.label] || COLORS.accent;
+    const d = `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="butt"/>`;
+  }).join('');
+  const legend = rows.map(r => {
+    const color = r.color || COLORS[r.key] || COLORS[r.label] || COLORS.accent;
+    return `<span style="color:${color}">${esc(r.label||r.key)} (${r.count})</span>`;
+  }).join('');
+  el.innerHTML = `<svg viewBox="0 0 180 140" role="img">${arcs}
+    <text x="${cx}" y="${cy+4}" text-anchor="middle" fill="#e7ecf3" font-size="14" font-weight="600">${total}</text>
+    <text x="${cx}" y="${cy+18}" text-anchor="middle" fill="#9aa7b8" font-size="9">total</text>
+  </svg><div class="legend">${legend}</div>`;
+}
+function renderBars(items, keys, colors) {
+  const el = document.getElementById('chart-campaigns');
+  const rows = items || [];
+  if (!rows.length) { el.innerHTML = emptyChart('No campaigns'); return; }
+  const w=320, rowH=22, padL=90, padR=12, padT=8, h=padT+rows.length*rowH+8;
+  const max = Math.max(1, ...rows.map(r => keys.reduce((s,k)=>s+(r[k]||0),0)));
+  const iw = w-padL-padR;
+  const body = rows.map((r,i) => {
+    const y = padT + i*rowH;
+    let x = padL;
+    const segs = keys.map((k,ki) => {
+      const val = r[k]||0;
+      const bw = (val/max)*iw;
+      const rect = `<rect x="${x.toFixed(1)}" y="${y+4}" width="${Math.max(0,bw).toFixed(1)}" height="12" fill="${colors[ki]}" rx="2"/>`;
+      x += bw;
+      return rect;
+    }).join('');
+    const name = String(r.label||r.name||'—').slice(0,14);
+    return `<text x="${padL-6}" y="${y+14}" text-anchor="end" fill="#9aa7b8" font-size="10">${esc(name)}</text>${segs}`;
+  }).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img">${body}</svg>`;
+}
+function renderCharts(charts) {
+  const c = charts || {};
+  renderActivity(c.activity_hourly || []);
+  renderDonut(c.status_breakdown || [], 'chart-status');
+  renderBars(c.campaign_bars || [], ['sent','failed'], [COLORS.sent, COLORS.failed]);
+  renderDonut(c.health_breakdown || [], 'chart-health');
 }
 async function load() {
   const err = document.getElementById('error');
@@ -140,6 +246,7 @@ async function load() {
       ['Campaigns', a.campaign_count ?? 0],
       ['Total sent', a.total_sent ?? 0],
     ].map(([l,n]) => `<div class="card"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+    renderCharts(data.charts);
     const healthClass = (h) => (h === 'excellent' || h === 'good') ? 'ok' : (h === 'warning' ? 'warn' : 'bad');
     document.getElementById('accounts').innerHTML = (data.accounts || []).map(r =>
       `<tr><td>${esc(r.account_name)}</td><td class="${healthClass(r.health_status)}"><span class="pill">${esc(r.health_status)}</span></td><td>${Number(r.score||0).toFixed(0)}</td><td>${esc(_status(r.status))}</td></tr>`
@@ -151,14 +258,12 @@ async function load() {
       `<tr><td>${esc(ev.sent_at || '—')}</td><td>${esc(String(ev.campaign_id ?? '—'))}</td><td>${esc(String(ev.account_id ?? '—'))}</td><td>${esc(ev.status)}</td></tr>`
     ).join('') || '<tr><td colspan="4">No recent activity</td></tr>';
     document.getElementById('stamp').textContent = 'Updated ' + (data.generated_at || new Date().toISOString()) +
-      ' · v' + ((data.app && data.app.version) || '');
+      ' · v' + ((data.app && data.app.version) || '') + ' · charts auto-refresh 15s';
   } catch (e) {
     err.hidden = false;
     err.textContent = 'Failed to load overview: ' + e;
   }
 }
-function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function _status(s){ if (s && typeof s === 'object' && s.value) return s.value; return s; }
 document.getElementById('refresh').onclick = load;
 document.getElementById('saveToken').onclick = () => {
   const t = (document.getElementById('token').value || '').trim();
@@ -373,6 +478,196 @@ def build_analytics_overview() -> Dict[str, Any]:
     }
 
 
+def _log_event_time(log: Any) -> Optional[datetime]:
+    """Best available timestamp for chart bucketing."""
+    for attr in ("sent_at", "completed_at", "created_at"):
+        value = getattr(log, attr, None)
+        if isinstance(value, datetime):
+            return value
+    return None
+
+
+def _log_status_key(log: Any) -> str:
+    status = getattr(log, "status", None)
+    return _enum_value(status).lower() if status is not None else "unknown"
+
+
+def aggregate_hourly_activity(
+    logs: Sequence[Any],
+    *,
+    hours: int = DEFAULT_CHART_HOURS,
+    now: Optional[datetime] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Build hourly sent/failed/other series for the last *hours* window.
+
+    Pure helper (duck-typed logs) so unit tests need no database.
+    """
+    window = max(1, min(int(hours), MAX_CHART_HOURS))
+    end = now or datetime.utcnow()
+    end_hour = end.replace(minute=0, second=0, microsecond=0)
+    start = end_hour - timedelta(hours=window - 1)
+    buckets: Dict[datetime, Dict[str, int]] = {}
+    cursor = start
+    while cursor <= end_hour:
+        buckets[cursor] = {"sent": 0, "failed": 0, "other": 0}
+        cursor += timedelta(hours=1)
+
+    for log in logs:
+        when = _log_event_time(log)
+        if when is None:
+            continue
+        bucket_key = when.replace(minute=0, second=0, microsecond=0)
+        if bucket_key < start or bucket_key > end_hour:
+            continue
+        slot = buckets.setdefault(bucket_key, {"sent": 0, "failed": 0, "other": 0})
+        status = _log_status_key(log)
+        if status == "sent":
+            slot["sent"] += 1
+        elif status == "failed":
+            slot["failed"] += 1
+        else:
+            slot["other"] += 1
+
+    series: List[Dict[str, Any]] = []
+    for hour in sorted(buckets.keys()):
+        counts = buckets[hour]
+        series.append(
+            {
+                "hour": hour.isoformat(),
+                "label": hour.strftime("%H:00"),
+                "sent": counts["sent"],
+                "failed": counts["failed"],
+                "other": counts["other"],
+                "total": counts["sent"] + counts["failed"] + counts["other"],
+            }
+        )
+    return series
+
+
+def aggregate_status_breakdown(logs: Sequence[Any]) -> List[Dict[str, Any]]:
+    """Pie/donut slices for send-status counts."""
+    counts: Dict[str, int] = {}
+    for log in logs:
+        key = _log_status_key(log)
+        counts[key] = counts.get(key, 0) + 1
+    color_map = {
+        "sent": "#3dcc91",
+        "failed": "#e85d5d",
+        "skipped": "#9aa7b8",
+        "rate_limited": "#e6b84d",
+        "pending": "#2d6cdf",
+        "sending": "#5b8def",
+        "cancelled": "#6b7785",
+    }
+    items = [
+        {
+            "key": key,
+            "label": key.replace("_", " "),
+            "count": count,
+            "color": color_map.get(key, "#2d6cdf"),
+        }
+        for key, count in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    ]
+    return items
+
+
+def aggregate_campaign_bars(
+    campaigns: Sequence[Any],
+    *,
+    limit: int = MAX_CHART_CAMPAIGNS,
+) -> List[Dict[str, Any]]:
+    """Horizontal bar rows for top campaigns by attempted sends."""
+    rows: List[Dict[str, Any]] = []
+    for campaign in campaigns:
+        sent = int(getattr(campaign, "sent_count", None) or 0)
+        failed = int(getattr(campaign, "failed_count", None) or 0)
+        name = str(getattr(campaign, "name", None) or getattr(campaign, "campaign_name", None) or "—")
+        cid = getattr(campaign, "id", None)
+        rows.append(
+            {
+                "id": cid,
+                "label": name,
+                "name": name,
+                "sent": sent,
+                "failed": failed,
+                "attempted": sent + failed,
+            }
+        )
+    rows.sort(key=lambda r: (-int(r["attempted"]), str(r["label"])))
+    return rows[: max(1, int(limit))] if rows else []
+
+
+def aggregate_health_breakdown(accounts: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Donut slices for account health_status distribution."""
+    counts: Dict[str, int] = {}
+    for row in accounts:
+        key = str(row.get("health_status") or "offline").lower()
+        counts[key] = counts.get(key, 0) + 1
+    color_map = {
+        "excellent": "#3dcc91",
+        "good": "#5bb8a0",
+        "warning": "#e6b84d",
+        "critical": "#e85d5d",
+        "offline": "#6b7785",
+    }
+    return [
+        {
+            "key": key,
+            "label": key,
+            "count": count,
+            "color": color_map.get(key, "#2d6cdf"),
+        }
+        for key, count in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    ]
+
+
+def build_charts_payload(
+    *,
+    hours: int = DEFAULT_CHART_HOURS,
+    log_limit: int = DEFAULT_CHART_LOG_LIMIT,
+    now: Optional[datetime] = None,
+    monitor: Optional[AccountHealthMonitor] = None,
+) -> Dict[str, Any]:
+    """
+    Live chart series for the companion dashboard (read-only, real DB data).
+
+    Returns hourly activity, status breakdown, campaign bars, and health donut.
+    """
+    window = max(1, min(int(hours), MAX_CHART_HOURS))
+    end = now or datetime.utcnow()
+    since = end - timedelta(hours=window)
+    fetch_limit = max(1, min(int(log_limit), DEFAULT_CHART_LOG_LIMIT))
+
+    with get_session() as session:
+        logs = list(
+            session.exec(
+                select(SendLog)
+                .where(SendLog.created_at >= since)
+                .order_by(SendLog.created_at.desc())  # type: ignore[attr-defined]
+                .limit(fetch_limit)
+            ).all()
+        )
+        campaigns = list(
+            session.exec(select(Campaign).where(Campaign.is_deleted.is_(False))).all()  # type: ignore[attr-defined]
+        )
+
+    accounts_payload = build_accounts_payload(monitor)
+    return {
+        "window_hours": window,
+        "generated_at": end.isoformat() + "Z",
+        "activity_hourly": aggregate_hourly_activity(logs, hours=window, now=end),
+        "status_breakdown": aggregate_status_breakdown(logs),
+        "campaign_bars": aggregate_campaign_bars(campaigns),
+        "health_breakdown": aggregate_health_breakdown(accounts_payload["accounts"]),
+        "meta": {
+            "logs_sampled": len(logs),
+            "campaign_count": len(campaigns),
+            "account_count": len(accounts_payload["accounts"]),
+        },
+    }
+
+
 def build_status_payload(
     settings: Optional[Settings] = None,
     *,
@@ -420,6 +715,7 @@ def build_overview_payload(
     campaigns = build_campaigns_payload()
     activity = build_activity_payload(activity_limit)
     analytics = build_analytics_overview()
+    charts = build_charts_payload()
     status = build_status_payload(settings, auth_required=auth_required)
     return {
         **status,
@@ -428,6 +724,7 @@ def build_overview_payload(
         "campaign_summary": campaigns["summary"],
         "campaigns": campaigns["campaigns"],
         "analytics": analytics,
+        "charts": charts,
         "activity": activity["activity"],
     }
 
@@ -607,12 +904,16 @@ def make_snapshot_builders(
     def overview() -> Dict[str, Any]:
         return build_overview_payload(settings, activity_limit, auth_required=auth_required)
 
+    def charts() -> Dict[str, Any]:
+        return build_charts_payload()
+
     return {
         "/api/status": status,
         "/api/accounts": accounts,
         "/api/campaigns": campaigns,
         "/api/activity": activity,
         "/api/overview": overview,
+        "/api/charts": charts,
     }
 
 
@@ -817,7 +1118,10 @@ def run_web_monitor_cli(argv: Sequence[str]) -> int:
     server = WebCompanionServer(host=host, port=port, settings=settings, auth_token=token)
     listen = server.base_url.split("?", 1)[0]
     print(f"TMAS web companion (read-only) at {listen}")
-    print("Endpoints: /  /api/status  /api/accounts  /api/campaigns  /api/activity  /api/overview")
+    print(
+        "Endpoints: /  /api/status  /api/accounts  /api/campaigns  "
+        "/api/activity  /api/overview  /api/charts"
+    )
     print("No write/control routes. Ctrl+C to stop.")
     if token:
         print("Auth: Authorization: Bearer <token> | X-TMAS-Token | ?token=")

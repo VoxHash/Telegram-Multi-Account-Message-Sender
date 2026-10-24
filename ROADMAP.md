@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.25)
+## Current Status (v1.2.26)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -31,17 +31,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **Optional AI copy tools** (user-supplied OpenAI-compatible API key; stdlib HTTP; Templates rewrite / spintax / variations)
 - **Plugin marketplace / registry** (curated JSON catalog, offline bundled fallback, SHA-256 install into `app_data/plugins/`)
 - **Enhanced macOS/Linux packaging and file associations** (Linux desktop/MIME/`install.sh`; macOS `.app` Info.plist UTI; local `.tmas-backup.zip` restore)
-- **Optional lightweight web companion (read-only monitoring)** (stdlib `http.server`; CLI `web-monitor` + Settings open; localhost by default; Bearer token auth + reverse-proxy guidance)
+- **Optional lightweight web companion (read-only monitoring)** (stdlib `http.server`; CLI `web-monitor` + Settings open; localhost by default; Bearer token auth + reverse-proxy guidance; live SVG charts)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Additional cloud providers beyond Google Drive
 
-### Latest release (v1.2.25 — 2026-10-24)
-- Phase 3 leftover: web companion Bearer token auth + reverse-proxy guidance for non-localhost
+### Latest release (v1.2.26 — 2026-10-24)
+- Phase 3 leftover: web companion richer live charts (`/api/charts` + SVG dashboard)
 
 ### Previous highlights
+- **v1.2.25**: Phase 3 leftover: web companion Bearer token auth + reverse-proxy guidance for non-localhost
 - **v1.2.24**: Phase 3: optional read-only web companion for local monitoring (accounts / campaigns / activity)
 - **v1.2.23**: Phase 3 packaging: Linux desktop + MIME install; macOS `.app` document types; local backup file association restore
 - **v1.2.22**: Plugin marketplace / registry: browse curated catalog, install verified plugins, offline bundled fallback
@@ -98,7 +99,8 @@ Realistic, shippable work — not a full platform rewrite.
   - Leftover: Apple code signing / notarization; Windows file-association installer polish
 - [x] Optional lightweight web companion (read-only monitoring first)
   - [x] Auth token / reverse-proxy guidance for non-localhost (v1.2.25)
-  - Leftover: richer live charts; optional auto-start with GUI
+  - [x] Richer live charts (v1.2.26)
+  - Leftover: optional auto-start with GUI
 - [ ] Mobile companion deferred until web companion proves demand
 
 ### Phase 4 (later): Team / enterprise

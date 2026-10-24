@@ -64,7 +64,7 @@ WEB_COMPANION_PORT=8765
 
 1. From the GUI: **Settings → General → Web Companion → Start & Open in Browser** (optional **Generate token**).
 2. From the CLI (blocks until Ctrl+C): `telegram-sender web-monitor` or `python -m app.cli web-monitor [--token …]`.
-3. Open `http://127.0.0.1:8765/` for the dashboard, or `/api/overview` for JSON.
+3. Open `http://127.0.0.1:8765/` for the dashboard (live charts), `/api/overview` for JSON, or `/api/charts` for chart series only.
 
 **Auth:** When `WEB_COMPANION_TOKEN` is set (or `--token` is passed), every request must present the token via:
 

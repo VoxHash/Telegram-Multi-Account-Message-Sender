@@ -69,7 +69,7 @@ Monitor account health, campaign status, and recent activity in a browser withou
 
 1. Open **Settings → General → Web Companion**, keep host `127.0.0.1`, optionally set/generate an auth token, then click **Start & Open in Browser**.
 2. Or run headless: `telegram-sender web-monitor` (add `--token` for non-localhost; see [CLI Reference](cli.md) and [Configuration](configuration.md)).
-3. Dashboard: `http://127.0.0.1:8765/` (append `?token=` when auth is enabled). JSON: `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`.
+3. Dashboard: `http://127.0.0.1:8765/` (append `?token=` when auth is enabled). Live SVG charts auto-refresh every 15s. JSON: `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`, `/api/charts`.
 4. Mutating HTTP methods (`POST`/`PUT`/`PATCH`/`DELETE`) return **405**. Non-localhost binds require a token; prefer localhost behind Caddy/nginx with TLS.
 
 ## AI Copy Tools (optional)

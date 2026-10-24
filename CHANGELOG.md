@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.26] - 2026-10-24
+
+### Added
+- **Web companion live charts**: Dashboard SVG charts for 24h hourly activity (sent/failed/other), send-status donut, campaign sent-vs-failed bars, and account-health donut. Auto-refresh every 15s with the overview.
+- **`GET /api/charts`**: Chart series JSON (`activity_hourly`, `status_breakdown`, `campaign_bars`, `health_breakdown`); also embedded under `charts` in `/api/overview`.
+- Pure aggregators (`aggregate_hourly_activity`, `aggregate_status_breakdown`, `aggregate_campaign_bars`, `aggregate_health_breakdown`) for deterministic unit tests without a DB.
+- **Unit tests** for chart aggregators, `/api/charts` route registration, and HTML chart markup.
+
+### Changed
+- Docs (API, CLI, usage, configuration, architecture, FAQ, README) cover live charts and the new endpoint.
+
 ## [1.2.25] - 2026-10-24
 
 ### Added

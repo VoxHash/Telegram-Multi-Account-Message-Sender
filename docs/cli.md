@@ -44,7 +44,8 @@ python -m app.cli web-monitor
 | `/api/accounts` | Account health summary + rows |
 | `/api/campaigns` | Campaign status list |
 | `/api/activity` | Recent send-log activity |
-| `/api/overview` | Combined snapshot |
+| `/api/overview` | Combined snapshot (includes `charts`) |
+| `/api/charts` | Live chart series (hourly activity, status/health donuts, campaign bars) |
 
 Write methods are rejected (`405`). Prefer `127.0.0.1` behind a TLS reverse proxy; see [Configuration](configuration.md) for auth and proxy guidance.
 

@@ -647,7 +647,7 @@
     "web_companion_open": "Start & Open in Browser",
     "web_companion_opened": "Web companion running at {url}",
     "web_companion_open_failed": "Failed to start web companion: {error}",
-    "web_companion_help": "Optional stdlib HTTP monitor (no extra dependency). Read-only JSON + dashboard for account health, campaign status, and recent activity. Default bind is 127.0.0.1. Non-localhost binds require an auth token (Bearer / X-TMAS-Token / ?token=). Prefer keeping the process on localhost behind Caddy/nginx with TLS — see docs/configuration.md. Desktop remains the control surface; CLI: telegram-sender web-monitor --token …",
+    "web_companion_help": "Optional stdlib HTTP monitor (no extra dependency). Read-only JSON + dashboard with live SVG charts (activity, status, campaigns, health), account/campaign tables, and recent activity. Default bind is 127.0.0.1. Non-localhost binds require an auth token (Bearer / X-TMAS-Token / ?token=). Prefer keeping the process on localhost behind Caddy/nginx with TLS — see docs/configuration.md. Desktop remains the control surface; CLI: telegram-sender web-monitor --token …",
     "database_settings": "Database Settings",
     "default_rate_limits": "Default Rate Limits",
     "warmup_settings": "Account Warmup Settings",

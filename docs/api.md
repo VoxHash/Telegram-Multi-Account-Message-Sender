@@ -454,7 +454,8 @@ server = start_companion_from_settings()  # background thread
 # or: WebCompanionServer(host="127.0.0.1", port=8765, auth_token="…").start(background=False)
 ```
 
-**GET endpoints:** `/`, `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`.  
+**GET endpoints:** `/`, `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`, `/api/charts`.  
+Dashboard embeds SVG live charts (hourly activity, status donut, campaign bars, health donut) refreshed from `/api/overview` (includes a `charts` object).
 **Mutating methods** (`POST`/`PUT`/`PATCH`/`DELETE`) return `405`.  
 **Auth:** when a token is configured, missing/invalid credentials return `401` with `WWW-Authenticate: Bearer`. Accepted via `Authorization: Bearer`, `X-TMAS-Token`, or `?token=`. Non-loopback binds refuse to start without a token.
 

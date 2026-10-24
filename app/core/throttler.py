@@ -4,7 +4,7 @@ Rate limiting and throttling for message sending.
 
 import asyncio
 import time
-from typing import Dict, Optional
+from typing import Deque, Dict, Optional
 from dataclasses import dataclass
 from collections import deque
 
@@ -22,11 +22,11 @@ class RateLimit:
 class RateLimiter:
     """Token bucket rate limiter implementation."""
 
-    def __init__(self, max_requests: int, time_window: int):
+    def __init__(self, max_requests: int, time_window: int) -> None:
         """Initialize rate limiter."""
         self.max_requests = max_requests
         self.time_window = time_window
-        self.requests = deque()
+        self.requests: Deque[float] = deque()
 
     async def acquire(self) -> bool:
         """Acquire a token from the rate limiter."""
@@ -50,7 +50,7 @@ class RateLimiter:
 
         oldest_request = self.requests[0]
         wait_time = (oldest_request + self.time_window) - time.time()
-        return max(0.0, wait_time)
+        return float(max(0.0, wait_time))
 
     def get_current_rate(self) -> float:
         """Get current requests per second."""
@@ -62,14 +62,14 @@ class RateLimiter:
 class Throttler:
     """Multi-level throttler for managing message sending rates."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize throttler."""
         self.account_limiters: Dict[int, RateLimiter] = {}
         self.global_limiter: Optional[RateLimiter] = None
         self.semaphores: Dict[int, asyncio.Semaphore] = {}
         self.last_activity: Dict[int, float] = {}
 
-    def set_account_limits(self, account_id: int, per_minute: int, per_hour: int, per_day: int):
+    def set_account_limits(self, account_id: int, per_minute: int, per_hour: int, per_day: int) -> None:
         """Set rate limits for an account."""
         # Use the most restrictive limit (per minute)
         self.account_limiters[account_id] = RateLimiter(per_minute, 60)
@@ -77,7 +77,7 @@ class Throttler:
         # Set concurrency limit (max 3 concurrent sends per account)
         self.semaphores[account_id] = asyncio.Semaphore(3)
 
-    def set_global_limits(self, per_minute: int, max_concurrency: int):
+    def set_global_limits(self, per_minute: int, max_concurrency: int) -> None:
         """Set global rate limits."""
         self.global_limiter = RateLimiter(per_minute, 60)
         self.global_semaphore = asyncio.Semaphore(max_concurrency)
@@ -107,7 +107,7 @@ class Throttler:
         except asyncio.TimeoutError:
             return False
 
-    def release_semaphore(self, account_id: int):
+    def release_semaphore(self, account_id: int) -> None:
         """Release account semaphore."""
         if account_id in self.semaphores:
             self.semaphores[account_id].release()
@@ -123,7 +123,7 @@ class Throttler:
         except asyncio.TimeoutError:
             return False
 
-    def release_global_semaphore(self):
+    def release_global_semaphore(self) -> None:
         """Release global semaphore."""
         if hasattr(self, "global_semaphore"):
             self.global_semaphore.release()
@@ -156,7 +156,7 @@ class Throttler:
 
         return self.global_limiter.get_current_rate()
 
-    def update_activity(self, account_id: int):
+    def update_activity(self, account_id: int) -> None:
         """Update last activity time for account."""
         self.last_activity[account_id] = time.time()
 
@@ -180,7 +180,7 @@ class Throttler:
             > 0,
         }
 
-    def reset_account_limits(self, account_id: int):
+    def reset_account_limits(self, account_id: int) -> None:
         """Reset limits for an account."""
         if account_id in self.account_limiters:
             del self.account_limiters[account_id]
@@ -189,7 +189,7 @@ class Throttler:
         if account_id in self.last_activity:
             del self.last_activity[account_id]
 
-    def reset_all_limits(self):
+    def reset_all_limits(self) -> None:
         """Reset all limits."""
         self.account_limiters.clear()
         self.semaphores.clear()

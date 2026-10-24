@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.19)
+## Current Status (v1.2.20)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -27,16 +27,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Pydantic v2 field validators on Settings
 - Circular-import hardening for `app.core` / `app.services` lazy exports
 - Incremental type hints on high-value core/services modules
+- **Blocking mypy** for `app/core`, `app/services`, `app/models` (strict flags; CI fails on errors)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Additional cloud providers beyond Google Drive
 
-### Latest release (v1.2.19 — 2026-10-24)
-- Quality + cloud UX: CI coverage summary, type-hint pass, offline restore messaging, analytics CSV/JSON export
+### Latest release (v1.2.20 — 2026-10-24)
+- Stricter mypy: blocking CI for core/services/models; typed JSON columns; remaining type gaps documented below
 
 ### Previous highlights
+- **v1.2.19**: Quality + cloud UX: CI coverage summary, type-hint pass, offline restore messaging, analytics CSV/JSON export
 - **v1.2.18**: Expanded unit tests, Pydantic v2 Settings validators, core/services circular-import hardening
 - **v1.2.17**: Account health dashboard polish (scores, summary cards, actionable warnings)
 - **v1.2.16**: Cloud backup MVP (Google Drive encrypted export/restore)
@@ -54,6 +56,7 @@ Realistic, shippable work — not a full platform rewrite.
 
 | Priority | Item | Outcome |
 | --- | --- | --- |
+| Done (v1.2.20) | Stricter mypy (blocking) | Strict flags + CI fail for `app/core`, `app/services`, `app/models`; GUI/plugins excluded |
 | Done (v1.2.19) | Coverage reporting in CI summary | pytest-cov + GitHub Actions job summary; fail-under **20%** baseline on ubuntu/3.11 |
 | Done (v1.2.19) | Type hints on remaining high-value modules | Incremental annotations on core/services (compliance, analytics, engine, campaign/warmup managers) |
 | Done (v1.2.19) | Offline-friendly restore messaging | Clear UX when cloud restore/list/backup attempted offline or Drive unreachable |
@@ -93,7 +96,10 @@ Realistic, shippable work — not a full platform rewrite.
 ### Code quality
 - [x] Broader pytest coverage beyond spintax/throttler (campaign filters, settings, CLI, import smoke; more integration coverage still welcome)
 - [x] Coverage reporting in CI summary (Actions job summary + fail-under 20% baseline; Codecov upload remains optional)
-- [x] Type hints on remaining high-value untyped modules (incremental; mypy stays non-blocking in CI)
+- [x] Type hints on remaining high-value untyped modules (incremental)
+- [x] Stricter mypy for `app/core`, `app/services`, `app/models` (blocking in CI)
+- [ ] Extend blocking mypy to `app/gui` and `app/plugins` (large PyQt annotation surface; deferred)
+- [ ] Optional: type `app/utils` / `app/cli.py` under the same blocking gate
 - [x] Resolve known `app.core` ↔ `app.services` import cycle for package-level imports
 
 ### Documentation

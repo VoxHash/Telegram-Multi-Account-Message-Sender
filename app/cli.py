@@ -17,7 +17,7 @@ from app.gui.main import MainWindow  # noqa: E402
 from PyQt5.QtWidgets import QApplication  # noqa: E402
 
 
-def main():
+def main() -> None:
     """Main entry point for the CLI."""
     # Initialize database
     initialize_database()
@@ -31,7 +31,7 @@ def main():
     # Create QApplication
     app = QApplication(sys.argv)
     app.setApplicationName("Telegram Multi-Account Message Sender")
-    app.setApplicationVersion("1.2.19")
+    app.setApplicationVersion("1.2.20")
 
     # Create and show main window
     main_window = MainWindow()

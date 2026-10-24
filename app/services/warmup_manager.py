@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer, QThread
 
-from ..models import Account, SendLog, SendStatus
+from ..models import Account, AccountStatus, SendLog, SendStatus
 from ..core.telethon_client import TelegramClientManager
 from ..services.db import get_session
 from ..services.logger import get_logger
@@ -74,12 +74,12 @@ class WarmupManager(QObject):
                 self.warmup_started.emit(account_id)
 
                 class WarmupWorker(QThread):
-                    def __init__(self, warmup_manager, account_id):
+                    def __init__(self, warmup_manager: "WarmupManager", account_id: int) -> None:
                         super().__init__()
                         self.warmup_manager = warmup_manager
                         self.account_id = account_id
 
-                    def run(self):
+                    def run(self) -> None:
                         # Create new event loop for this thread
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
@@ -105,7 +105,7 @@ class WarmupManager(QObject):
             self.warmup_error.emit(account_id, str(e))
             return False
 
-    def cleanup_worker(self, worker: QThread):
+    def cleanup_worker(self, worker: QThread) -> None:
         """Clean up finished worker thread."""
         try:
             if worker in self.active_workers:
@@ -114,7 +114,7 @@ class WarmupManager(QObject):
         except Exception as e:
             self.logger.error(f"Error cleaning up worker: {e}")
 
-    def _reset_warmup_progress(self, account_id: int):
+    def _reset_warmup_progress(self, account_id: int) -> None:
         """Reset warmup progress flag when worker finishes."""
         try:
             self.warmup_in_progress[account_id] = False
@@ -122,7 +122,7 @@ class WarmupManager(QObject):
         except Exception as e:
             self.logger.error(f"Error resetting warmup progress: {e}")
 
-    async def _warmup_account(self, account_id: int):
+    async def _warmup_account(self, account_id: int) -> None:
         """Warmup an account by sending test messages."""
         try:
             with get_session() as session:
@@ -230,7 +230,10 @@ class WarmupManager(QObject):
         try:
             # Get Telegram client
             self.logger.debug(f"Getting client for account {account.name} (ID: {account.id})")
-            client = self.client_manager.get_client(account.id)
+            account_id = account.id
+            if account_id is None:
+                return {"success": False, "error": "Account is not persisted"}
+            client = self.client_manager.get_client(account_id)
             if not client:
                 # Try to add the account to client manager first
                 self.logger.debug(
@@ -244,7 +247,7 @@ class WarmupManager(QObject):
                             "error": "Failed to add account to client manager",
                         }
 
-                    client = self.client_manager.get_client(account.id)
+                    client = self.client_manager.get_client(account_id)
                     if not client:
                         return {
                             "success": False,
@@ -288,12 +291,12 @@ class WarmupManager(QObject):
         message: str,
         success: bool,
         error: Optional[str],
-    ):
+    ) -> None:
         """Create a send log for warmup message."""
         try:
             with get_session() as session:
                 send_log = SendLog(
-                    account_id=account.id,
+                    account_id=account.id if account.id is not None else 0,
                     recipient_id=None,  # No specific recipient for warmup
                     recipient_type="warmup",
                     recipient_identifier=f"warmup_{account.id}",
@@ -312,7 +315,7 @@ class WarmupManager(QObject):
         except Exception as e:
             self.logger.error(f"Error creating warmup log: {e}")
 
-    def check_warmup_accounts(self):
+    def check_warmup_accounts(self) -> None:
         """Check for accounts that need warmup."""
         try:
             with get_session() as session:
@@ -320,10 +323,10 @@ class WarmupManager(QObject):
                 accounts = (
                     session.query(Account)
                     .filter(
-                        Account.warmup_enabled.is_(True),
-                        Account.is_active.is_(True),
-                        Account.is_deleted.is_(False),
-                        Account.status == "ONLINE",
+                        Account.warmup_enabled.is_(True),  # type: ignore[attr-defined]
+                        Account.is_active.is_(True),  # type: ignore[attr-defined]
+                        Account.is_deleted.is_(False),  # type: ignore[attr-defined]
+                        Account.status == AccountStatus.ONLINE,  # type: ignore[arg-type]
                     )
                     .all()
                 )

@@ -2,12 +2,12 @@
 Send log model for tracking message sending activities.
 """
 
-from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, TYPE_CHECKING
 from enum import Enum
 
 from sqlmodel import Field, Relationship
-from sqlalchemy import JSON
+from sqlalchemy import Column, JSON
 
 from .base import BaseModel, JSONFieldMixin
 
@@ -73,7 +73,7 @@ class SendLog(BaseModel, JSONFieldMixin, table=True):
     telegram_error_code: Optional[str] = Field(default=None)
 
     # Additional metadata
-    log_metadata: Optional[str] = Field(default=None, sa_column=JSON)
+    log_metadata: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
     user_agent: Optional[str] = Field(default=None)
     ip_address: Optional[str] = Field(default=None)
 
@@ -121,7 +121,7 @@ class SendLog(BaseModel, JSONFieldMixin, table=True):
         """Mark the send as rate limited."""
         self.status = SendStatus.RATE_LIMITED
         self.completed_at = datetime.utcnow()
-        self.next_retry_at = datetime.utcnow().timestamp() + retry_after_seconds
+        self.next_retry_at = datetime.utcnow() + timedelta(seconds=retry_after_seconds)
 
         if self.started_at:
             duration = self.completed_at - self.started_at

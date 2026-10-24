@@ -61,9 +61,10 @@ class AccountHealthMonitor:
             since = datetime.utcnow() - timedelta(hours=24)
             recent_failures = (
                 session.exec(
-                    select(func.count(SendLog.id)).where(
+                    select(func.count()).select_from(SendLog).where(
                         SendLog.account_id == account.id,
-                        SendLog.sent_at >= since,
+                        SendLog.sent_at.is_not(None),  # type: ignore[union-attr]
+                        SendLog.sent_at >= since,  # type: ignore[operator]
                         SendLog.status == SendStatus.FAILED,
                     )
                 ).first()
@@ -71,9 +72,10 @@ class AccountHealthMonitor:
             )
             recent_total = (
                 session.exec(
-                    select(func.count(SendLog.id)).where(
+                    select(func.count()).select_from(SendLog).where(
                         SendLog.account_id == account.id,
-                        SendLog.sent_at >= since,
+                        SendLog.sent_at.is_not(None),  # type: ignore[union-attr]
+                        SendLog.sent_at >= since,  # type: ignore[operator]
                     )
                 ).first()
                 or 0
@@ -266,7 +268,7 @@ class AccountHealthMonitor:
     def get_all_accounts_health(self) -> List[Dict[str, Any]]:
         """Get health status for all accounts, worst score first."""
         with get_session() as session:
-            query = select(Account).where(Account.is_deleted.is_(False))
+            query = select(Account).where(Account.is_deleted.is_(False))  # type: ignore[attr-defined]
             accounts = list(session.exec(query).all())
 
         results = [self.check_account_health(account) for account in accounts]
@@ -333,7 +335,9 @@ class AccountHealthMonitor:
             since = datetime.utcnow() - timedelta(days=days)
 
             query = select(SendLog).where(
-                SendLog.account_id == account_id, SendLog.sent_at >= since
+                SendLog.account_id == account_id,
+                SendLog.sent_at.is_not(None),  # type: ignore[union-attr]
+                SendLog.sent_at >= since,  # type: ignore[operator]
             )
             logs = session.exec(query).all()
 

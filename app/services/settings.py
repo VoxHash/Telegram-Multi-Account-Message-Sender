@@ -65,8 +65,8 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.2.19"
-    app_env: AppEnvironment = "development"
+    app_version: str = "1.2.20"
+    app_env: AppEnvironment = AppEnvironment.DEVELOPMENT
     debug: bool = False
     start_with_windows: bool = False
 
@@ -74,7 +74,7 @@ class Settings(BaseSettings):
     language: Language = Language.ENGLISH
 
     # Logging
-    log_level: LogLevel = "INFO"
+    log_level: LogLevel = LogLevel.INFO
     log_to_file: bool = True
     log_file_max_size: int = 10 * 1024 * 1024  # 10MB
     log_file_backup_count: int = 5
@@ -114,7 +114,7 @@ class Settings(BaseSettings):
     content_dir: str = "content"
 
     # UI Settings
-    theme: Theme = "auto"
+    theme: Theme = Theme.AUTO
     window_width: int = 1200
     window_height: int = 800
     window_maximized: bool = False
@@ -152,7 +152,7 @@ class Settings(BaseSettings):
 
     @field_validator("telegram_api_id", mode="before")
     @classmethod
-    def validate_api_id(cls, v):
+    def validate_api_id(cls, v: Any) -> Optional[int]:
         """Validate Telegram API ID."""
         if v is None or v == "":
             return None
@@ -166,7 +166,7 @@ class Settings(BaseSettings):
 
     @field_validator("telegram_api_hash", mode="before")
     @classmethod
-    def validate_api_hash(cls, v):
+    def validate_api_hash(cls, v: Any) -> Optional[str]:
         """Validate Telegram API hash."""
         if v is None or v == "":
             return None
@@ -176,7 +176,7 @@ class Settings(BaseSettings):
 
     @field_validator("log_level", mode="before")
     @classmethod
-    def validate_log_level(cls, v):
+    def validate_log_level(cls, v: Any) -> Any:
         """Validate log level."""
         if isinstance(v, str):
             return LogLevel(v.upper())
@@ -184,7 +184,7 @@ class Settings(BaseSettings):
 
     @field_validator("theme", mode="before")
     @classmethod
-    def validate_theme(cls, v):
+    def validate_theme(cls, v: Any) -> Any:
         """Validate theme."""
         if isinstance(v, str):
             return Theme(v.lower())
@@ -192,7 +192,7 @@ class Settings(BaseSettings):
 
     @field_validator("app_env", mode="before")
     @classmethod
-    def validate_app_env(cls, v):
+    def validate_app_env(cls, v: Any) -> Any:
         """Validate application environment."""
         if isinstance(v, str):
             return AppEnvironment(v.lower())
@@ -200,7 +200,7 @@ class Settings(BaseSettings):
 
     @field_validator("language", mode="before")
     @classmethod
-    def validate_language(cls, v):
+    def validate_language(cls, v: Any) -> Any:
         """Validate language setting."""
         if v is None or v == "":
             return Language.ENGLISH

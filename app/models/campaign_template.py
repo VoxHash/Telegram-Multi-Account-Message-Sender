@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Any, TYPE_CHECKING
 from enum import Enum
 
 from sqlmodel import Field, Relationship
-from sqlalchemy import JSON
+from sqlalchemy import Column, JSON
 
 from .base import BaseModel, SoftDeleteMixin, JSONFieldMixin
 from .campaign import CampaignType, MessageType
@@ -46,8 +46,8 @@ class CampaignTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     use_spintax: bool = Field(default=False)
     spintax_text: Optional[str] = Field(default=None)
     use_ab_testing: bool = Field(default=False)
-    ab_variants: Optional[str] = Field(default=None, sa_column=JSON)
-    ab_split_percentages: Optional[str] = Field(default=None, sa_column=JSON)
+    ab_variants: Optional[List[Dict[str, Any]]] = Field(default=None, sa_column=Column(JSON))
+    ab_split_percentages: Optional[List[float]] = Field(default=None, sa_column=Column(JSON))
 
     # Scheduling defaults
     messages_per_minute: int = Field(default=1)
@@ -57,7 +57,7 @@ class CampaignTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     # Account selection defaults
     account_selection_strategy: str = Field(default="round_robin")
-    account_weights: Optional[str] = Field(default=None, sa_column=JSON)
+    account_weights: Optional[Dict[int, float]] = Field(default=None, sa_column=Column(JSON))
     max_concurrent_accounts: int = Field(default=3)
 
     # Safety defaults
@@ -67,7 +67,7 @@ class CampaignTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     max_retries: int = Field(default=3)
 
     # Metadata
-    tags: Optional[str] = Field(default=None, sa_column=JSON)
+    tags: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
     usage_count: int = Field(default=0)
     is_public: bool = Field(default=False)  # For sharing templates
     created_by: Optional[str] = Field(default=None)
@@ -75,7 +75,7 @@ class CampaignTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     # Relationships
     campaigns: List["Campaign"] = Relationship(back_populates="template")
 
-    def create_campaign_from_template(self, name: str, **overrides) -> Dict[str, Any]:
+    def create_campaign_from_template(self, name: str, **overrides: Any) -> Dict[str, Any]:
         """Create campaign data from template with optional overrides."""
         campaign_data = {
             "name": name,
@@ -114,14 +114,7 @@ class CampaignTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     def get_tags_list(self) -> List[str]:
         """Get tags as a list."""
-        if self.tags is None:
-            return []
-        try:
-            import json
-
-            return json.loads(self.tags) if isinstance(self.tags, str) else self.tags
-        except (json.JSONDecodeError, TypeError):
-            return []
+        return list(self.tags) if self.tags else []
 
     def set_tags_list(self, tags: List[str]) -> None:
         """Set tags from a list."""
@@ -130,4 +123,4 @@ class CampaignTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             import json
 
-            self.tags = json.dumps(tags)
+            self.tags = tags

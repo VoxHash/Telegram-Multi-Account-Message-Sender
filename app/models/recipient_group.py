@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Any
 from enum import Enum
 
 from sqlmodel import Field, Relationship
-from sqlalchemy import JSON
+from sqlalchemy import Column, JSON
 
 from .base import BaseModel, SoftDeleteMixin, JSONFieldMixin
 from .recipient import Recipient
@@ -32,11 +32,11 @@ class RecipientGroup(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     group_type: GroupType = Field(default=GroupType.STATIC)
 
     # Dynamic grouping rules (for dynamic/smart groups)
-    grouping_rules: Optional[str] = Field(default=None, sa_column=JSON)  # Filter criteria
+    grouping_rules: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))  # Filter criteria
     auto_update: bool = Field(default=False)  # Auto-update group members
 
     # Metadata
-    tags: Optional[str] = Field(default=None, sa_column=JSON)
+    tags: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
     notes: Optional[str] = Field(default=None)
 
     # Statistics
@@ -52,21 +52,16 @@ class RecipientGroup(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     def update_statistics(self) -> None:
         """Update recipient statistics."""
-        active_count = sum(1 for m in self.members if m.recipient and m.recipient.is_contactable())
+        active_count = len(
+            [m for m in self.members if m.recipient is not None and m.recipient.is_contactable()]
+        )
         self.total_recipients = len(self.members)
         self.active_recipients = active_count
         self.last_updated = datetime.utcnow()
 
     def get_tags_list(self) -> List[str]:
         """Get tags as a list."""
-        if self.tags is None:
-            return []
-        try:
-            import json
-
-            return json.loads(self.tags) if isinstance(self.tags, str) else self.tags
-        except (json.JSONDecodeError, TypeError):
-            return []
+        return list(self.tags) if self.tags else []
 
     def set_tags_list(self, tags: List[str]) -> None:
         """Set tags from a list."""
@@ -75,22 +70,11 @@ class RecipientGroup(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             import json
 
-            self.tags = json.dumps(tags)
+            self.tags = tags
 
     def get_grouping_rules_dict(self) -> Dict[str, Any]:
         """Get grouping rules as a dictionary."""
-        if self.grouping_rules is None:
-            return {}
-        try:
-            import json
-
-            return (
-                json.loads(self.grouping_rules)
-                if isinstance(self.grouping_rules, str)
-                else self.grouping_rules
-            )
-        except (json.JSONDecodeError, TypeError):
-            return {}
+        return dict(self.grouping_rules) if self.grouping_rules else {}
 
     def set_grouping_rules_dict(self, rules: Dict[str, Any]) -> None:
         """Set grouping rules from a dictionary."""
@@ -99,7 +83,7 @@ class RecipientGroup(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             import json
 
-            self.grouping_rules = json.dumps(rules)
+            self.grouping_rules = rules
 
 
 class RecipientGroupMember(BaseModel, table=True):

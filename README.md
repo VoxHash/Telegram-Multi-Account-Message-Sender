@@ -329,7 +329,7 @@ isort app/
 flake8 app/
 
 # Type checking
-mypy app/
+mypy app/core app/services app/models
 ```
 
 ### Running Tests

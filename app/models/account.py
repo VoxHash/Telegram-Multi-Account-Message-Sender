@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Any, TYPE_CHECKING
 from enum import Enum
 
 from sqlmodel import Field, Relationship
-from sqlalchemy import JSON
+from sqlalchemy import Column, JSON
 
 from .base import BaseModel, SoftDeleteMixin, JSONFieldMixin
 
@@ -76,7 +76,7 @@ class Account(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     # Additional settings
     is_active: bool = Field(default=True)
     notes: Optional[str] = Field(default=None)
-    tags: Optional[str] = Field(default=None, sa_column=JSON)
+    tags: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
 
     # Statistics
     total_messages_sent: int = Field(default=0)
@@ -184,14 +184,7 @@ class Account(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     def get_tags(self) -> List[str]:
         """Get tags as a list."""
-        if self.tags is None:
-            return []
-        try:
-            import json
-
-            return json.loads(self.tags) if isinstance(self.tags, str) else self.tags
-        except (json.JSONDecodeError, TypeError):
-            return []
+        return list(self.tags) if self.tags else []
 
     def set_tags(self, tags: List[str]) -> None:
         """Set tags from a list."""
@@ -200,4 +193,4 @@ class Account(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             import json
 
-            self.tags = json.dumps(tags)
+            self.tags = tags

@@ -30,11 +30,11 @@ class GoogleDriveError(Exception):
 class GoogleDriveProvider(CloudProvider):
     """Google Drive implementation of ``CloudProvider``."""
 
-    def __init__(self, token_store: Optional[DriveTokenStore] = None):
+    def __init__(self, token_store: Optional[DriveTokenStore] = None) -> None:
         self.logger = get_logger()
         self.token_store = token_store or DriveTokenStore()
-        self._credentials = None
-        self._service = None
+        self._credentials: Any = None
+        self._service: Any = None
         self._backup_folder_id: Optional[str] = None
 
     @property
@@ -118,7 +118,7 @@ class GoogleDriveProvider(CloudProvider):
 
         file_id = created["id"]
         self.logger.info(f"Uploaded backup to Google Drive: {remote_name} ({file_id})")
-        return file_id
+        return str(file_id)
 
     def download(self, remote_id: str, local_path: Path) -> Path:
         """Download a remote backup file to ``local_path``."""
@@ -189,10 +189,12 @@ class GoogleDriveProvider(CloudProvider):
         self._service = None
         self._backup_folder_id = None
 
-    def _require_service(self):
+    def _require_service(self) -> Any:
         if self._service is None:
             if not self.is_authenticated():
                 raise GoogleDriveError("Google Drive is not authenticated")
+        if self._service is None:
+            raise GoogleDriveError("Google Drive is not authenticated")
         return self._service
 
     def _require_backup_folder_id(self) -> str:
@@ -206,7 +208,7 @@ class GoogleDriveProvider(CloudProvider):
         return self._find_or_create_folder(service, BACKUPS_FOLDER, parent_id=root_id)
 
     @staticmethod
-    def _find_or_create_folder(service, name: str, *, parent_id: str) -> str:
+    def _find_or_create_folder(service: Any, name: str, *, parent_id: str) -> str:
         escaped_name = name.replace("'", "\\'")
         query = (
             f"name = '{escaped_name}' and '{parent_id}' in parents "
@@ -215,7 +217,7 @@ class GoogleDriveProvider(CloudProvider):
         response = service.files().list(q=query, spaces="drive", fields="files(id)").execute()
         files = response.get("files", [])
         if files:
-            return files[0]["id"]
+            return str(files[0]["id"])
 
         metadata = {
             "name": name,
@@ -223,7 +225,7 @@ class GoogleDriveProvider(CloudProvider):
             "parents": [parent_id],
         }
         created = service.files().create(body=metadata, fields="id").execute()
-        return created["id"]
+        return str(created["id"])
 
 
 def _import_google_deps() -> Tuple[Any, Any, Any, Any, Any]:
@@ -241,7 +243,7 @@ def _import_google_deps() -> Tuple[Any, Any, Any, Any, Any]:
     return Request, Credentials, InstalledAppFlow, build, MediaFileUpload
 
 
-def _credentials_to_dict(credentials) -> Dict[str, Any]:
+def _credentials_to_dict(credentials: Any) -> Dict[str, Any]:
     return {
         "token": credentials.token,
         "refresh_token": credentials.refresh_token,

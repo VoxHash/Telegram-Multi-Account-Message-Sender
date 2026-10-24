@@ -88,7 +88,7 @@ We welcome feature suggestions! Please:
    black app/
    isort app/
    flake8 app/
-   mypy app/
+   mypy app/core app/services app/models
    ```
 
 5. **Commit your changes** (using Conventional Commits):
@@ -192,7 +192,7 @@ We use a clear branching strategy to organize development:
    black app/ --check
    isort app/ --check
    flake8 app/
-   mypy app/
+   mypy app/core app/services app/models
    ```
 
 3. **Update documentation** if your changes affect:
@@ -272,7 +272,7 @@ isort app/
 flake8 app/
 
 # Type checking
-mypy app/
+mypy app/core app/services app/models
 
 # Run tests
 pytest

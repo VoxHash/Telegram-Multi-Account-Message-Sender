@@ -5,7 +5,7 @@ Translation management for multi-language support.
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 from PyQt5.QtCore import QObject, pyqtSignal
 
 from .settings import Language, get_settings
@@ -26,14 +26,14 @@ class TranslationManager(QObject):
     # Signal emitted when language changes
     language_changed = pyqtSignal(str)
 
-    def __init__(self, settings=None):
+    def __init__(self, settings: Any = None) -> None:
         super().__init__()
         self.settings = settings or get_settings()
         self.current_language = self.settings.language.value
-        self.translations: Dict[str, Dict[str, str]] = {}
+        self.translations: Dict[str, Dict[str, Any]] = {}
         self.load_translations()
 
-    def load_translations(self):
+    def load_translations(self) -> None:
         """Load all translation files."""
         translations_dir = get_translations_dir()
 
@@ -53,23 +53,23 @@ class TranslationManager(QObject):
                 print(f"Translation file not found for {lang_code}: {translation_file}")
                 self.translations[lang_code] = {}
 
-    def get_text(self, key: str, **kwargs) -> str:
+    def get_text(self, key: str, **kwargs: Any) -> str:
         """Get translated text for a key."""
         # Get translation for current language
         translation = self.translations.get(self.current_language, {})
 
         # Handle nested keys (e.g., "tabs.accounts")
-        text = translation
+        node: Any = translation
         for part in key.split("."):
-            if isinstance(text, dict) and part in text:
-                text = text[part]
+            if isinstance(node, dict) and part in node:
+                node = node[part]
             else:
                 # If key not found, return the key itself
                 print(f"Translation key not found: {key} (language: {self.current_language})")
                 return key
 
         # Ensure text is a string
-        text = str(text) if text is not None else key
+        text = str(node) if node is not None else key
 
         # Format with kwargs if provided
         if kwargs:
@@ -80,7 +80,7 @@ class TranslationManager(QObject):
 
         return text
 
-    def set_language(self, language: str):
+    def set_language(self, language: str) -> None:
         """Set the current language."""
         if language in [lang.value for lang in Language]:
             self.current_language = language
@@ -124,6 +124,6 @@ def get_translation_manager() -> TranslationManager:
     return _translation_manager
 
 
-def _(key: str, **kwargs) -> str:
+def _(key: str, **kwargs: Any) -> str:
     """Convenience function for getting translated text."""
     return get_translation_manager().get_text(key, **kwargs)

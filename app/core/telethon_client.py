@@ -21,7 +21,7 @@ from ..models import Account, AccountStatus
 class TelegramClientWrapper:
     """Wrapper for Telethon TelegramClient with additional functionality."""
 
-    def __init__(self, account: Account, proxy: Optional[Dict[str, str]] = None):
+    def __init__(self, account: Account, proxy: Optional[Dict[str, str]] = None) -> None:
         """Initialize client wrapper."""
         self.account = account
         self.proxy = proxy
@@ -70,7 +70,7 @@ class TelegramClientWrapper:
             self.account.error_message = str(e)
             return False
 
-    async def disconnect(self):
+    async def disconnect(self) -> None:
         """Disconnect from Telegram."""
         if self.client and self._connected:
             try:
@@ -213,7 +213,7 @@ class TelegramClientWrapper:
 class TelegramClientManager:
     """Manages multiple Telegram clients."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize client manager."""
         self.clients: Dict[int, TelegramClientWrapper] = {}
         self.logger = get_logger()
@@ -234,9 +234,12 @@ class TelegramClientManager:
 
             # Connect
             if await client.connect():
-                self.clients[account.id] = client
+                account_id = account.id
+                if account_id is None:
+                    raise ValueError("Account must be persisted before adding to client manager")
+                self.clients[account_id] = client
                 self.logger.log_telegram_event(
-                    "add_account", account.id, "Account added successfully"
+                    "add_account", account_id, "Account added successfully"
                 )
                 return True
             else:
@@ -247,7 +250,7 @@ class TelegramClientManager:
             self.logger.error(f"Error adding account {account.id}: {e}")
             return False
 
-    async def remove_account(self, account_id: int):
+    async def remove_account(self, account_id: int) -> None:
         """Remove an account from the manager."""
         if account_id in self.clients:
             await self.clients[account_id].disconnect()
@@ -290,14 +293,14 @@ class TelegramClientManager:
         """Get status of all clients."""
         return {account_id: client.get_status() for account_id, client in self.clients.items()}
 
-    def get_event_loop(self):
+    def get_event_loop(self) -> Optional[asyncio.AbstractEventLoop]:
         """Get the main event loop."""
         try:
             return asyncio.get_running_loop()
         except RuntimeError:
             return None
 
-    async def disconnect_all(self):
+    async def disconnect_all(self) -> None:
         """Disconnect all clients."""
         for client in self.clients.values():
             await client.disconnect()

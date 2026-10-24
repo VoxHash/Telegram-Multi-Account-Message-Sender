@@ -47,12 +47,12 @@ def decrypt_data(encrypted_data: str, password: str) -> str:
     try:
         combined = base64.urlsafe_b64decode(encrypted_data.encode())
         salt = combined[:16]
-        encrypted_data = combined[16:]
+        ciphertext = combined[16:]
 
         key = generate_key(password, salt)
         f = Fernet(key)
 
-        decrypted_data = f.decrypt(encrypted_data)
+        decrypted_data = f.decrypt(ciphertext)
         return decrypted_data.decode("utf-8")
 
     except Exception as e:

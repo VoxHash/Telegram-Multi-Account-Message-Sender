@@ -82,10 +82,10 @@ jobs:
       run: |
         isort --check-only app/ || true
 
+    # Blocking mypy for app.core / app.services / app.models (strict flags in pyproject.toml).
+    # GUI and plugins are excluded; see ROADMAP remaining type gaps.
     - name: Type check with mypy
-      continue-on-error: true
-      run: |
-        mypy app/core app/services app/models --ignore-missing-imports || true
+      run: mypy app/core app/services app/models
 
     - name: Test with pytest
       if: ${{ !(matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11') }}

@@ -5,7 +5,7 @@ Performance monitoring and optimization utilities.
 import time
 import functools
 import tracemalloc
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any, Optional, Callable, Generator, Iterator
 from datetime import datetime
 from collections import defaultdict
 from contextlib import contextmanager
@@ -16,7 +16,7 @@ from . import get_logger
 class PerformanceMonitor:
     """Monitors application performance metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance monitor."""
         self.logger = get_logger()
         self.metrics: Dict[str, List[float]] = defaultdict(list)
@@ -54,7 +54,7 @@ class PerformanceMonitor:
         }
 
     @contextmanager
-    def measure_time(self, operation_name: str):
+    def measure_time(self, operation_name: str) -> Iterator[None]:
         """Context manager to measure operation time."""
         start_time = time.perf_counter()
         try:
@@ -65,7 +65,7 @@ class PerformanceMonitor:
             self.logger.debug(f"{operation_name} took {elapsed:.3f}s")
 
     @contextmanager
-    def measure_memory(self, operation_name: str):
+    def measure_memory(self, operation_name: str) -> Iterator[None]:
         """Context manager to measure memory usage."""
         if not self.tracemalloc_started:
             try:
@@ -124,16 +124,16 @@ class PerformanceMonitor:
 
     def get_performance_report(self) -> Dict[str, Any]:
         """Generate comprehensive performance report."""
-        report = {
+        metrics: Dict[str, Dict[str, float]] = {}
+        for metric_name in self.metrics:
+            metrics[metric_name] = self.get_metric_stats(metric_name)
+
+        report: Dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat(),
-            "metrics": {},
+            "metrics": metrics,
             "slow_queries": self.get_slow_queries(),
             "memory_snapshots": self.memory_snapshots[-100:] if self.memory_snapshots else [],
         }
-
-        # Calculate stats for all metrics
-        for metric_name in self.metrics:
-            report["metrics"][metric_name] = self.get_metric_stats(metric_name)
 
         # Query statistics
         if self.query_times:
@@ -155,14 +155,14 @@ class PerformanceMonitor:
         self.logger.info("Performance metrics reset")
 
 
-def performance_timer(operation_name: Optional[str] = None):
+def performance_timer(operation_name: Optional[str] = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to measure function execution time."""
 
     def decorator(func: Callable) -> Callable:
         name = operation_name or f"{func.__module__}.{func.__name__}"
 
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             monitor = get_performance_monitor()
             with monitor.measure_time(name):
                 return func(*args, **kwargs)

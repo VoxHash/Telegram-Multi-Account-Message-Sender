@@ -11,7 +11,7 @@ import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import cast,  Any, Dict, Optional
 
 from app import __version__
 from app.services import get_logger
@@ -46,7 +46,7 @@ class BackupPackageError(Exception):
 class BackupPackageBuilder:
     """Creates and validates application backup packages for cloud upload."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = get_logger()
 
     @staticmethod
@@ -139,7 +139,7 @@ class BackupPackageBuilder:
                 if digest != meta["sha256"]:
                     raise BackupPackageError(f"Checksum mismatch for {filename}")
 
-        return manifest
+        return cast(Dict[str, Any], manifest)
 
     def extract(
         self,

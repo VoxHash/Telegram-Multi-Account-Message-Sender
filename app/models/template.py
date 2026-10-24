@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Any
 from enum import Enum
 
 from sqlmodel import Field
-from sqlalchemy import JSON
+from sqlalchemy import Column, JSON
 
 from .base import BaseModel, SoftDeleteMixin, JSONFieldMixin
 
@@ -55,17 +55,17 @@ class MessageTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     caption: Optional[str] = Field(default=None)
 
     # Variables and personalization
-    variables: Optional[str] = Field(default=None, sa_column=JSON)
-    variable_descriptions: Optional[str] = Field(default=None, sa_column=JSON)
+    variables: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
+    variable_descriptions: Optional[Dict[str, str]] = Field(default=None, sa_column=Column(JSON))
     use_spintax: bool = Field(default=False)
     spintax_text: Optional[str] = Field(default=None)
 
     # A/B Testing
     use_ab_testing: bool = Field(default=False)
-    ab_variants: Optional[str] = Field(default=None, sa_column=JSON)
+    ab_variants: Optional[List[Dict[str, Any]]] = Field(default=None, sa_column=Column(JSON))
 
     # Organization
-    tags: Optional[str] = Field(default=None, sa_column=JSON)
+    tags: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
     notes: Optional[str] = Field(default=None)
 
     # Usage statistics
@@ -83,42 +83,49 @@ class MessageTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     def get_available_variables(self) -> List[str]:
         """Get list of available variables in the template."""
-        return self.variables.copy()
+        return list(self.variables) if self.variables else []
 
     def add_variable(self, variable: str, description: str = "") -> None:
         """Add a variable to the template."""
+        if self.variables is None:
+            self.variables = []
         if variable not in self.variables:
             self.variables.append(variable)
             if description:
+                if self.variable_descriptions is None:
+                    self.variable_descriptions = {}
                 self.variable_descriptions[variable] = description
 
     def remove_variable(self, variable: str) -> None:
         """Remove a variable from the template."""
-        if variable in self.variables:
+        if self.variables and variable in self.variables:
             self.variables.remove(variable)
-            self.variable_descriptions.pop(variable, None)
+            if self.variable_descriptions is not None:
+                self.variable_descriptions.pop(variable, None)
 
     def render_template(self, variables: Dict[str, str]) -> Dict[str, str]:
         """Render template with provided variables."""
-        rendered = {
-            "subject": self.subject,
+        rendered: Dict[str, str] = {
+            "subject": self.subject or "",
             "body": self.body,
-            "caption": self.caption,
+            "caption": self.caption or "",
         }
 
         # Replace variables in text fields
         for field in ["subject", "body", "caption"]:
-            if rendered[field]:
+            text_val = rendered[field]
+            if text_val:
                 for var, value in variables.items():
                     placeholder = f"{{{{{var}}}}}"
-                    rendered[field] = rendered[field].replace(placeholder, str(value))
+                    text_val = text_val.replace(placeholder, str(value))
+                rendered[field] = text_val
 
         return rendered
 
     def validate_variables(self, variables: Dict[str, str]) -> List[str]:
         """Validate that all required variables are provided."""
         missing = []
-        for var in self.variables:
+        for var in self.variables or []:
             if var not in variables or not variables[var]:
                 missing.append(var)
         return missing
@@ -145,22 +152,11 @@ class MessageTemplate(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     def get_tags_list(self) -> List[str]:
         """Get tags as a list."""
-        if self.tags:
-            import json
-
-            if isinstance(self.tags, str):
-                try:
-                    return json.loads(self.tags)
-                except (json.JSONDecodeError, TypeError):
-                    return []
-            return self.tags if isinstance(self.tags, list) else []
-        return []
+        return list(self.tags) if self.tags else []
 
     def set_tags_list(self, tags: List[str]) -> None:
         """Set tags from a list."""
-        import json
-
-        self.tags = json.dumps(tags) if tags else None
+        self.tags = tags if tags else None
 
     def get_ab_variant(self, recipient_id: int) -> Dict[str, Any]:
         """Get A/B test variant for a recipient."""

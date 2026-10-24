@@ -73,7 +73,7 @@ class PluginAPI:
     directly accessing internal components.
     """
 
-    def __init__(self, services: Dict[str, Any]):
+    def __init__(self, services: Dict[str, Any]) -> None:
         """
         Initialize Plugin API with application services.
 
@@ -83,23 +83,26 @@ class PluginAPI:
         self.services = services
         self._hooks: Dict[str, List[Callable]] = {}
 
-    def get_logger(self):
+    def get_logger(self) -> Any:
         """Get application logger."""
         return self.services.get("logger")
 
-    def get_settings(self):
+    def get_settings(self) -> Any:
         """Get application settings."""
         return self.services.get("settings")
 
-    def get_session(self):
+    def get_session(self) -> Any:
         """Get database session."""
-        return self.services.get("session")()
+        session_factory = self.services.get("session")
+        if session_factory is None:
+            raise RuntimeError("Database session factory is not registered")
+        return session_factory()
 
-    def get_campaign_manager(self):
+    def get_campaign_manager(self) -> Any:
         """Get campaign manager service."""
         return self.services.get("campaign_manager")
 
-    def register_hook(self, hook_name: str, callback: Callable):
+    def register_hook(self, hook_name: str, callback: Callable) -> None:
         """
         Register a hook callback.
 
@@ -111,13 +114,13 @@ class PluginAPI:
             self._hooks[hook_name] = []
         self._hooks[hook_name].append(callback)
 
-    def unregister_hook(self, hook_name: str, callback: Callable):
+    def unregister_hook(self, hook_name: str, callback: Callable) -> None:
         """Unregister a hook callback."""
         if hook_name in self._hooks:
             if callback in self._hooks[hook_name]:
                 self._hooks[hook_name].remove(callback)
 
-    def call_hook(self, hook_name: str, *args, **kwargs) -> List[Any]:
+    def call_hook(self, hook_name: str, *args: Any, **kwargs: Any) -> List[Any]:
         """
         Call all registered hooks for a given hook name.
 
@@ -149,7 +152,7 @@ class Plugin(ABC):
     Plugins must inherit from this class and implement required methods.
     """
 
-    def __init__(self, api: PluginAPI):
+    def __init__(self, api: PluginAPI) -> None:
         """
         Initialize plugin with API access.
 
@@ -175,32 +178,32 @@ class Plugin(ABC):
         """Get plugin configuration."""
         return self._config
 
-    def set_config(self, config: Dict[str, Any]):
+    def set_config(self, config: Dict[str, Any]) -> None:
         """Set plugin configuration."""
         self._config = config
 
-    def enable(self):
+    def enable(self) -> None:
         """Enable the plugin. Called when plugin is enabled."""
         if not self._enabled:
             self._enabled = True
             self.on_enable()
 
-    def disable(self):
+    def disable(self) -> None:
         """Disable the plugin. Called when plugin is disabled."""
         if self._enabled:
             self._enabled = False
             self.on_disable()
 
-    def on_enable(self):
+    def on_enable(self) -> None:
         """Called when plugin is enabled. Override in subclasses."""
 
-    def on_disable(self):
+    def on_disable(self) -> None:
         """Called when plugin is disabled. Override in subclasses."""
 
-    def on_load(self):
+    def on_load(self) -> None:
         """Called when plugin is loaded. Override in subclasses."""
 
-    def on_unload(self):
+    def on_unload(self) -> None:
         """Called when plugin is unloaded. Override in subclasses."""
 
     def validate_config(self, config: Dict[str, Any]) -> tuple[bool, Optional[str]]:
@@ -241,7 +244,7 @@ class AnalyticsPlugin(Plugin):
     """Base class for analytics plugins."""
 
     @abstractmethod
-    def track_event(self, event_name: str, data: Dict[str, Any]):
+    def track_event(self, event_name: str, data: Dict[str, Any]) -> None:
         """
         Track an analytics event.
 
@@ -255,7 +258,7 @@ class NotificationPlugin(Plugin):
     """Base class for notification plugins."""
 
     @abstractmethod
-    def send_notification(self, title: str, message: str, level: str = "info"):
+    def send_notification(self, title: str, message: str, level: str = "info") -> None:
         """
         Send a notification.
 
@@ -274,7 +277,7 @@ class IntegrationPlugin(Plugin):
         """Connect to external service. Returns True if successful."""
 
     @abstractmethod
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from external service."""
 
     @property

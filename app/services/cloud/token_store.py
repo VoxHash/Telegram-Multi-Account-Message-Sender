@@ -6,7 +6,7 @@ import base64
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, cast,  Any, Dict, Optional
 
 from app.utils.crypto import decrypt_data, encrypt_data
 
@@ -17,7 +17,7 @@ KEY_FILENAME = ".drive_token_key"
 class DriveTokenStore:
     """Persist OAuth token JSON encrypted under the application data directory."""
 
-    def __init__(self, cloud_dir: Optional[Path] = None):
+    def __init__(self, cloud_dir: Optional[Path] = None) -> None:
         if cloud_dir is None:
             from app.services.settings import get_settings
 
@@ -39,7 +39,8 @@ class DriveTokenStore:
             return None
         try:
             decrypted = decrypt_data(self.token_path.read_text(encoding="utf-8"), self._encryption_secret())
-            return json.loads(decrypted)
+            payload = json.loads(decrypted)
+            return cast(Optional[Dict[str, Any]], payload) if isinstance(payload, dict) else None
         except (ValueError, json.JSONDecodeError):
             return None
 

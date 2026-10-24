@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Any, TYPE_CHECKING
 from enum import Enum
 
 from sqlmodel import Field, Relationship
-from sqlalchemy import JSON
+from sqlalchemy import Column, JSON
 
 from .base import BaseModel, SoftDeleteMixin, JSONFieldMixin
 
@@ -73,12 +73,12 @@ class Recipient(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     # Status and metadata
     status: RecipientStatus = Field(default=RecipientStatus.ACTIVE)
     source: RecipientSource = Field(default=RecipientSource.MANUAL)
-    source_metadata: Optional[str] = Field(default=None, sa_column=JSON)
+    source_metadata: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
 
     # Organization
-    tags: Optional[str] = Field(default=None, sa_column=JSON)
+    tags: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
     notes: Optional[str] = Field(default=None)
-    custom_fields: Optional[str] = Field(default=None, sa_column=JSON)
+    custom_fields: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
 
     # Statistics
     total_messages_sent: int = Field(default=0)
@@ -149,16 +149,17 @@ class Recipient(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     def is_contactable(self) -> bool:
         """Check if recipient can be contacted."""
+        has_identity = bool(
+            self.username
+            or self.user_id
+            or self.phone_number
+            or self.group_id
+            or self.group_username
+        )
         return (
             self.status == RecipientStatus.ACTIVE
             and not self.is_deleted
-            and (
-                self.username
-                or self.user_id
-                or self.phone_number
-                or self.group_id
-                or self.group_username
-            )
+            and has_identity
         )
 
     def increment_message_count(self, success: bool = True) -> None:
@@ -179,71 +180,27 @@ class Recipient(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     def get_tags_list(self) -> List[str]:
         """Get tags as a list."""
-        if self.tags is None:
-            return []
-        try:
-            import json
-
-            return json.loads(self.tags) if isinstance(self.tags, str) else self.tags
-        except (json.JSONDecodeError, TypeError):
-            return []
+        return list(self.tags) if self.tags else []
 
     def set_tags_list(self, tags: List[str]) -> None:
         """Set tags from a list."""
-        if not tags:
-            self.tags = None
-        else:
-            import json
-
-            self.tags = json.dumps(tags)
+        self.tags = tags if tags else None
 
     def get_source_metadata_dict(self) -> Dict[str, Any]:
         """Get source metadata as a dictionary."""
-        if self.source_metadata is None:
-            return {}
-        try:
-            import json
-
-            return (
-                json.loads(self.source_metadata)
-                if isinstance(self.source_metadata, str)
-                else self.source_metadata
-            )
-        except (json.JSONDecodeError, TypeError):
-            return {}
+        return dict(self.source_metadata) if self.source_metadata else {}
 
     def set_source_metadata_dict(self, metadata: Dict[str, Any]) -> None:
         """Set source metadata from a dictionary."""
-        if not metadata:
-            self.source_metadata = None
-        else:
-            import json
-
-            self.source_metadata = json.dumps(metadata)
+        self.source_metadata = metadata if metadata else None
 
     def get_custom_fields_dict(self) -> Dict[str, Any]:
         """Get custom fields as a dictionary."""
-        if self.custom_fields is None:
-            return {}
-        try:
-            import json
-
-            return (
-                json.loads(self.custom_fields)
-                if isinstance(self.custom_fields, str)
-                else self.custom_fields
-            )
-        except (json.JSONDecodeError, TypeError):
-            return {}
+        return dict(self.custom_fields) if self.custom_fields else {}
 
     def set_custom_fields_dict(self, fields: Dict[str, Any]) -> None:
         """Set custom fields from a dictionary."""
-        if not fields:
-            self.custom_fields = None
-        else:
-            import json
-
-            self.custom_fields = json.dumps(fields)
+        self.custom_fields = fields if fields else None
 
 
 class RecipientList(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
@@ -258,10 +215,10 @@ class RecipientList(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     # Metadata
     source: RecipientSource = Field(default=RecipientSource.MANUAL)
     source_file_path: Optional[str] = Field(default=None)
-    import_metadata: Optional[str] = Field(default=None, sa_column=JSON)
+    import_metadata: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
 
     # Organization
-    tags: Optional[str] = Field(default=None, sa_column=JSON)
+    tags: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
     notes: Optional[str] = Field(default=None)
 
     # Statistics
@@ -281,7 +238,9 @@ class RecipientList(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     def update_statistics(self) -> None:
         """Update recipient statistics."""
         self.total_recipients = len(self.recipients)
-        self.active_recipients = sum(1 for r in self.recipients if r.recipient.is_contactable())
+        self.active_recipients = len(
+            [r for r in self.recipients if r.recipient is not None and r.recipient.is_contactable()]
+        )
         self.last_updated = datetime.utcnow()
 
     def get_recipient_count(self) -> int:
@@ -290,51 +249,25 @@ class RecipientList(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     def get_active_recipient_count(self) -> int:
         """Get active recipient count."""
-        return sum(1 for r in self.recipients if r.recipient.is_contactable())
+        return len(
+            [r for r in self.recipients if r.recipient is not None and r.recipient.is_contactable()]
+        )
 
     def get_tags_list(self) -> List[str]:
         """Get tags as a list."""
-        if self.tags is None:
-            return []
-        try:
-            import json
-
-            return json.loads(self.tags) if isinstance(self.tags, str) else self.tags
-        except (json.JSONDecodeError, TypeError):
-            return []
+        return list(self.tags) if self.tags else []
 
     def set_tags_list(self, tags: List[str]) -> None:
         """Set tags from a list."""
-        if not tags:
-            self.tags = None
-        else:
-            import json
-
-            self.tags = json.dumps(tags)
+        self.tags = tags if tags else None
 
     def get_import_metadata_dict(self) -> Dict[str, Any]:
         """Get import metadata as a dictionary."""
-        if self.import_metadata is None:
-            return {}
-        try:
-            import json
-
-            return (
-                json.loads(self.import_metadata)
-                if isinstance(self.import_metadata, str)
-                else self.import_metadata
-            )
-        except (json.JSONDecodeError, TypeError):
-            return {}
+        return dict(self.import_metadata) if self.import_metadata else {}
 
     def set_import_metadata_dict(self, metadata: Dict[str, Any]) -> None:
         """Set import metadata from a dictionary."""
-        if not metadata:
-            self.import_metadata = None
-        else:
-            import json
-
-            self.import_metadata = json.dumps(metadata)
+        self.import_metadata = metadata if metadata else None
 
 
 class RecipientListRecipient(BaseModel, table=True):

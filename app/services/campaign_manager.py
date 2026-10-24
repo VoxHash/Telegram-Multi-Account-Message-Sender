@@ -30,7 +30,7 @@ class CampaignManager(QObject):
     campaign_progress_updated = pyqtSignal(int, dict)  # campaign_id, progress_data
     campaign_error = pyqtSignal(int, str)  # campaign_id, error_message
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.logger = get_logger()
         self.client_manager = TelegramClientManager()
@@ -40,7 +40,7 @@ class CampaignManager(QObject):
         self.plugin_manager = get_plugin_manager()
 
         # Running campaigns tracking
-        self._running_campaigns: Dict[int, asyncio.Task] = {}
+        self._running_campaigns: Dict[int, bool] = {}
         self._campaign_tasks: Dict[int, threading.Thread] = {}
         self._campaign_status: Dict[int, str] = {}
 
@@ -423,7 +423,7 @@ class CampaignManager(QObject):
             recipients = self._get_campaign_recipients_sync(campaign)
 
             # Create hash from recipient IDs
-            recipient_ids = sorted([r.id for r in recipients])
+            recipient_ids = sorted(r.id for r in recipients if r.id is not None)
             hash_input = f"{campaign.id}_{len(recipient_ids)}_{'_'.join(map(str, recipient_ids))}"
 
             return hashlib.md5(hash_input.encode()).hexdigest()
@@ -442,7 +442,8 @@ class CampaignManager(QObject):
                 if campaign.recipient_source == "manual":
                     # Get all active recipients
                     query = select(Recipient).where(
-                        Recipient.is_deleted.is_(False), Recipient.status == "active"
+                        Recipient.is_deleted.is_(False),  # type: ignore[attr-defined]
+                        Recipient.status == "active",
                     )
                 else:
                     # For other sources, return empty for now
@@ -474,7 +475,7 @@ class CampaignManager(QObject):
             self.logger.error(f"Error getting sent recipients: {e}")
             return set()
 
-    def _run_campaign_thread(self, campaign_id: int):
+    def _run_campaign_thread(self, campaign_id: int) -> None:
         """Run campaign in a separate thread."""
         try:
             # Use asyncio.run() to create a completely isolated event loop
@@ -492,7 +493,7 @@ class CampaignManager(QObject):
             if campaign_id in self._campaign_status:
                 del self._campaign_status[campaign_id]
 
-    async def _run_campaign_async(self, campaign_id: int):
+    async def _run_campaign_async(self, campaign_id: int) -> None:
         """Run campaign asynchronously."""
         self.logger.info(f"Campaign {campaign_id} execution started")
         try:
@@ -568,10 +569,10 @@ class CampaignManager(QObject):
                     r for r in recipients if r.id not in self._sent_recipients[campaign_id]
                 ]
 
-                account_by_id = {a.id: a for a in accounts}
+                account_by_id = {a.id: a for a in accounts if a.id is not None}
                 pace_slots = build_pace_schedule(
                     len(pending_recipients),
-                    [a.id for a in accounts],
+                    [a.id for a in accounts if a.id is not None],
                     campaign.messages_per_minute or 1,
                     messages_per_hour=campaign.messages_per_hour or 60,
                     jitter_seconds=float(campaign.random_jitter_seconds or 0),
@@ -589,7 +590,7 @@ class CampaignManager(QObject):
                     # Check if campaign should continue
                     with get_session() as check_session:
                         check_campaign = check_session.get(Campaign, campaign_id)
-                        if check_campaign.status != CampaignStatus.RUNNING:
+                        if check_campaign is None or check_campaign.status != CampaignStatus.RUNNING:
                             break
 
                     try:
@@ -598,12 +599,12 @@ class CampaignManager(QObject):
                             await asyncio.sleep(pace_slots[i]["wait_before_ms"] / 1000.0)
 
                         # Select account (prefer paced assignment)
-                        account = None
+                        selected_account: Optional[Account] = None
                         if i < len(pace_slots):
-                            account = account_by_id.get(pace_slots[i]["account_id"])
-                        if not account:
-                            account = self._select_account(accounts, campaign)
-                        if not account:
+                            selected_account = account_by_id.get(pace_slots[i]["account_id"])
+                        if selected_account is None:
+                            selected_account = self._select_account(accounts, campaign)
+                        if selected_account is None:
                             skipped_count += 1
                             continue
 
@@ -621,17 +622,21 @@ class CampaignManager(QObject):
                             )
                             continue
 
-                        media_path = campaign.get_effective_media_path(recipient.id)
+                        recipient_id = recipient.id
+                        if recipient_id is None:
+                            skipped_count += 1
+                            continue
+                        media_path = campaign.get_effective_media_path(recipient_id)
 
                         # Send message
                         result = await self._send_message(
-                            account, recipient, message_text, media_path, campaign
+                            selected_account, recipient, message_text, media_path, campaign
                         )
 
                         # Update counts and tracking
                         if result["success"]:
                             sent_count += 1
-                            self._sent_recipients[campaign_id].add(recipient.id)
+                            self._sent_recipients[campaign_id].add(recipient_id)
                             self.logger.info(f"Sent message to {recipient.get_display_name()}")
 
                             # Track analytics
@@ -641,7 +646,7 @@ class CampaignManager(QObject):
                                     "campaign_id": campaign.id,
                                     "campaign_name": campaign.name,
                                     "recipient_id": recipient.id,
-                                    "account_id": account.id,
+                                    "account_id": selected_account.id,
                                     "success": True,
                                 },
                             )
@@ -658,16 +663,18 @@ class CampaignManager(QObject):
                                     "campaign_id": campaign.id,
                                     "campaign_name": campaign.name,
                                     "recipient_id": recipient.id,
-                                    "account_id": account.id,
+                                    "account_id": selected_account.id,
                                     "error": result.get("error", "Unknown error"),
                                     "success": False,
                                 },
                             )
 
                         # Create send log
-                        await self._create_send_log(campaign, account, recipient, result)
+                        await self._create_send_log(
+                            campaign, selected_account, recipient, result
+                        )
                         self.logger.debug(
-                            f"Created send log for campaign {campaign_id}, account {account.id}, recipient {recipient.id}"
+                            f"Created send log for campaign {campaign_id}, account {selected_account.id}, recipient {recipient.id}"
                         )
 
                         # Update campaign progress
@@ -684,7 +691,7 @@ class CampaignManager(QObject):
                 # Mark campaign as completed
                 with get_session() as final_session:
                     final_campaign = final_session.get(Campaign, campaign_id)
-                    if final_campaign.status == CampaignStatus.RUNNING:
+                    if final_campaign is not None and final_campaign.status == CampaignStatus.RUNNING:
                         # Determine final status based on results
                         if failed_count > 0 and sent_count == 0:
                             # All messages failed
@@ -723,7 +730,8 @@ class CampaignManager(QObject):
                 if campaign.recipient_source == "manual":
                     # Get all active recipients
                     query = select(Recipient).where(
-                        Recipient.is_deleted.is_(False), Recipient.status == "active"
+                        Recipient.is_deleted.is_(False),  # type: ignore[attr-defined]
+                        Recipient.status == "active",
                     )
                 else:
                     # For other sources, return empty for now
@@ -743,9 +751,9 @@ class CampaignManager(QObject):
                 from sqlmodel import select
 
                 query = select(Account).where(
-                    Account.is_deleted.is_(False),
+                    Account.is_deleted.is_(False),  # type: ignore[attr-defined]
                     Account.status == "ONLINE",
-                    Account.is_active.is_(True),
+                    Account.is_active.is_(True),  # type: ignore[attr-defined]
                 )
 
                 accounts = session.exec(query).all()
@@ -776,7 +784,10 @@ class CampaignManager(QObject):
         if not campaign.use_spintax or not recipients:
             return None
 
-        bases = [campaign.get_effective_message_text(r.id) or "" for r in recipients]
+        bases = [
+            campaign.get_effective_message_text(r.id if r.id is not None else 0) or ""
+            for r in recipients
+        ]
         groups: Dict[str, List[int]] = {}
         for idx, base in enumerate(bases):
             if "{" in base and "}" in base:
@@ -804,7 +815,8 @@ class CampaignManager(QObject):
         if preexpanded_text is not None:
             message_text = preexpanded_text
         else:
-            message_text = campaign.get_effective_message_text(recipient.id)
+            recipient_id = recipient.id if recipient.id is not None else 0
+            message_text = campaign.get_effective_message_text(recipient_id)
 
             # Apply spintax if enabled (single-message path)
             if campaign.use_spintax and message_text:
@@ -823,9 +835,7 @@ class CampaignManager(QObject):
         message_text = message_text.replace("{username}", recipient.username or "")
 
         # Apply plugin filters
-        message_text = self._apply_message_filters(message_text, recipient)
-
-        return message_text
+        return self._apply_message_filters(message_text, recipient)
 
     def _apply_message_filters(self, message_text: str, recipient: Recipient) -> Optional[str]:
         """
@@ -855,7 +865,7 @@ class CampaignManager(QObject):
             ),
         }
 
-        filtered_message = message_text
+        filtered_message: Optional[str] = message_text
 
         for plugin_info in enabled_plugins:
             plugin = self.plugin_manager.get_plugin(
@@ -863,6 +873,8 @@ class CampaignManager(QObject):
             )
             if plugin and isinstance(plugin, MessageFilterPlugin):
                 try:
+                    if filtered_message is None:
+                        return None
                     filtered_message = plugin.filter_message(filtered_message, recipient_data)
                     if filtered_message is None:
                         # Plugin filtered out the message
@@ -872,7 +884,7 @@ class CampaignManager(QObject):
 
         return filtered_message
 
-    def _track_analytics_event(self, event_name: str, data: Dict[str, Any]):
+    def _track_analytics_event(self, event_name: str, data: Dict[str, Any]) -> None:
         """
         Track analytics event through enabled analytics plugins.
 
@@ -1027,14 +1039,14 @@ class CampaignManager(QObject):
             self.logger.error(f"Error sending message: {e}")
             return {"success": False, "error": str(e)}
 
-    async def _create_error_log(self, campaign: Campaign, error_message: str):
+    async def _create_error_log(self, campaign: Campaign, error_message: str) -> None:
         """Create an error log entry for campaign failures."""
         try:
             with get_session() as session:
                 send_log = SendLog(
-                    campaign_id=campaign.id,
-                    account_id=None,  # No specific account for general errors
-                    recipient_id=None,  # No specific recipient for general errors
+                    campaign_id=campaign.id if campaign.id is not None else 0,
+                    account_id=0,  # No specific account for general errors
+                    recipient_id=0,  # No specific recipient for general errors
                     recipient_type="error",
                     recipient_identifier=f"campaign_{campaign.id}_error",
                     message_text=campaign.message_text or "",
@@ -1053,7 +1065,7 @@ class CampaignManager(QObject):
 
     async def _create_send_log(
         self, campaign: Campaign, account: Account, recipient: Recipient, result: Dict[str, Any]
-    ):
+    ) -> None:
         """Create a send log entry."""
         try:
             self.logger.debug(
@@ -1061,9 +1073,9 @@ class CampaignManager(QObject):
             )
             with get_session() as session:
                 send_log = SendLog(
-                    campaign_id=campaign.id,
-                    account_id=account.id,
-                    recipient_id=recipient.id,
+                    campaign_id=campaign.id if campaign.id is not None else 0,
+                    account_id=account.id if account.id is not None else 0,
+                    recipient_id=recipient.id if recipient.id is not None else 0,
                     message_text=result.get("message_text", ""),
                     status=SendStatus.SENT if result["success"] else SendStatus.FAILED,
                     error_message=result.get("error"),
@@ -1079,7 +1091,7 @@ class CampaignManager(QObject):
 
     async def _update_campaign_progress(
         self, campaign_id: int, sent: int, failed: int, skipped: int, progress: float
-    ):
+    ) -> None:
         """Update campaign progress."""
         try:
             with get_session() as session:
@@ -1103,7 +1115,7 @@ class CampaignManager(QObject):
         except Exception as e:
             self.logger.error(f"Error updating campaign progress: {e}")
 
-    def _update_campaign_status(self):
+    def _update_campaign_status(self) -> None:
         """Update campaign status from database."""
         try:
             with get_session() as session:
@@ -1111,13 +1123,14 @@ class CampaignManager(QObject):
 
                 # Get all running campaigns from database
                 query = select(Campaign).where(
-                    Campaign.status == CampaignStatus.RUNNING, Campaign.is_deleted.is_(False)
+                    Campaign.status == CampaignStatus.RUNNING,
+                    Campaign.is_deleted.is_(False),  # type: ignore[attr-defined]
                 )
                 running_campaigns = session.exec(query).all()
 
                 # Check if any running campaigns are no longer in our tracking
                 for campaign in running_campaigns:
-                    if campaign.id not in self._running_campaigns:
+                    if campaign.id is not None and campaign.id not in self._running_campaigns:
                         # Campaign was started externally or restarted
                         self._campaign_status[campaign.id] = "running"
                         self.campaign_started.emit(campaign.id)
@@ -1125,7 +1138,7 @@ class CampaignManager(QObject):
         except Exception as e:
             self.logger.error(f"Error updating campaign status: {e}")
 
-    def _check_scheduled_campaigns(self):
+    def _check_scheduled_campaigns(self) -> None:
         """Check for campaigns that should be started based on their start time."""
         try:
             with get_session() as session:
@@ -1136,9 +1149,9 @@ class CampaignManager(QObject):
                 now = datetime.utcnow()
                 query = select(Campaign).where(
                     Campaign.status == CampaignStatus.SCHEDULED,
-                    Campaign.is_deleted.is_(False),
-                    Campaign.start_time <= now,
-                    Campaign.is_active.is_(True),
+                    Campaign.is_deleted.is_(False),  # type: ignore[attr-defined]
+                    Campaign.start_time <= now,  # type: ignore[operator]
+                    Campaign.is_active.is_(True),  # type: ignore[attr-defined]
                 )
 
                 scheduled_campaigns = session.exec(query).all()
@@ -1153,6 +1166,8 @@ class CampaignManager(QObject):
                         f"Starting scheduled campaign {campaign.id}: {campaign.name} (scheduled for {campaign.start_time})"
                     )
                     # Start the campaign
+                    if campaign.id is None:
+                        continue
                     success = self.start_campaign(campaign.id)
                     if success:
                         self.logger.info(f"Successfully started scheduled campaign {campaign.id}")

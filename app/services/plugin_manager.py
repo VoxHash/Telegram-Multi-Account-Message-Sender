@@ -27,7 +27,7 @@ from ..services.db import get_session
 class PluginManager:
     """Manages plugin loading, enabling, disabling, and execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize plugin manager."""
         self.logger = get_logger()
         self.settings = get_settings()
@@ -42,11 +42,11 @@ class PluginManager:
         # Load plugin paths from settings
         self._load_plugin_paths()
 
-    def _initialize_api(self):
+    def _initialize_api(self) -> None:
         """Initialize plugin API with application services."""
 
         # Import here to avoid circular dependency
-        def get_campaign_manager_func():
+        def get_campaign_manager_func() -> Any:
             from ..services import get_campaign_manager
 
             return get_campaign_manager()
@@ -59,7 +59,7 @@ class PluginManager:
         }
         self.api = PluginAPI(services)
 
-    def _load_plugin_paths(self):
+    def _load_plugin_paths(self) -> None:
         """Load plugin paths from settings or use defaults."""
         # Default plugin directory
         default_path = Path(self.settings.app_data_dir) / "plugins"
@@ -166,6 +166,8 @@ class PluginManager:
             # Try to instantiate plugin - Python's ABC will raise TypeError if abstract methods aren't implemented
             # We catch it and provide better error context
             try:
+                if self.api is None:
+                    raise RuntimeError("Plugin API is not initialized")
                 plugin_instance = plugin_class(self.api)
             except TypeError as e:
                 error_msg = str(e)
@@ -315,7 +317,7 @@ class PluginManager:
         """List all enabled plugins."""
         return [info for info in self.plugins.values() if info.status == PluginStatus.ENABLED]
 
-    def reload_all_plugins(self):
+    def reload_all_plugins(self) -> None:
         """Reload all plugins."""
         self.logger.info("Reloading all plugins...")
 
@@ -391,7 +393,7 @@ def get_plugin_manager() -> PluginManager:
     return _plugin_manager
 
 
-def initialize_plugins():
+def initialize_plugins() -> None:
     """Initialize and load all plugins."""
     manager = get_plugin_manager()
     manager.reload_all_plugins()

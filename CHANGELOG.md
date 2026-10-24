@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.20] - 2026-10-24
+
+### Changed
+- **Stricter mypy (blocking CI)**: `app/core`, `app/services`, and `app/models` now run under strict flags (`disallow_untyped_defs`, `warn_return_any`, `check_untyped_defs`, `no_implicit_optional`, `strict_equality`, and related checks). CI fails the job on mypy errors for that scope.
+- **Typed SQLModel JSON columns**: JSON fields use native `List`/`Dict` types with `sa_column=Column(JSON)` instead of `Optional[str]` + string dumps.
+- **Type fixes** across campaign manager, logger, engine, warmup, account health, cloud backup, settings validators, and plugin API for Optional IDs and SQLAlchemy query expressions.
+
+### Added
+- **Mypy package config**: `files` / `follow_imports=silent` in `pyproject.toml`; GUI and plugins documented as remaining exclusions in ROADMAP.
+
 ## [1.2.19] - 2026-10-24
 
 ### Added

@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Any, TYPE_CHECKING
 from enum import Enum
 
 from sqlmodel import Field, Relationship
-from sqlalchemy import JSON
+from sqlalchemy import Column, JSON
 
 from .base import BaseModel, SoftDeleteMixin, JSONFieldMixin
 
@@ -90,8 +90,8 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     # A/B Testing
     use_ab_testing: bool = Field(default=False)
-    ab_variants: Optional[str] = Field(default=None, sa_column=JSON)
-    ab_split_percentages: Optional[str] = Field(default=None, sa_column=JSON)
+    ab_variants: Optional[List[Dict[str, Any]]] = Field(default=None, sa_column=Column(JSON))
+    ab_split_percentages: Optional[List[float]] = Field(default=None, sa_column=Column(JSON))
 
     # Scheduling
     start_time: Optional[datetime] = Field(default=None)
@@ -103,7 +103,7 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
     recurrence_interval: int = Field(default=1)  # Every N days/weeks/months
     recurrence_end_date: Optional[datetime] = Field(default=None)
     recurrence_count: Optional[int] = Field(default=None)  # Max number of occurrences
-    recurrence_days_of_week: Optional[str] = Field(default=None, sa_column=JSON)  # [0-6] for weekly
+    recurrence_days_of_week: Optional[List[int]] = Field(default=None, sa_column=Column(JSON))  # [0-6] for weekly
     recurrence_day_of_month: Optional[int] = Field(default=None)  # 1-31 for monthly
     last_recurrence_run: Optional[datetime] = Field(default=None)
     next_recurrence_run: Optional[datetime] = Field(default=None)
@@ -117,13 +117,13 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     # Account selection
     account_selection_strategy: str = Field(default="round_robin")  # round_robin, random, weighted
-    account_weights: Optional[str] = Field(default=None, sa_column=JSON)
+    account_weights: Optional[Dict[int, float]] = Field(default=None, sa_column=Column(JSON))
     max_concurrent_accounts: int = Field(default=3)
 
     # Recipients
     recipient_source: str = Field(default="manual")  # manual, csv, channel, group
     recipient_list_id: Optional[int] = Field(default=None, foreign_key="recipientlists.id")
-    recipient_filters: Optional[str] = Field(default=None, sa_column=JSON)
+    recipient_filters: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
 
     # Safety and compliance
     dry_run: bool = Field(default=False)
@@ -145,7 +145,7 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     # Additional settings
     is_active: bool = Field(default=True)
-    tags: Optional[str] = Field(default=None, sa_column=JSON)
+    tags: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
     notes: Optional[str] = Field(default=None)
     template_id: Optional[int] = Field(default=None, foreign_key="campaign_templates.id")
 
@@ -172,7 +172,8 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         """Get the effective message text for a recipient."""
         if self.use_ab_testing:
             variant = self.get_ab_variant(recipient_id)
-            return variant.get("text", self.message_text)
+            text = variant.get("text", self.message_text)
+            return str(text) if text is not None else self.message_text
         return self.message_text
 
     def get_effective_media_path(self, recipient_id: int) -> Optional[str]:
@@ -236,18 +237,7 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
 
     def get_ab_variants_list(self) -> List[Dict[str, Any]]:
         """Get A/B variants as a list."""
-        if self.ab_variants is None:
-            return []
-        try:
-            import json
-
-            return (
-                json.loads(self.ab_variants)
-                if isinstance(self.ab_variants, str)
-                else self.ab_variants
-            )
-        except (json.JSONDecodeError, TypeError):
-            return []
+        return list(self.ab_variants) if self.ab_variants else []
 
     def set_ab_variants_list(self, variants: List[Dict[str, Any]]) -> None:
         """Set A/B variants from a list."""
@@ -256,22 +246,11 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             import json
 
-            self.ab_variants = json.dumps(variants)
+            self.ab_variants = variants
 
     def get_ab_split_percentages_list(self) -> List[float]:
         """Get A/B split percentages as a list."""
-        if self.ab_split_percentages is None:
-            return []
-        try:
-            import json
-
-            return (
-                json.loads(self.ab_split_percentages)
-                if isinstance(self.ab_split_percentages, str)
-                else self.ab_split_percentages
-            )
-        except (json.JSONDecodeError, TypeError):
-            return []
+        return list(self.ab_split_percentages) if self.ab_split_percentages else []
 
     def set_ab_split_percentages_list(self, percentages: List[float]) -> None:
         """Set A/B split percentages from a list."""
@@ -280,22 +259,11 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             import json
 
-            self.ab_split_percentages = json.dumps(percentages)
+            self.ab_split_percentages = percentages
 
     def get_account_weights_dict(self) -> Dict[int, float]:
         """Get account weights as a dictionary."""
-        if self.account_weights is None:
-            return {}
-        try:
-            import json
-
-            return (
-                json.loads(self.account_weights)
-                if isinstance(self.account_weights, str)
-                else self.account_weights
-            )
-        except (json.JSONDecodeError, TypeError):
-            return {}
+        return dict(self.account_weights) if self.account_weights else {}
 
     def set_account_weights_dict(self, weights: Dict[int, float]) -> None:
         """Set account weights from a dictionary."""
@@ -304,22 +272,11 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             import json
 
-            self.account_weights = json.dumps(weights)
+            self.account_weights = weights
 
     def get_recipient_filters_dict(self) -> Dict[str, Any]:
         """Get recipient filters as a dictionary."""
-        if self.recipient_filters is None:
-            return {}
-        try:
-            import json
-
-            return (
-                json.loads(self.recipient_filters)
-                if isinstance(self.recipient_filters, str)
-                else self.recipient_filters
-            )
-        except (json.JSONDecodeError, TypeError):
-            return {}
+        return dict(self.recipient_filters) if self.recipient_filters else {}
 
     def set_recipient_filters_dict(self, filters: Dict[str, Any]) -> None:
         """Set recipient filters from a dictionary."""
@@ -328,18 +285,11 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             import json
 
-            self.recipient_filters = json.dumps(filters)
+            self.recipient_filters = filters
 
     def get_tags_list(self) -> List[str]:
         """Get tags as a list."""
-        if self.tags is None:
-            return []
-        try:
-            import json
-
-            return json.loads(self.tags) if isinstance(self.tags, str) else self.tags
-        except (json.JSONDecodeError, TypeError):
-            return []
+        return list(self.tags) if self.tags else []
 
     def set_tags_list(self, tags: List[str]) -> None:
         """Set tags from a list."""
@@ -348,4 +298,4 @@ class Campaign(BaseModel, SoftDeleteMixin, JSONFieldMixin, table=True):
         else:
             import json
 
-            self.tags = json.dumps(tags)
+            self.tags = tags

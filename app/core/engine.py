@@ -6,7 +6,7 @@ import asyncio
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from ..models import Campaign, Account, Recipient
+from ..models import Account, Campaign, CampaignStatus, Recipient
 from ..services.logger import get_logger
 from .telethon_client import TelegramClientManager
 from .throttler import Throttler
@@ -71,7 +71,7 @@ class CampaignRunner:
             )
 
             # Update campaign status
-            campaign.status = "running"
+            campaign.status = CampaignStatus.RUNNING
             campaign.start_time_actual = datetime.utcnow()
 
             # Get recipients
@@ -79,7 +79,7 @@ class CampaignRunner:
 
             # Process recipients
             for recipient in recipients:
-                if campaign.status != "running":
+                if campaign.status != CampaignStatus.RUNNING:
                     break
 
                 # Select account
@@ -95,7 +95,7 @@ class CampaignRunner:
                 await asyncio.sleep(campaign.messages_per_minute / 60)
 
             # Mark campaign as completed
-            campaign.status = "completed"
+            campaign.status = CampaignStatus.COMPLETED
             campaign.end_time_actual = datetime.utcnow()
 
             self.logger.log_campaign_event("complete", campaign.id, "Campaign completed")
@@ -103,7 +103,7 @@ class CampaignRunner:
 
         except Exception as e:
             self.logger.error(f"Error running campaign {campaign.id}: {e}")
-            campaign.status = "error"
+            campaign.status = CampaignStatus.FAILED
             return False
 
     async def _get_campaign_recipients(self, campaign: Campaign) -> List[Recipient]:
@@ -124,20 +124,26 @@ class CampaignRunner:
         """Send a campaign message."""
         try:
             # Get message content
-            message_text = campaign.get_effective_message_text(recipient.id)
-            media_path = campaign.get_effective_media_path(recipient.id)
+            recipient_id = recipient.id
+            account_id = account.id
+            if recipient_id is None or account_id is None:
+                raise ValueError("Account and recipient must be persisted before sending")
+            message_text = campaign.get_effective_message_text(recipient_id)
+            media_path = campaign.get_effective_media_path(recipient_id)
 
             # Send message
             result = await self.message_engine.send_message(
-                account.id, recipient, message_text, media_path
+                account_id, recipient, message_text, media_path
             )
 
             # Log result
             if result["success"]:
-                self.logger.log_send_event("sent", account.id, recipient.id, "Message sent")
+                self.logger.log_send_event("sent", account_id, recipient_id, "Message sent")
                 campaign.sent_count += 1
             else:
-                self.logger.log_send_event("failed", account.id, recipient.id, result["error"])
+                self.logger.log_send_event(
+                    "failed", account_id, recipient_id, result["error"]
+                )
                 campaign.failed_count += 1
 
         except Exception as e:

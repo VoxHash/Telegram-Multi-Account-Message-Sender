@@ -21,7 +21,7 @@ from .performance import get_performance_monitor
 class DatabaseService:
     """Database service for managing SQLite database operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.settings = get_settings()
         self.logger = get_logger()
         self.engine: Optional[Engine] = None
@@ -74,13 +74,13 @@ class DatabaseService:
             self.logger.error(f"Failed to initialize database: {e}")
             raise
 
-    def _setup_event_listeners(self):
+    def _setup_event_listeners(self) -> None:
         """Set up database event listeners."""
         if not self.engine:
             return
 
         @event.listens_for(self.engine, "connect")
-        def set_sqlite_pragma(dbapi_connection, connection_record):
+        def set_sqlite_pragma(dbapi_connection: Any, connection_record: Any) -> None:
             """Set SQLite pragmas for better performance and compatibility."""
             if self.settings.database_url.startswith("sqlite:///"):
                 cursor = dbapi_connection.cursor()
@@ -107,14 +107,14 @@ class DatabaseService:
 
             @event.listens_for(self.engine, "before_cursor_execute")
             def receive_before_cursor_execute(
-                conn, cursor, statement, parameters, context, executemany
-            ):
+                conn: Any, cursor: Any, statement: Any, parameters: Any, context: Any, executemany: Any
+            ) -> None:
                 context._query_start_time = time.time()
 
             @event.listens_for(self.engine, "after_cursor_execute")
             def receive_after_cursor_execute(
-                conn, cursor, statement, parameters, context, executemany
-            ):
+                conn: Any, cursor: Any, statement: Any, parameters: Any, context: Any, executemany: Any
+            ) -> None:
                 if hasattr(context, "_query_start_time"):
                     total = time.time() - context._query_start_time
                     monitor = get_performance_monitor()
@@ -211,7 +211,7 @@ class DatabaseService:
                 tables = SQLModel.metadata.tables.keys()
 
                 # Get row counts for each table
-                table_counts = {}
+                table_counts: Dict[str, Any] = {}
                 for table_name in tables:
                     try:
                         table = SQLModel.metadata.tables[table_name]

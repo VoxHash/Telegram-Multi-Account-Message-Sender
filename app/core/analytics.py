@@ -24,7 +24,7 @@ PathLike = Union[str, Path]
 class CampaignStats:
     """Campaign statistics."""
 
-    campaign_id: int
+    campaign_id: Optional[int]
     campaign_name: str
     total_recipients: int
     sent_count: int
@@ -40,7 +40,7 @@ class CampaignStats:
 class AccountStats:
     """Account statistics."""
 
-    account_id: int
+    account_id: Optional[int]
     account_name: str
     total_messages_sent: int
     total_messages_failed: int
@@ -313,7 +313,8 @@ class CampaignAnalytics:
         summary_rows: List[Dict[str, Any]] = []
 
         for campaign in campaigns:
-            logs = list(send_logs_by_campaign.get(campaign.id, []))
+            cid = campaign.id
+            logs = list(send_logs_by_campaign.get(cid, [])) if cid is not None else []
             report = self.generate_campaign_report(campaign, logs)
             campaign_reports.append(report)
             summary_rows.append(

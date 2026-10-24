@@ -26,7 +26,7 @@ class SpintaxResult:
 class SpintaxProcessor:
     """Processes spintax syntax for message personalization."""
 
-    def __init__(self, seed: Optional[int] = None):
+    def __init__(self, seed: Optional[int] = None) -> None:
         """Initialize spintax processor with optional seed for reproducibility."""
         self.seed = seed
         self._random = random.Random(seed) if seed is not None else random

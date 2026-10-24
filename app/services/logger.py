@@ -5,7 +5,7 @@ Logging service with rich console output and file logging.
 import logging
 import logging.handlers
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 from datetime import datetime
 
 from rich.console import Console
@@ -27,7 +27,7 @@ class ColoredFormatter(logging.Formatter):
     }
     RESET = "\033[0m"
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         log_color = self.COLORS.get(record.levelname, "")
         record.levelname = f"{log_color}{record.levelname}{self.RESET}"
         return super().format(record)
@@ -36,13 +36,13 @@ class ColoredFormatter(logging.Formatter):
 class AppLogger:
     """Application logger with rich console and file output."""
 
-    def __init__(self, name: str = "telegram_sender"):
+    def __init__(self, name: str = "telegram_sender") -> None:
         self.name = name
         self.settings = get_settings()
         self.console = Console()
         self._setup_logging()
 
-    def _setup_logging(self):
+    def _setup_logging(self) -> None:
         """Set up logging configuration."""
         # Install rich traceback handler
         install(show_locals=True)
@@ -107,38 +107,38 @@ class AppLogger:
             error_handler.setFormatter(file_formatter)
             self.logger.addHandler(error_handler)
 
-    def debug(self, message: str, **kwargs):
+    def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug message."""
         self.logger.debug(message, **kwargs)
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, **kwargs: Any) -> None:
         """Log info message."""
         self.logger.info(message, **kwargs)
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning message."""
         self.logger.warning(message, **kwargs)
 
-    def error(self, message: str, **kwargs):
+    def error(self, message: str, **kwargs: Any) -> None:
         """Log error message."""
         self.logger.error(message, **kwargs)
 
-    def critical(self, message: str, **kwargs):
+    def critical(self, message: str, **kwargs: Any) -> None:
         """Log critical message."""
         self.logger.critical(message, **kwargs)
 
-    def exception(self, message: str, **kwargs):
+    def exception(self, message: str, **kwargs: Any) -> None:
         """Log exception with traceback."""
         self.logger.exception(message, **kwargs)
 
-    def log_telegram_event(self, event_type: str, account_id: int, message: str, **kwargs):
+    def log_telegram_event(self, event_type: str, account_id: Optional[int], message: str, **kwargs: Any) -> None:
         """Log Telegram-specific event."""
         self.info(
             f"[bold blue]Telegram[/bold blue] [{event_type}] Account {account_id}: {message}",
             **kwargs,
         )
 
-    def log_campaign_event(self, event_type: str, campaign_id: int, message: str, **kwargs):
+    def log_campaign_event(self, event_type: str, campaign_id: Optional[int], message: str, **kwargs: Any) -> None:
         """Log campaign-specific event."""
         self.info(
             f"[bold green]Campaign[/bold green] [{event_type}] Campaign {campaign_id}: {message}",
@@ -146,8 +146,13 @@ class AppLogger:
         )
 
     def log_send_event(
-        self, status: str, account_id: int, recipient_id: int, message: str, **kwargs
-    ):
+        self,
+        status: str,
+        account_id: Optional[int],
+        recipient_id: Optional[int],
+        message: str,
+        **kwargs: Any,
+    ) -> None:
         """Log message send event."""
         color = {
             "sent": "green",
@@ -163,25 +168,30 @@ class AppLogger:
         )
 
     def log_rate_limit(
-        self, account_id: int, limit_type: str, current: int, max_limit: int, **kwargs
-    ):
+        self,
+        account_id: Optional[int],
+        limit_type: str,
+        current: int,
+        max_limit: int,
+        **kwargs: Any,
+    ) -> None:
         """Log rate limit information."""
         self.warning(
             f"[bold yellow]Rate Limit[/bold yellow] Account {account_id} {limit_type}: {current}/{max_limit}",
             **kwargs,
         )
 
-    def log_safety_event(self, event_type: str, message: str, **kwargs):
+    def log_safety_event(self, event_type: str, message: str, **kwargs: Any) -> None:
         """Log safety/compliance event."""
         self.warning(f"[bold red]Safety[/bold red] [{event_type}]: {message}", **kwargs)
 
-    def log_performance(self, operation: str, duration_ms: float, **kwargs):
+    def log_performance(self, operation: str, duration_ms: float, **kwargs: Any) -> None:
         """Log performance metrics."""
         self.debug(
             f"[bold magenta]Performance[/bold magenta] {operation}: {duration_ms:.2f}ms", **kwargs
         )
 
-    def reload_settings(self):
+    def reload_settings(self) -> None:
         """Reload logger with updated settings."""
         self.settings = get_settings()
         self._setup_logging()
@@ -217,36 +227,36 @@ def setup_logging(name: str = "telegram_sender") -> AppLogger:
     return AppLogger(name)
 
 
-def log_telegram_event(event_type: str, account_id: int, message: str, **kwargs):
+def log_telegram_event(event_type: str, account_id: Optional[int], message: str, **kwargs: Any) -> None:
     """Log Telegram event using global logger."""
     logger.log_telegram_event(event_type, account_id, message, **kwargs)
 
 
-def log_campaign_event(event_type: str, campaign_id: int, message: str, **kwargs):
+def log_campaign_event(event_type: str, campaign_id: Optional[int], message: str, **kwargs: Any) -> None:
     """Log campaign event using global logger."""
     logger.log_campaign_event(event_type, campaign_id, message, **kwargs)
 
 
-def log_send_event(status: str, account_id: int, recipient_id: int, message: str, **kwargs):
+def log_send_event(status: str, account_id: Optional[int], recipient_id: Optional[int], message: str, **kwargs: Any) -> None:
     """Log send event using global logger."""
     logger.log_send_event(status, account_id, recipient_id, message, **kwargs)
 
 
-def log_rate_limit(account_id: int, limit_type: str, current: int, max_limit: int, **kwargs):
+def log_rate_limit(account_id: Optional[int], limit_type: str, current: int, max_limit: int, **kwargs: Any) -> None:
     """Log rate limit using global logger."""
     logger.log_rate_limit(account_id, limit_type, current, max_limit, **kwargs)
 
 
-def log_safety_event(event_type: str, message: str, **kwargs):
+def log_safety_event(event_type: str, message: str, **kwargs: Any) -> None:
     """Log safety event using global logger."""
     logger.log_safety_event(event_type, message, **kwargs)
 
 
-def log_performance(operation: str, duration_ms: float, **kwargs):
+def log_performance(operation: str, duration_ms: float, **kwargs: Any) -> None:
     """Log performance using global logger."""
     logger.log_performance(operation, duration_ms, **kwargs)
 
 
-def reload_logger():
+def reload_logger() -> None:
     """Reload the global logger with updated settings."""
     logger.reload_settings()

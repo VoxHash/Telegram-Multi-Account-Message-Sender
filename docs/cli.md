@@ -20,6 +20,27 @@ python -m app.cli
 
 The application primarily uses a GUI interface. For programmatic access, use the Python API.
 
+### Read-only web companion
+
+Start a local stdlib HTTP monitor (no extra dependencies). Desktop remains primary; this process only serves status JSON and a small dashboard.
+
+```bash
+telegram-sender web-monitor
+telegram-sender web-monitor --host 127.0.0.1 --port 8765
+python -m app.cli web-monitor
+```
+
+| Path | Description |
+| --- | --- |
+| `/` | Minimal HTML dashboard |
+| `/api/status` | App / companion metadata |
+| `/api/accounts` | Account health summary + rows |
+| `/api/campaigns` | Campaign status list |
+| `/api/activity` | Recent send-log activity |
+| `/api/overview` | Combined snapshot |
+
+Write methods are rejected (`405`). Prefer `127.0.0.1`; see [Configuration](configuration.md) for bind risks.
+
 ## Python API
 
 ### Basic Usage

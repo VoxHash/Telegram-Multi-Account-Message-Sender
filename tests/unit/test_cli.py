@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 class TestCliEntrypoint:
     def test_cli_module_exposes_main(self):
-        # Importing app.cli pulls Qt; ensure main is callable once imported.
+        # Importing app.cli no longer pulls Qt at import time (web-monitor path).
         cli = importlib.import_module("app.cli")
         assert callable(cli.main)
 
@@ -20,12 +20,13 @@ class TestCliEntrypoint:
         mock_window = MagicMock()
 
         with (
-            patch.object(cli, "initialize_database") as init_db,
-            patch.object(cli, "get_settings") as get_settings,
-            patch.object(cli, "get_logger") as get_logger,
-            patch.object(cli, "QApplication", return_value=mock_app) as qapp,
-            patch.object(cli, "MainWindow", return_value=mock_window) as main_window,
+            patch("app.services.initialize_database") as init_db,
+            patch("app.services.get_settings") as get_settings,
+            patch("app.services.get_logger") as get_logger,
+            patch("PyQt5.QtWidgets.QApplication", return_value=mock_app) as qapp,
+            patch("app.gui.main.MainWindow", return_value=mock_window) as main_window,
             patch.object(cli.sys, "exit") as sys_exit,
+            patch.object(cli.sys, "argv", ["telegram-sender"]),
         ):
             get_logger.return_value = MagicMock()
             cli.main()

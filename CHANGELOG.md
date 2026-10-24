@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.24] - 2026-10-24
+
+### Added
+- **Optional read-only web companion**: Local stdlib `http.server` monitor (no FastAPI/Flask dependency) for account health, campaign status, recent activity, and analytics overview. Desktop remains primary; no send/control/write routes.
+- **CLI**: `telegram-sender web-monitor` (`--host` / `--port`); Settings → **Start & Open in Browser**.
+- **Endpoints**: `GET /`, `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`; mutating methods return **405**.
+- **Settings / env**: `WEB_COMPANION_ENABLED`, `WEB_COMPANION_HOST` (default `127.0.0.1`), `WEB_COMPANION_PORT` (default `8765`).
+- **Unit tests** for read-only HTTP behavior, argv parsing, and settings URL helpers.
+- **Docs**: Configuration, usage, CLI, API, FAQ, architecture, README, and env template cover enablement and bind risks.
+
+### Security
+- Default bind is localhost. Binding beyond loopback exposes status metadata without authentication — documented in Settings help and docs.
+
 ## [1.2.23] - 2026-10-24
 
 ### Added

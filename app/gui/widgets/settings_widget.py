@@ -161,6 +161,38 @@ class SettingsWidget(QWidget):
 
         general_layout.addWidget(registry_group)
 
+        # Optional read-only web companion
+        web_group = QGroupBox(_("settings.web_companion_settings"))
+        web_layout = QFormLayout(web_group)
+
+        self.web_companion_enabled_check = QCheckBox(_("settings.web_companion_enabled"))
+        self.web_companion_enabled_check.setChecked(bool(self.settings.web_companion_enabled))
+        web_layout.addRow(self.web_companion_enabled_check)
+
+        self.web_companion_host_edit = QLineEdit()
+        self.web_companion_host_edit.setText(self.settings.web_companion_host or "127.0.0.1")
+        self.web_companion_host_edit.setPlaceholderText("127.0.0.1")
+        web_layout.addRow(f"{_('settings.web_companion_host')}:", self.web_companion_host_edit)
+
+        self.web_companion_port_spin = QSpinBox()
+        self.web_companion_port_spin.setRange(1024, 65535)
+        self.web_companion_port_spin.setValue(int(self.settings.web_companion_port or 8765))
+        web_layout.addRow(f"{_('settings.web_companion_port')}:", self.web_companion_port_spin)
+
+        web_btn_row = QHBoxLayout()
+        self.web_companion_open_btn = QPushButton(_("settings.web_companion_open"))
+        self.web_companion_open_btn.clicked.connect(self.open_web_companion)
+        web_btn_row.addWidget(self.web_companion_open_btn)
+        web_btn_row.addStretch()
+        web_layout.addRow(web_btn_row)
+
+        web_help = QLabel(_("settings.web_companion_help"))
+        web_help.setWordWrap(True)
+        web_help.setStyleSheet("color: #888888; font-style: italic;")
+        web_layout.addRow(web_help)
+
+        general_layout.addWidget(web_group)
+
         # Database Settings
         db_group = QGroupBox(_("settings.database_settings"))
         db_layout = QFormLayout(db_group)
@@ -479,6 +511,13 @@ class SettingsWidget(QWidget):
                 self.plugin_registry_url_edit.text().strip() or default_registry
             )
 
+            # Optional read-only web companion
+            self.settings.web_companion_enabled = self.web_companion_enabled_check.isChecked()
+            self.settings.web_companion_host = (
+                self.web_companion_host_edit.text().strip() or "127.0.0.1"
+            )
+            self.settings.web_companion_port = int(self.web_companion_port_spin.value())
+
             # Database settings
             self.settings.database_url = self.db_url_edit.text().strip()
 
@@ -591,6 +630,11 @@ AI_MODEL={self.settings.ai_model or 'gpt-4o-mini'}
 
 # Plugin registry / marketplace catalog URL
 PLUGIN_REGISTRY_URL={self.settings.plugin_registry_url or ''}
+
+# Optional read-only web companion (stdlib; bind 127.0.0.1 by default)
+WEB_COMPANION_ENABLED={str(self.settings.web_companion_enabled).lower()}
+WEB_COMPANION_HOST={self.settings.web_companion_host or '127.0.0.1'}
+WEB_COMPANION_PORT={int(self.settings.web_companion_port or 8765)}
 """
 
             with open(".env", "w") as f:
@@ -598,6 +642,37 @@ PLUGIN_REGISTRY_URL={self.settings.plugin_registry_url or ''}
 
         except Exception as e:
             self.logger.error(f"Error saving to .env file: {e}")
+
+    def open_web_companion(self):
+        """Start the read-only web companion (if needed) and open it in a browser."""
+        import webbrowser
+
+        from ...services.web_companion import (
+            companion_url_from_settings,
+            start_companion_from_settings,
+        )
+
+        try:
+            # Apply current form values so Open uses what the user sees.
+            self.settings.web_companion_enabled = True
+            self.settings.web_companion_host = (
+                self.web_companion_host_edit.text().strip() or "127.0.0.1"
+            )
+            self.settings.web_companion_port = int(self.web_companion_port_spin.value())
+            self.web_companion_enabled_check.setChecked(True)
+
+            server = start_companion_from_settings(self.settings, background=True)
+            url = server.base_url or companion_url_from_settings(self.settings)
+            webbrowser.open(url)
+            self.status_label.setText(_("settings.web_companion_opened").format(url=url))
+            self.logger.info(f"Web companion opened at {url}")
+        except Exception as e:
+            self.logger.error(f"Failed to open web companion: {e}")
+            QMessageBox.critical(
+                self,
+                _("common.error"),
+                _("settings.web_companion_open_failed").format(error=str(e)),
+            )
 
     def reset_settings(self):
         """Reset settings to defaults."""
@@ -634,6 +709,11 @@ PLUGIN_REGISTRY_URL={self.settings.plugin_registry_url or ''}
 
             # Plugin registry
             self.plugin_registry_url_edit.setText(self.settings.plugin_registry_url or "")
+
+            # Optional read-only web companion
+            self.web_companion_enabled_check.setChecked(bool(self.settings.web_companion_enabled))
+            self.web_companion_host_edit.setText(self.settings.web_companion_host or "127.0.0.1")
+            self.web_companion_port_spin.setValue(int(self.settings.web_companion_port or 8765))
 
             # Database settings
             self.db_url_edit.setText(self.settings.database_url)

@@ -98,6 +98,18 @@ Optional encrypted backup/restore lives under `app/services/cloud/`:
 
 Google API client libraries are optional (`pip install '.[cloud]'`). Tokens are encrypted under `app_data/cloud/`.
 
+## Web companion (read-only)
+
+Optional local monitor in `app/services/web_companion.py` (stdlib `http.server` only — no web framework dependency):
+
+| Piece | Role |
+| --- | --- |
+| Snapshot builders | Account health, campaign status, activity, analytics overview from the SQLite DB |
+| `WebCompanionHandler` | GET/HEAD/OPTIONS only; mutating methods → `405` |
+| CLI / Settings | `telegram-sender web-monitor` or **Settings → Start & Open in Browser** |
+
+Default bind is `127.0.0.1:8765`. Desktop remains the control surface.
+
 ## See Also
 
 - [API Documentation](api.md) for API details

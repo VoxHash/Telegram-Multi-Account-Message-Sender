@@ -63,6 +63,15 @@ The application provides a graphical interface for managing multiple Telegram ac
 
 Sideloading with **Load Plugin** remains available for local `.py` files that are not in the catalog.
 
+## Web Companion (read-only monitoring, optional)
+
+Monitor account health, campaign status, and recent activity in a browser without giving the companion send/control powers.
+
+1. Open **Settings → General → Web Companion**, keep host `127.0.0.1`, set a port if needed, then click **Start & Open in Browser**.
+2. Or run headless: `telegram-sender web-monitor` (see [CLI Reference](cli.md) and [Configuration](configuration.md)).
+3. Dashboard: `http://127.0.0.1:8765/`. JSON: `/api/status`, `/api/accounts`, `/api/campaigns`, `/api/activity`, `/api/overview`.
+4. Mutating HTTP methods (`POST`/`PUT`/`PATCH`/`DELETE`) return **405**. Do not bind beyond localhost unless you accept unauthenticated status exposure on that network.
+
 ## AI Copy Tools (optional)
 
 1. Set `AI_API_KEY` (and optionally `AI_BASE_URL` / `AI_MODEL`) in `.env` or **Settings → General → AI Copy Tools**. See [Configuration Guide](configuration.md).

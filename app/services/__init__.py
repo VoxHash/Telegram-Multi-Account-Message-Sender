@@ -45,6 +45,11 @@ __all__ = [
     # Plugin Registry / Marketplace
     "get_plugin_registry_service",
     "PluginRegistryService",
+    # Optional read-only web companion
+    "WebCompanionServer",
+    "start_companion_from_settings",
+    "stop_companion",
+    "run_web_monitor_cli",
 ]
 
 # name -> (submodule, attribute)
@@ -75,6 +80,10 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "initialize_plugins": (".plugin_manager", "initialize_plugins"),
     "get_plugin_registry_service": (".plugin_registry", "get_plugin_registry_service"),
     "PluginRegistryService": (".plugin_registry", "PluginRegistryService"),
+    "WebCompanionServer": (".web_companion", "WebCompanionServer"),
+    "start_companion_from_settings": (".web_companion", "start_companion_from_settings"),
+    "stop_companion": (".web_companion", "stop_companion"),
+    "run_web_monitor_cli": (".web_companion", "run_web_monitor_cli"),
 }
 
 

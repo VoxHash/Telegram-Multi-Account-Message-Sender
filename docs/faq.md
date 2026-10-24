@@ -107,6 +107,10 @@ They are opt-in. Set your own OpenAI-compatible `AI_API_KEY` in Settings (or `.e
 
 Open **Plugins → Browse Registry** to discover curated plugins from the official catalog (`registry/catalog.json`). Install downloads a SHA-256–verified `.py` file into `app_data/plugins/`; you still enable it manually after review. Offline, the app uses the bundled catalog. Override the catalog URL with `PLUGIN_REGISTRY_URL` if needed.
 
+### What is the web companion?
+
+An optional **read-only** local monitor (`telegram-sender web-monitor` or Settings → Start & Open). It serves account health, campaign status, and recent activity over stdlib HTTP — no extra packages, no send/control APIs. Keep the default `127.0.0.1` bind; non-localhost binds expose status metadata without authentication.
+
 ### How do I schedule a campaign?
 
 When creating a campaign, set the "Start Time" field to schedule the campaign for a specific time. The campaign will start automatically at the scheduled time.

@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.23)
+## Current Status (v1.2.24)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -31,16 +31,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **Optional AI copy tools** (user-supplied OpenAI-compatible API key; stdlib HTTP; Templates rewrite / spintax / variations)
 - **Plugin marketplace / registry** (curated JSON catalog, offline bundled fallback, SHA-256 install into `app_data/plugins/`)
 - **Enhanced macOS/Linux packaging and file associations** (Linux desktop/MIME/`install.sh`; macOS `.app` Info.plist UTI; local `.tmas-backup.zip` restore)
+- **Optional lightweight web companion (read-only monitoring)** (stdlib `http.server`; CLI `web-monitor` + Settings open; localhost by default)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Additional cloud providers beyond Google Drive
 
-### Latest release (v1.2.23 — 2026-10-24)
-- Phase 3 packaging: Linux desktop + MIME install; macOS `.app` document types; local backup file association restore
+### Latest release (v1.2.24 — 2026-10-24)
+- Phase 3: optional read-only web companion for local monitoring (accounts / campaigns / activity)
 
 ### Previous highlights
+- **v1.2.23**: Phase 3 packaging: Linux desktop + MIME install; macOS `.app` document types; local backup file association restore
 - **v1.2.22**: Plugin marketplace / registry: browse curated catalog, install verified plugins, offline bundled fallback
 - **v1.2.21**: Optional AI-assisted copy tools behind user-supplied API keys (no AI SDK dependency)
 - **v1.2.20**: Stricter mypy: blocking CI for core/services/models; typed JSON columns; remaining type gaps documented below
@@ -93,7 +95,8 @@ Realistic, shippable work — not a full platform rewrite.
 ### Phase 3 (later): Platform expansion
 - [x] Enhanced macOS/Linux packaging and file associations
   - Leftover: Apple code signing / notarization; Windows file-association installer polish
-- [ ] Optional lightweight web companion (read-only monitoring first)
+- [x] Optional lightweight web companion (read-only monitoring first)
+  - Leftover: auth token / reverse-proxy guidance for non-localhost; richer live charts; optional auto-start with GUI
 - [ ] Mobile companion deferred until web companion proves demand
 
 ### Phase 4 (later): Team / enterprise

@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "Telegram Multi-Account Message Sender"
-    app_version: str = "1.2.23"
+    app_version: str = "1.2.24"
     app_env: AppEnvironment = AppEnvironment.DEVELOPMENT
     debug: bool = False
     start_with_windows: bool = False
@@ -142,6 +142,11 @@ class Settings(BaseSettings):
         "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender"
         "/main/registry/catalog.json"
     )
+
+    # Optional read-only web companion (stdlib http.server; desktop remains primary)
+    web_companion_enabled: bool = False
+    web_companion_host: str = "127.0.0.1"
+    web_companion_port: int = 8765
 
     # Optional: Additional settings
     custom_settings: Dict[str, Any] = Field(default_factory=dict)
@@ -248,6 +253,12 @@ class Settings(BaseSettings):
     def is_ai_copy_configured(self) -> bool:
         """Check if optional AI copy tools have a user-supplied API key."""
         return bool(self.ai_api_key and str(self.ai_api_key).strip())
+
+    def get_web_companion_url(self) -> str:
+        """Local URL for the optional read-only web companion."""
+        host = self.web_companion_host or "127.0.0.1"
+        display = "127.0.0.1" if host in ("0.0.0.0", "::") else host
+        return f"http://{display}:{int(self.web_companion_port or 8765)}"
 
     def get_proxy_settings(self) -> Dict[str, Optional[str]]:
         """Get proxy settings as dictionary."""

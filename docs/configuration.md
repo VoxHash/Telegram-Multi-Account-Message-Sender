@@ -46,6 +46,25 @@ You can configure the application using environment variables. See `example_file
 - `AI_BASE_URL`: Chat Completions base URL (default `https://api.openai.com/v1`)
 - `AI_MODEL`: Model id (default `gpt-4o-mini`)
 - `PLUGIN_REGISTRY_URL`: HTTPS URL of the curated plugin catalog JSON (default: official GitHub `registry/catalog.json`)
+- `WEB_COMPANION_ENABLED`: Start preference for the optional read-only web monitor (`true`/`false`, default `false`)
+- `WEB_COMPANION_HOST`: Bind address (default `127.0.0.1`)
+- `WEB_COMPANION_PORT`: Port (default `8765`)
+
+### Web Companion (read-only, optional)
+
+Lightweight local HTTP monitor built with the Python standard library (no FastAPI/Flask dependency). It exposes account health, campaign status, recent activity, and an analytics overview — **GET only**. The desktop app remains the control surface; there are no send/start/stop routes.
+
+```env
+WEB_COMPANION_ENABLED=false
+WEB_COMPANION_HOST=127.0.0.1
+WEB_COMPANION_PORT=8765
+```
+
+1. From the GUI: **Settings → General → Web Companion → Start & Open in Browser**.
+2. From the CLI (blocks until Ctrl+C): `telegram-sender web-monitor` or `python -m app.cli web-monitor`.
+3. Open `http://127.0.0.1:8765/` for the dashboard, or `/api/overview` for JSON.
+
+**Security:** Keep the default localhost bind. Binding to `0.0.0.0` (or any non-loopback address) exposes campaign/account status metadata on the network **without authentication**. Only do that on a trusted LAN, and prefer a firewall or reverse proxy with auth if you must.
 
 ### Plugin Registry (marketplace)
 

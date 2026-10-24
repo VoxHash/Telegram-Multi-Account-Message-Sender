@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.17] - 2026-10-24
+
+### Changed
+- **Account health dashboard polish**: Health scoring no longer treats “no send history” as a low success rate; offline/error/suspended/inactive accounts get clear status signals and next-step recommendations; Dashboard shows average score / healthy / needs-attention / critical summary cards, success-rate column, empty states, row tooltips, and a detail panel for selected accounts (worst scores sorted first).
+
+### Added
+- **Unit tests** for `AccountHealthMonitor` scoring edge cases and health summary aggregation.
+
 ## [1.2.16] - 2026-10-24
 
 ### Added

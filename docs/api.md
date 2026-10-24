@@ -494,6 +494,28 @@ from app.services import restore_database
 success = restore_database("backup.db")
 ```
 
+### Account Health Service
+
+#### `AccountHealthMonitor`
+
+Scores Telegram accounts for the Dashboard health table (connection status, success rate, 24h errors, warmup, activity).
+
+```python
+from app.services import AccountHealthMonitor, HealthStatus
+
+monitor = AccountHealthMonitor()
+rows = monitor.get_all_accounts_health()  # worst score first
+summary = monitor.get_health_summary(rows)
+```
+
+**Methods:**
+- `check_account_health(account: Account) -> dict`: Score one account (`score`, `health_status`, `warnings`, `recommendations`, `metrics`)
+- `get_all_accounts_health() -> list[dict]`: Health rows for all non-deleted accounts
+- `get_health_summary(health_rows: list[dict] | None = None) -> dict`: Aggregate counts (`average_score`, `healthy`, `needs_attention`, …)
+- `get_account_performance_metrics(account_id: int, days: int = 7) -> dict`: Period send/fail breakdown
+
+`HealthStatus` values: `excellent`, `good`, `warning`, `critical`, `offline`.
+
 ### Campaign Manager Service
 
 #### `get_campaign_manager() -> CampaignManager`

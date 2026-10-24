@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.16)
+## Current Status (v1.2.17)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -20,16 +20,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - CI: compileall, GUI import smoke, pip-install smoke, unit tests
 - Optional Rust native accelerator (`tmms_native`) with prebuilt `tmms_native-linux-x86_64` on Releases
 - Encrypted Google Drive cloud backup / restore MVP (Settings → Cloud Backup)
+- Account health dashboard polish (scores, summary cards, actionable warnings)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Offline-friendly restore messaging and additional cloud providers
 
-### Latest release (v1.2.16 — 2026-10-24)
-- Cloud backup MVP: `.tmas-backup.zip` builder, Google Drive OAuth provider, Settings UI, restore with pre-restore snapshot
+### Latest release (v1.2.17 — 2026-10-24)
+- Account health dashboard: clearer scores, status signals, summary metrics, empty/error states, and actionable recommendations
 
 ### Previous highlights
+- **v1.2.16**: Cloud backup MVP (Google Drive encrypted export/restore)
 - **v1.2.15**: Rust native accelerator + prebuilt Linux x86_64 binary on Releases
 - **v1.2.14**: Documentation kit completion, SendGram upgrade path, repo hygiene
 - **v1.2.13**: GHCR OCI image description metadata
@@ -44,11 +46,11 @@ Realistic, shippable work — not a full platform rewrite.
 
 | Priority | Item | Outcome |
 | --- | --- | --- |
-| High | Account health dashboard polish | Clear health scores and actionable warnings in the UI |
 | Medium | Expand unit/integration tests | Cover campaign filter payloads, settings, and CLI entrypoints |
 | Medium | Pydantic v2 field validators | Remove V1 `@validator` deprecation warnings |
 | Medium | Circular-import hardening for `app.core` package exports | Safer `from app.core...` imports outside the GUI boot path |
 | Low | Plugin marketplace / registry | Discover third-party plugins (after API stability) |
+| Done (v1.2.17) | Account health dashboard polish | Clear health scores, summary cards, and actionable warnings in the UI |
 | Done (v1.2.16) | Cloud backup MVP (encrypted export/restore) | Safe backup of app data to a user-owned Google Drive folder |
 | Done (v1.2.15) | Ship prebuilt `tmms_native` in releases | Users get Rust accel without a local Rust toolchain |
 

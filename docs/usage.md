@@ -80,11 +80,19 @@ Schedule campaigns for specific times with timezone support.
 
 Configure rate limits to respect Telegram's limits and prevent account bans.
 
+## Account Health (Dashboard)
+
+The **Dashboard** tab includes an Account Health section that scores each account (0–100) from connection status, success rate, recent 24h errors, warmup progress, and activity.
+
+- Summary cards show average score, healthy accounts, accounts that need attention, and critical/offline counts.
+- The table lists worst scores first; select a row for warnings and recommended actions (also available as row tooltips).
+- Offline, error, suspended, and inactive accounts get clear status labels and next-step guidance (reconnect, test connection, finish warmup).
+
 ## Best Practices
 
 - Start with conservative rate limits
 - Test messages before sending campaigns
-- Monitor account health
+- Monitor account health on the Dashboard and act on warnings before large campaigns
 - Use warmup for new accounts
 - Keep templates organized
 

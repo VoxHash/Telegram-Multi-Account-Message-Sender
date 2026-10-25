@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.39)
+## Current Status (v1.2.40)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -27,7 +27,7 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Pydantic v2 field validators on Settings
 - Circular-import hardening for `app.core` / `app.services` lazy exports
 - Incremental type hints on high-value core/services modules
-- **Blocking mypy** for `app/core`, `app/services`, `app/models`, `app/plugins`, and practical GUI subset (`theme`, `about`, package inits) (strict flags; CI fails on errors)
+- **Blocking mypy** for `app/core`, `app/services`, `app/models`, `app/plugins`, and expanded GUI subset (`theme`, `about`, `plugin_widget`, `testing_widget`, `telegram_selector`, package inits) (strict flags; CI fails on errors)
 - **Optional AI copy tools** (user-supplied API key; provider presets: OpenAI-compatible, Azure OpenAI, Anthropic Messages API; stdlib HTTP; Templates rewrite / spintax / variations; AI UI strings in all 13 locales)
 - **Plugin marketplace / registry** (curated JSON catalog, offline bundled fallback, SHA-256 install into `app_data/plugins/`)
 - **Enhanced macOS/Linux packaging and file associations** (Linux desktop/MIME/`install.sh`; macOS `.app` Info.plist UTI; local `.tmas-backup.zip` restore)
@@ -47,10 +47,11 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Contributor and sponsor community growth
 - Ongoing community registry PRs beyond the curated seed set
 
-### Latest release (v1.2.39 — 2026-10-25)
-- Technical debt: expand blocking mypy to `app/plugins` + practical GUI subset (`theme` / `about` / inits)
+### Latest release (v1.2.40 — 2026-10-25)
+- Technical debt: expand blocking mypy GUI subset (`plugin_widget` / `testing_widget` / `telegram_selector`)
 
 ### Previous highlights
+- **v1.2.39**: Technical debt: expand blocking mypy to `app/plugins` + practical GUI subset (`theme` / `about` / inits)
 - **v1.2.38**: Phase 2 leftover: AI provider presets (Azure OpenAI path/api-version + Anthropic Messages API)
 - **v1.2.37**: Phase 2 leftover: AI non-English locale strings for AI UI keys (all 13 languages)
 - **v1.2.36**: Phase 2/4 leftover: further third-party registry volume (Emoji Strip + Success Counter)
@@ -90,7 +91,7 @@ Realistic, shippable work — not a full platform rewrite.
 | --- | --- | --- |
 | Done (v1.2.22) | Plugin marketplace / registry | Discover/install curated plugins via JSON catalog (remote + bundled offline); SHA-256 verify; Plugins → Browse Registry |
 | Done (v1.2.21) | AI-assisted copy tools (optional keys) | Templates rewrite / spintax / variations via OpenAI-compatible Chat Completions; user-supplied `AI_API_KEY`; no SDK hard dependency |
-| Done (v1.2.20 / v1.2.39) | Stricter mypy (blocking) | Strict flags + CI fail for core/services/models; v1.2.39 adds plugins + practical GUI subset; large PyQt widgets leftover |
+| Done (v1.2.20 / v1.2.39 / v1.2.40) | Stricter mypy (blocking) | Strict flags + CI fail for core/services/models; v1.2.39 plugins + theme/about; v1.2.40 adds plugin/testing/telegram_selector widgets; larger PyQt widgets leftover |
 | Done (v1.2.19) | Coverage reporting in CI summary | pytest-cov + GitHub Actions job summary; fail-under **20%** baseline on ubuntu/3.11 |
 | Done (v1.2.19) | Type hints on remaining high-value modules | Incremental annotations on core/services (compliance, analytics, engine, campaign/warmup managers) |
 | Done (v1.2.19) | Offline-friendly restore messaging | Clear UX when cloud restore/list/backup attempted offline or Drive unreachable |
@@ -151,7 +152,8 @@ Realistic, shippable work — not a full platform rewrite.
 - [x] Type hints on remaining high-value untyped modules (incremental)
 - [x] Stricter mypy for `app/core`, `app/services`, `app/models` (blocking in CI)
 - [x] Extend blocking mypy to `app/plugins` + practical GUI subset (`theme`, `about`, package inits) — v1.2.39
-  - Leftover: remaining large PyQt widgets (`app/gui/main.py`, most of `app/gui/widgets/`)
+- [x] Expand blocking mypy GUI subset (`plugin_widget`, `testing_widget`, `telegram_selector`) — v1.2.40
+  - Leftover: remaining large PyQt widgets (`app/gui/main.py`, dashboard/settings/account/campaign/recipient/template/log/cloud_backup)
 - [ ] Optional: type `app/utils` / `app/cli.py` under the same blocking gate
 - [x] Resolve known `app.core` ↔ `app.services` import cycle for package-level imports
 

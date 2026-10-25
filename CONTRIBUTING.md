@@ -90,7 +90,10 @@ We welcome feature suggestions! Please:
    flake8 app/
    mypy app/core app/services app/models app/plugins \
      app/gui/__init__.py app/gui/theme.py \
-     app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
+     app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
+     app/gui/widgets/plugin_widget.py \
+     app/gui/widgets/testing_widget.py \
+     app/gui/widgets/telegram_selector.py
    ```
 
 5. **Commit your changes** (using Conventional Commits):
@@ -218,7 +221,10 @@ We use a clear branching strategy to organize development:
    flake8 app/
    mypy app/core app/services app/models app/plugins \
      app/gui/__init__.py app/gui/theme.py \
-     app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
+     app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
+     app/gui/widgets/plugin_widget.py \
+     app/gui/widgets/testing_widget.py \
+     app/gui/widgets/telegram_selector.py
    ```
 
 3. **Update documentation** if your changes affect:
@@ -300,7 +306,10 @@ flake8 app/
 # Type checking (blocking CI scope; remaining PyQt widgets deferred)
 mypy app/core app/services app/models app/plugins \
   app/gui/__init__.py app/gui/theme.py \
-  app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
+  app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
+  app/gui/widgets/plugin_widget.py \
+  app/gui/widgets/testing_widget.py \
+  app/gui/widgets/telegram_selector.py
 
 # Run tests
 pytest

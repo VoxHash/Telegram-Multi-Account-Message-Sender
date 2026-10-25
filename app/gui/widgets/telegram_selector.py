@@ -5,6 +5,7 @@ Telegram channel/group selector widget for browsing and selecting chats.
 import asyncio
 from typing import Optional, List, Dict, Any
 from PyQt5.QtWidgets import (
+    QWidget,
     QVBoxLayout,
     QHBoxLayout,
     QDialog,
@@ -48,7 +49,7 @@ class TelegramChatFetcher(QThread):
         api_hash: str,
         session_path: str,
         proxy: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         super().__init__()
         self.account_id = account_id
         self.api_id = api_id
@@ -58,11 +59,11 @@ class TelegramChatFetcher(QThread):
         self.logger = get_logger()
         self._should_stop = False
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the fetching process."""
         self._should_stop = True
 
-    def run(self):
+    def run(self) -> None:
         """Fetch chats from Telegram."""
         try:
             loop = asyncio.new_event_loop()
@@ -76,7 +77,7 @@ class TelegramChatFetcher(QThread):
             self.logger.error(f"Error fetching chats: {e}")
             self.error_occurred.emit(str(e))
 
-    async def _fetch_chats(self):
+    async def _fetch_chats(self) -> None:
         """Async method to fetch chats."""
         client = None
         try:
@@ -122,7 +123,7 @@ class TelegramChatFetcher(QThread):
                     chat_info["has_threads"] = True
                     # Fetch threads
                     try:
-                        threads = []
+                        threads: List[Dict[str, Any]] = []
                         async for message in client.iter_messages(entity, limit=100):
                             if hasattr(message, "reply_to") and message.reply_to:
                                 thread_id = message.reply_to.reply_to_msg_id
@@ -158,7 +159,7 @@ class TelegramChatFetcher(QThread):
                     pass
             self.error_occurred.emit(str(e))
 
-    def _get_entity_type(self, entity) -> str:
+    def _get_entity_type(self, entity: Any) -> str:
         """Get entity type string."""
         if isinstance(entity, Channel):
             if entity.broadcast:
@@ -178,17 +179,17 @@ class TelegramSelectorDialog(QDialog):
 
     chat_selected = pyqtSignal(dict)  # Emits selected chat info
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
-        self.selected_chat = None
-        self.selected_thread_id = None
-        self.fetcher = None
+        self.selected_chat: Optional[Dict[str, Any]] = None
+        self.selected_thread_id: Optional[Any] = None
+        self.fetcher: Optional[TelegramChatFetcher] = None
 
         self.setup_ui()
         self.load_accounts()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         self.setWindowTitle(_("recipients.select_from_telegram"))
         self.setModal(True)
@@ -252,12 +253,13 @@ class TelegramSelectorDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
-    def load_accounts(self):
+    def load_accounts(self) -> None:
         """Load available accounts."""
         try:
             with get_session() as session:
                 query = select(Account).where(
-                    Account.is_deleted.is_(False), Account.status == AccountStatus.ONLINE
+                    Account.is_deleted.is_(False),  # type: ignore[attr-defined]
+                    Account.status == AccountStatus.ONLINE
                 )
                 accounts = session.exec(query).all()
 
@@ -277,11 +279,11 @@ class TelegramSelectorDialog(QDialog):
             self.logger.error(f"Error loading accounts: {e}")
             QMessageBox.critical(self, _("common.error"), str(e))
 
-    def on_account_changed(self):
+    def on_account_changed(self) -> None:
         """Handle account selection change."""
         self.fetch_chats()
 
-    def fetch_chats(self):
+    def fetch_chats(self) -> None:
         """Fetch chats from selected account."""
         account_id = self.account_combo.currentData()
         if not account_id:
@@ -312,7 +314,7 @@ class TelegramSelectorDialog(QDialog):
                 progress = QProgressDialog(
                     _("recipients.fetching_chats"), _("common.cancel"), 0, 0, self
                 )
-                progress.setWindowModality(Qt.WindowModal)
+                progress.setWindowModality(Qt.WindowModality.WindowModal)
                 progress.setCancelButton(None)
                 progress.show()
 
@@ -328,15 +330,16 @@ class TelegramSelectorDialog(QDialog):
                     proxy=proxy,
                 )
 
-                self.fetcher.chats_fetched.connect(
-                    lambda chats: (progress.close(), self.populate_chats(chats))
-                )
-                self.fetcher.error_occurred.connect(
-                    lambda error: (
-                        progress.close(),
-                        QMessageBox.critical(self, _("common.error"), error),
-                    )
-                )
+                def _on_chats_fetched(chats: List[Dict[str, Any]]) -> None:
+                    progress.close()
+                    self.populate_chats(chats)
+
+                def _on_fetch_error(error: str) -> None:
+                    progress.close()
+                    QMessageBox.critical(self, _("common.error"), error)
+
+                self.fetcher.chats_fetched.connect(_on_chats_fetched)
+                self.fetcher.error_occurred.connect(_on_fetch_error)
                 self.fetcher.progress.connect(progress.setLabelText)
 
                 self.fetcher.start()
@@ -345,7 +348,7 @@ class TelegramSelectorDialog(QDialog):
             self.logger.error(f"Error fetching chats: {e}")
             QMessageBox.critical(self, _("common.error"), str(e))
 
-    def populate_chats(self, chats: List[Dict[str, Any]]):
+    def populate_chats(self, chats: List[Dict[str, Any]]) -> None:
         """Populate the chats tree with fetched chats."""
         self.chats_tree.clear()
         self.all_chats = chats
@@ -359,7 +362,7 @@ class TelegramSelectorDialog(QDialog):
                     f"@{chat.get('username', '')}" if chat.get("username") else "",
                 ]
             )
-            item.setData(0, Qt.UserRole, chat)
+            item.setData(0, Qt.ItemDataRole.UserRole, chat)
 
             # Add thread items if available
             if chat.get("has_threads") and chat.get("threads"):
@@ -374,7 +377,7 @@ class TelegramSelectorDialog(QDialog):
                             "",
                         ]
                     )
-                    thread_item.setData(0, Qt.UserRole, {**chat, "thread_id": thread.get("id")})
+                    thread_item.setData(0, Qt.ItemDataRole.UserRole, {**chat, "thread_id": thread.get("id")})
                     item.addChild(thread_item)
 
             self.chats_tree.addTopLevelItem(item)
@@ -382,13 +385,15 @@ class TelegramSelectorDialog(QDialog):
         self.chats_tree.expandAll()
         self.chats_tree.resizeColumnToContents(0)
 
-    def filter_chats(self, text: str):
+    def filter_chats(self, text: str) -> None:
         """Filter chats by search text."""
         text_lower = text.lower()
 
         for i in range(self.chats_tree.topLevelItemCount()):
             item = self.chats_tree.topLevelItem(i)
-            chat = item.data(0, Qt.UserRole)
+            if item is None:
+                continue
+            chat = item.data(0, Qt.ItemDataRole.UserRole) or {}
 
             if (
                 not text
@@ -399,18 +404,19 @@ class TelegramSelectorDialog(QDialog):
                 # Show/hide children
                 for j in range(item.childCount()):
                     child = item.child(j)
-                    child.setHidden(False)
+                    if child is not None:
+                        child.setHidden(False)
             else:
                 item.setHidden(True)
 
-    def on_chat_selected(self):
+    def on_chat_selected(self) -> None:
         """Handle chat selection."""
         selected_items = self.chats_tree.selectedItems()
         if not selected_items:
             return
 
         item = selected_items[0]
-        chat_data = item.data(0, Qt.UserRole)
+        chat_data = item.data(0, Qt.ItemDataRole.UserRole)
 
         if chat_data:
             self.selected_chat = chat_data
@@ -429,11 +435,11 @@ class TelegramSelectorDialog(QDialog):
             else:
                 self.thread_group.setVisible(False)
 
-    def on_chat_double_clicked(self, item, column):
+    def on_chat_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle chat double-click."""
         self.accept_selection()
 
-    def accept_selection(self):
+    def accept_selection(self) -> None:
         """Accept the selected chat."""
         selected_items = self.chats_tree.selectedItems()
         if not selected_items:
@@ -441,7 +447,7 @@ class TelegramSelectorDialog(QDialog):
             return
 
         item = selected_items[0]
-        chat_data = item.data(0, Qt.UserRole)
+        chat_data = item.data(0, Qt.ItemDataRole.UserRole)
 
         if not chat_data:
             return

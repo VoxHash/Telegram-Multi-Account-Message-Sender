@@ -2,7 +2,7 @@
 Testing widget for sending test messages.
 """
 
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from PyQt5.QtWidgets import (
     QWidget,
@@ -45,7 +45,7 @@ class TestMessageWorker(QThread):
         message_text: str,
         media_path: Optional[str] = None,
         use_spintax: bool = False,
-    ):
+    ) -> None:
         super().__init__()
         self.account_id = account_id
         self.recipient_identifier = recipient_identifier
@@ -56,11 +56,11 @@ class TestMessageWorker(QThread):
         self.client_manager = TelegramClientManager()
         self.spintax_processor = SpintaxProcessor()
 
-    def run(self):
+    def run(self) -> None:
         """Send test message."""
         import asyncio
 
-        async def async_send():
+        async def async_send() -> None:
             try:
                 self.progress.emit("Connecting to Telegram...")
 
@@ -148,12 +148,12 @@ class TestMessageWorker(QThread):
 class TestingWidget(QWidget):
     """Widget for testing message sending."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.spintax_processor = SpintaxProcessor()
         self.translation_manager = get_translation_manager()
-        self.recent_tests = []  # Store recent tests in memory
+        self.recent_tests: List[Dict[str, Any]] = []  # Store recent tests in memory
 
         # Connect language change signal
         self.translation_manager.language_changed.connect(self.on_language_changed)
@@ -163,12 +163,12 @@ class TestingWidget(QWidget):
         # Ensure translations are applied after UI setup
         self.update_ui_translations()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
         # Create splitter for form and results
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
         layout.addWidget(splitter)
 
         # Left side - Test Form
@@ -341,7 +341,7 @@ class TestingWidget(QWidget):
         # Set splitter proportions
         splitter.setSizes([400, 300])
 
-    def choose_media_file(self):
+    def choose_media_file(self) -> None:
         """Open file dialog to choose media file."""
         # Telegram supported media file extensions
         supported_extensions = [
@@ -408,12 +408,12 @@ class TestingWidget(QWidget):
         url_lower = url.lower()
         return any(ext in url_lower for ext in media_extensions)
 
-    def load_data(self):
+    def load_data(self) -> None:
         """Load accounts, recipients, and templates."""
         try:
             with get_session() as session:
                 # Load accounts
-                accounts = session.query(Account).filter(Account.deleted_at.is_(None)).all()
+                accounts = session.query(Account).filter(Account.deleted_at.is_(None)).all()  # type: ignore[union-attr]
                 self.account_combo.clear()
                 self.logger.info(f"Loading {len(accounts)} accounts for testing")
                 for account in accounts:
@@ -422,7 +422,7 @@ class TestingWidget(QWidget):
                     self.logger.debug(f"Added account: {account.phone_number} (ID: {account.id})")
 
                 # Load recipients
-                recipients = session.query(Recipient).filter(Recipient.deleted_at.is_(None)).all()
+                recipients = session.query(Recipient).filter(Recipient.deleted_at.is_(None)).all()  # type: ignore[union-attr]
                 self.recipient_combo.clear()
                 for recipient in recipients:
                     if recipient.recipient_type == "USER":
@@ -454,7 +454,7 @@ class TestingWidget(QWidget):
                 # Load templates
                 templates = (
                     session.query(MessageTemplate)
-                    .filter(MessageTemplate.deleted_at.is_(None))
+                    .filter(MessageTemplate.deleted_at.is_(None))  # type: ignore[union-attr]
                     .all()
                 )
                 self.template_combo.clear()
@@ -466,7 +466,7 @@ class TestingWidget(QWidget):
             self.logger.error(f"Error loading data: {e}")
             QMessageBox.critical(self, "Error", f"Failed to load data: {e}")
 
-    def on_template_changed(self, template_name):
+    def on_template_changed(self, template_name: str) -> None:
         """Handle template selection change."""
         if template_name == "None":
             return
@@ -489,7 +489,7 @@ class TestingWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Error loading template: {e}")
 
-    def send_test_message(self):
+    def send_test_message(self) -> None:
         """Send test message."""
         try:
             # Validate inputs
@@ -580,12 +580,12 @@ class TestingWidget(QWidget):
             self.send_button.setText("Send Test Message")
 
     @pyqtSlot(str)
-    def on_test_progress(self, message):
+    def on_test_progress(self, message: str) -> None:
         """Handle test progress updates."""
         self.logger.info(f"Test progress: {message}")
 
     @pyqtSlot(dict)
-    def on_test_finished(self, result):
+    def on_test_finished(self, result: Dict[str, Any]) -> None:
         """Handle test completion."""
         try:
             # Re-enable send button
@@ -629,7 +629,7 @@ class TestingWidget(QWidget):
             if hasattr(self, "worker"):
                 self.worker.deleteLater()
 
-    def update_tests_list(self):
+    def update_tests_list(self) -> None:
         """Update the recent tests list."""
         self.tests_list.clear()
 
@@ -659,13 +659,13 @@ class TestingWidget(QWidget):
 
             # Color code based on success
             if test["success"]:
-                item.setBackground(Qt.green)
+                item.setBackground(Qt.GlobalColor.green)
             else:
-                item.setBackground(Qt.red)
+                item.setBackground(Qt.GlobalColor.red)
 
             self.tests_list.addItem(item)
 
-    def clear_tests(self):
+    def clear_tests(self) -> None:
         """Clear recent tests."""
         reply = QMessageBox.question(
             self,
@@ -679,13 +679,13 @@ class TestingWidget(QWidget):
             self.update_tests_list()
             self.logger.info("Recent tests cleared")
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Update UI elements with new translations
         self.update_ui_translations()
 
-    def update_ui_translations(self):
+    def update_ui_translations(self) -> None:
         """Update UI elements with current translations."""
         try:
             # Update form group title

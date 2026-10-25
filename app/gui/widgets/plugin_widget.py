@@ -2,7 +2,7 @@
 Plugin management widget for the Telegram Multi-Account Message Sender.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Union
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -36,7 +36,7 @@ from ...services.plugin_registry import (
     RegistryPluginEntry,
     get_plugin_registry_service,
 )
-from ...core.plugin import PluginStatus
+from ...core.plugin import Plugin, PluginStatus
 
 
 class PluginListWidget(QWidget):
@@ -46,14 +46,14 @@ class PluginListWidget(QWidget):
     plugin_enabled = pyqtSignal(str)
     plugin_disabled = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.plugin_manager = get_plugin_manager()
         self.setup_ui()
         self.refresh_plugins()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the plugin list UI."""
         layout = QVBoxLayout(self)
 
@@ -92,13 +92,15 @@ class PluginListWidget(QWidget):
                 _("common.actions"),
             ]
         )
-        self.plugins_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        header = self.plugins_table.horizontalHeader()
+        if header is not None:
+            header.setSectionResizeMode(QHeaderView.Stretch)
         self.plugins_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.plugins_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.plugins_table.itemSelectionChanged.connect(self.on_plugin_selected)
         layout.addWidget(self.plugins_table)
 
-    def refresh_plugins(self):
+    def refresh_plugins(self) -> None:
         """Refresh the plugins list."""
         self.plugins_table.setRowCount(0)
         plugins = self.plugin_manager.list_plugins()
@@ -157,7 +159,7 @@ class PluginListWidget(QWidget):
 
             self.plugins_table.setCellWidget(row, 5, actions_widget)
 
-    def on_plugin_selected(self):
+    def on_plugin_selected(self) -> None:
         """Handle plugin selection."""
         selected_items = self.plugins_table.selectedItems()
         if selected_items:
@@ -168,7 +170,7 @@ class PluginListWidget(QWidget):
                 plugin_id = f"{name_item.text()}@{version_item.text()}"
                 self.plugin_selected.emit(plugin_id)
 
-    def enable_plugin(self, plugin_id: str):
+    def enable_plugin(self, plugin_id: str) -> None:
         """Enable a plugin."""
         if self.plugin_manager.enable_plugin(plugin_id):
             QMessageBox.information(self, _("common.success"), _("plugins.enabled_successfully"))
@@ -177,7 +179,7 @@ class PluginListWidget(QWidget):
         else:
             QMessageBox.warning(self, _("common.error"), _("plugins.enable_failed"))
 
-    def disable_plugin(self, plugin_id: str):
+    def disable_plugin(self, plugin_id: str) -> None:
         """Disable a plugin."""
         if self.plugin_manager.disable_plugin(plugin_id):
             QMessageBox.information(self, _("common.success"), _("plugins.disabled_successfully"))
@@ -186,7 +188,7 @@ class PluginListWidget(QWidget):
         else:
             QMessageBox.warning(self, _("common.error"), _("plugins.disable_failed"))
 
-    def configure_plugin(self, plugin_id: str):
+    def configure_plugin(self, plugin_id: str) -> None:
         """Configure a plugin."""
         plugin = self.plugin_manager.get_plugin(plugin_id)
         if not plugin:
@@ -205,7 +207,7 @@ class PluginListWidget(QWidget):
             else:
                 QMessageBox.warning(self, _("common.error"), _("plugins.config_save_failed"))
 
-    def show_plugin_info(self, plugin_id: str):
+    def show_plugin_info(self, plugin_id: str) -> None:
         """Show detailed plugin information."""
         plugin_info = self.plugin_manager.get_plugin_info(plugin_id)
         if not plugin_info:
@@ -234,7 +236,7 @@ class PluginListWidget(QWidget):
 
         QMessageBox.information(self, _("plugins.plugin_info"), info_text)
 
-    def load_plugin_file(self):
+    def load_plugin_file(self) -> None:
         """Load a plugin from a file."""
         file_path, _selected_filter = QFileDialog.getOpenFileName(
             self, _("plugins.select_plugin_file"), "", "Python Files (*.py);;All Files (*)"
@@ -248,7 +250,7 @@ class PluginListWidget(QWidget):
             else:
                 QMessageBox.warning(self, _("common.error"), _("plugins.load_failed"))
 
-    def reload_all_plugins(self):
+    def reload_all_plugins(self) -> None:
         """Reload all plugins."""
         reply = QMessageBox.question(
             self,
@@ -262,7 +264,7 @@ class PluginListWidget(QWidget):
             self.refresh_plugins()
             QMessageBox.information(self, _("common.success"), _("plugins.reloaded_successfully"))
 
-    def browse_registry(self):
+    def browse_registry(self) -> None:
         """Open the plugin marketplace / registry browser."""
         dialog = PluginRegistryDialog(self)
         if dialog.exec_() == QDialog.Accepted:
@@ -272,7 +274,7 @@ class PluginListWidget(QWidget):
 class PluginRegistryDialog(QDialog):
     """Browse and install plugins from the official curated registry."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.registry = get_plugin_registry_service()
@@ -281,7 +283,7 @@ class PluginRegistryDialog(QDialog):
         self.setup_ui()
         self.refresh_catalog()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         self.setWindowTitle(_("plugins.registry_title"))
         self.resize(820, 480)
         layout = QVBoxLayout(self)
@@ -335,7 +337,9 @@ class PluginRegistryDialog(QDialog):
                 _("common.actions"),
             ]
         )
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        header = self.table.horizontalHeader()
+        if header is not None:
+            header.setSectionResizeMode(QHeaderView.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         layout.addWidget(self.table)
@@ -348,7 +352,7 @@ class PluginRegistryDialog(QDialog):
             close_btn.clicked.connect(self.accept)
         layout.addWidget(buttons)
 
-    def refresh_catalog(self):
+    def refresh_catalog(self) -> None:
         try:
             catalog = self.registry.fetch_catalog(prefer_remote=True)
             query = self.search_edit.text().strip()
@@ -381,7 +385,7 @@ class PluginRegistryDialog(QDialog):
             return _("plugins.registry_installed")
         return _("plugins.registry_available")
 
-    def _populate_table(self):
+    def _populate_table(self) -> None:
         self.table.setRowCount(len(self._entries))
         for row, entry in enumerate(self._entries):
             self.table.setItem(row, 0, QTableWidgetItem(entry.name))
@@ -411,7 +415,7 @@ class PluginRegistryDialog(QDialog):
 
             self.table.setCellWidget(row, 5, actions)
 
-    def show_entry_info(self, entry: RegistryPluginEntry):
+    def show_entry_info(self, entry: RegistryPluginEntry) -> None:
         text = f"""
         <h2>{entry.name}</h2>
         <p><b>ID:</b> {entry.id}</p>
@@ -428,7 +432,7 @@ class PluginRegistryDialog(QDialog):
             text += f"<p><b>Tags:</b> {', '.join(entry.tags)}</p>"
         QMessageBox.information(self, _("plugins.plugin_info"), text)
 
-    def install_entry(self, entry: RegistryPluginEntry, overwrite: bool = False):
+    def install_entry(self, entry: RegistryPluginEntry, overwrite: bool = False) -> None:
         reply = QMessageBox.question(
             self,
             _("common.confirm"),
@@ -466,13 +470,13 @@ class PluginRegistryDialog(QDialog):
 class PluginConfigDialog(QDialog):
     """Dialog for configuring a plugin."""
 
-    def __init__(self, plugin, config: Dict[str, Any], parent=None):
+    def __init__(self, plugin: Plugin, config: Dict[str, Any], parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.plugin = plugin
         self.config = config.copy()
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the configuration dialog UI."""
         self.setWindowTitle(_("plugins.configure_plugin").format(name=self.plugin.metadata.name))
         layout = QVBoxLayout(self)
@@ -480,7 +484,7 @@ class PluginConfigDialog(QDialog):
         form_layout = QFormLayout()
 
         # Create input fields for each config key
-        self.config_widgets = {}
+        self.config_widgets: Dict[str, Union[QCheckBox, QSpinBox, QLineEdit]] = {}
         default_config = self.plugin.get_default_config()
 
         for key, value in default_config.items():
@@ -513,7 +517,7 @@ class PluginConfigDialog(QDialog):
 
     def get_config(self) -> Dict[str, Any]:
         """Get configuration from widgets."""
-        config = {}
+        config: Dict[str, Any] = {}
         for key, widget in self.config_widgets.items():
             if isinstance(widget, QCheckBox):
                 config[key] = widget.isChecked()
@@ -527,12 +531,12 @@ class PluginConfigDialog(QDialog):
 class PluginWidget(QWidget):
     """Main plugin management widget."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the plugin management UI."""
         layout = QVBoxLayout(self)
 

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.40] - 2026-10-25
+
+### Added
+- **Technical debt: expand blocking mypy GUI subset**: CI / `[tool.mypy]` now also gates `app/gui/widgets/plugin_widget.py`, `testing_widget.py`, and `telegram_selector.py` under the same strict flags as core/services/models/plugins.
+- **Unit tests** for blocking mypy path presence updated to include the three new widgets.
+
+### Changed
+- Annotated plugin management, message testing, and Telegram chat-selector widgets for strict mypy (return types, Qt enum paths, null-safe header/tree access).
+- Docs (architecture, README, CONTRIBUTING) and ROADMAP document the expanded gate; remaining large PyQt widgets (`main`, dashboard/settings/account/campaign/recipient/template/log/cloud_backup) stay deferred.
+
 ## [1.2.39] - 2026-10-25
 
 ### Added

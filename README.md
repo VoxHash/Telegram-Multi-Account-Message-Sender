@@ -342,7 +342,10 @@ flake8 app/
 # Type checking (blocking CI scope; remaining PyQt widgets deferred)
 mypy app/core app/services app/models app/plugins \
   app/gui/__init__.py app/gui/theme.py \
-  app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
+  app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
+  app/gui/widgets/plugin_widget.py \
+  app/gui/widgets/testing_widget.py \
+  app/gui/widgets/telegram_selector.py
 ```
 
 ### Running Tests

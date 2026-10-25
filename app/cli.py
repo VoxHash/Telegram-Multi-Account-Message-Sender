@@ -20,6 +20,7 @@ from app.services.plugin_sdk import (  # noqa: E402
     run_plugin_validate_cli,
 )
 from app.services.web_companion import parse_web_monitor_argv, run_web_monitor_cli  # noqa: E402
+from app.utils.security_posture import parse_security_argv, run_security_cli  # noqa: E402
 
 
 def main() -> None:
@@ -43,6 +44,10 @@ def main() -> None:
     is_catalog_sign, *_ = parse_plugin_catalog_sign_argv(sys.argv)
     if is_catalog_sign:
         raise SystemExit(run_plugin_catalog_sign_cli(sys.argv))
+
+    is_security, *_ = parse_security_argv(sys.argv)
+    if is_security:
+        raise SystemExit(run_security_cli(sys.argv))
 
     from app import __version__
     from app.core.launch_args import filter_qt_argv, resolve_existing_backup_package

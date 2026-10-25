@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.44)
+## Current Status (v1.2.45)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -41,16 +41,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **Signed plugin catalogs** (Ed25519 + `json-sorted-compact`; official `trusted_keys.json`; `plugin-catalog-sign` CLI)
 - **Richer community registry submissions** (Whitespace Normalize + Failure Counter installables; analytics sample template; `plugin-catalog-entry` CLI; plugin submission issue template)
 - **Further third-party registry volume** (Emoji Strip Filter + Success Counter Analytics; six downloadable catalog plugins)
+- **Security posture** (threat model for proxies/shared machines; session/credential storage review + `security-check`/`security-harden`; periodic `pip-audit` CI)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Ongoing community registry PRs beyond the curated seed set
 
-### Latest release (v1.2.44 — 2026-10-25)
-- Technical debt: type `app/utils` / `app/cli.py` under the same blocking mypy gate
+### Latest release (v1.2.45 — 2026-10-25)
+- Security: threat model, credential storage review/harden CLI, periodic dependency audit
 
 ### Previous highlights
+- **v1.2.44**: Technical debt: type `app/utils` / `app/cli.py` under the same blocking mypy gate
 - **v1.2.43**: Technical debt: expand blocking mypy GUI subset (`settings_widget` / `account_widget` / `campaign_widget`)
 - **v1.2.42**: Technical debt: expand blocking mypy GUI subset (`log_widget` / `template_widget` / `recipient_widget`)
 - **v1.2.41**: Technical debt: expand blocking mypy GUI subset (`main` / `cloud_backup_widget` / `dashboard_widget`)
@@ -96,6 +98,7 @@ Realistic, shippable work — not a full platform rewrite.
 | Done (v1.2.22) | Plugin marketplace / registry | Discover/install curated plugins via JSON catalog (remote + bundled offline); SHA-256 verify; Plugins → Browse Registry |
 | Done (v1.2.21) | AI-assisted copy tools (optional keys) | Templates rewrite / spintax / variations via OpenAI-compatible Chat Completions; user-supplied `AI_API_KEY`; no SDK hard dependency |
 | Done (v1.2.20 / v1.2.39–v1.2.44) | Stricter mypy (blocking) | Strict flags + CI fail for core/services/models; v1.2.39–v1.2.43 plugins + expanded GUI; v1.2.44 `app/utils` + `app/cli.py` |
+| Done (v1.2.45) | Security posture | Threat model (proxies/shared machines); session/credential review + harden CLI; periodic `pip-audit` CI |
 | Done (v1.2.19) | Coverage reporting in CI summary | pytest-cov + GitHub Actions job summary; fail-under **20%** baseline on ubuntu/3.11 |
 | Done (v1.2.19) | Type hints on remaining high-value modules | Incremental annotations on core/services (compliance, analytics, engine, campaign/warmup managers) |
 | Done (v1.2.19) | Offline-friendly restore messaging | Clear UX when cloud restore/list/backup attempted offline or Drive unreachable |
@@ -168,16 +171,16 @@ Realistic, shippable work — not a full platform rewrite.
 - [ ] Short video walkthrough (external; link from README when published)
 
 ### Security
-- [ ] Periodic dependency audit
-- [ ] Session/credential storage review
-- [ ] Document threat model for proxies and shared machines
+- [x] Periodic dependency audit (`pip-audit` workflow + SECURITY.md process) — v1.2.45
+- [x] Session/credential storage review (`security-check` / `security-harden`) — v1.2.45
+- [x] Document threat model for proxies and shared machines — v1.2.45
 
 ---
 
 ## Community
 
 - [x] GitHub Sponsors + issue/PR templates + CODE_OF_CONDUCT
-- [ ] Discord or Discussions-first community channel
+- [ ] Discord or Discussions-first community channel (Discussions linked in SUPPORT; Discord still open)
 - [ ] Beta tester list for cloud-backup MVP
 
 ---

@@ -1,6 +1,6 @@
 [project]
 name = "telegram-multi-account-sender"
-version = "1.2.44"
+version = "1.2.45"
 description = "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"
 readme = "README.md"
 license = {text = "Eclipse Public License 2.0"}
@@ -71,6 +71,7 @@ dev = [
     "pre-commit>=3.0.0",
     "twine>=4.0.0",
     "build>=0.10.0",
+    "pip-audit>=2.7.0",
 ]
 docs = [
     "sphinx>=6.0.0",

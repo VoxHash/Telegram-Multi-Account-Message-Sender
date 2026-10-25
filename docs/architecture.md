@@ -129,6 +129,17 @@ Default bind is `127.0.0.1:8765`. Non-loopback binds require `WEB_COMPANION_TOKE
 
 Install never auto-enables third-party code. Submit via PR after `plugin-catalog-entry` + `plugin-validate`. Maintainers re-sign `registry/catalog.json` after edits.
 
+## Security posture (local secrets)
+
+| Piece | Role |
+| --- | --- |
+| `app/utils/security_posture.py` | Review Telethon sessions, `.env`, SQLite DB, and cloud token dirs; POSIX owner-only harden |
+| CLI | `telegram-sender security-check` / `security-harden` |
+| `SECURITY.md` | Threat model (proxies / shared machines), storage review, vulnerability reporting |
+| `.github/workflows/dependency-audit.yml` | Periodic `pip-audit` on `requirements.txt` |
+
+Desktop remains single-operator; multi-user RBAC belongs to SendGram.
+
 ## Type checking (mypy)
 
 CI runs **blocking** mypy (strict flags in `pyproject.toml`) on:
@@ -145,4 +156,5 @@ See [ROADMAP](../ROADMAP.md) and [CONTRIBUTING](../CONTRIBUTING.md).
 - [API Documentation](api.md) for API details
 - [Development Guide](../CONTRIBUTING.md) for development setup
 - [Installation](installation.md#optional-rust-native-accelerator) for the build step
+- [SECURITY.md](../SECURITY.md) for threat model and dependency audit
 

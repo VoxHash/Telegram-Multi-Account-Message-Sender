@@ -49,6 +49,23 @@ python -m app.cli web-monitor
 
 Write methods are rejected (`405`). Prefer `127.0.0.1` behind a TLS reverse proxy; see [Configuration](configuration.md) for auth and proxy guidance.
 
+### Security posture (sessions / credentials)
+
+Review or harden on-disk secrets for shared-machine and proxy threat models. Never prints secret values. Full model: [SECURITY.md](../SECURITY.md).
+
+```bash
+telegram-sender security-check
+telegram-sender security-harden
+python -m app.cli security-check
+```
+
+| Command | Description |
+| --- | --- |
+| `security-check` | Report Telethon sessions, `.env`, SQLite DB, and cloud token dir permission posture |
+| `security-harden` | POSIX: owner-only `chmod` (`0700` dirs / `0600` files). Windows: guidance only |
+
+Exit code `1` means warnings (e.g. world-readable session files).
+
 ### Operator handoff (export / import)
 
 Move a single-operator workspace between machines without Google Drive, or transfer templates/campaigns only. Multi-user roles belong to [SendGram](https://www.sendgram.pro).

@@ -1,0 +1,48 @@
+name: Dependency audit
+
+# Periodic + on-demand pip-audit for runtime requirements (SECURITY.md).
+on:
+  schedule:
+    # Mondays 06:15 UTC
+    - cron: "15 6 * * 1"
+  workflow_dispatch:
+  push:
+    branches: [main, dev]
+    paths:
+      - "requirements.txt"
+      - "requirements-dev.txt"
+      - "pyproject.toml"
+      - ".github/workflows/dependency-audit.yml"
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - "requirements.txt"
+      - "requirements-dev.txt"
+      - "pyproject.toml"
+      - ".github/workflows/dependency-audit.yml"
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install pip-audit
+        run: python -m pip install --upgrade pip pip-audit
+
+      - name: Audit runtime requirements
+        run: |
+          pip-audit -r requirements.txt --progress-spinner off
+          {
+            echo "## pip-audit (requirements.txt)"
+            echo ""
+            echo "No known vulnerabilities found means the job exited 0."
+            echo "See SECURITY.md for the periodic dependency-audit process."
+          } >> "$GITHUB_STEP_SUMMARY"

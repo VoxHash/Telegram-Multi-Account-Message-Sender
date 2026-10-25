@@ -291,15 +291,15 @@ A recipient list is a collection of recipients that you can use for campaigns. T
 
 ### Is my data secure?
 
-Yes, the application stores data locally on your computer. API credentials are encrypted. However, always follow best security practices.
+Data stays on your machine (SQLite, Telethon sessions, optional `.env`). Telethon `.session` files are **bearer credentials** — anyone who can read them can use the account. On POSIX, run `telegram-sender security-check` and `security-harden` to keep sessions / `.env` / `app.db` owner-only. Password-protect handoff and cloud backup packages that include sessions. Full threat model (proxies, shared PCs): [SECURITY.md](../SECURITY.md).
 
 ### Are my messages encrypted?
 
-Messages are sent through Telegram's encrypted network. The application itself does not store message content after sending (only logs).
+Messages are sent through Telegram's encrypted network. The application itself stores send logs locally; protect `app_data/` like other secrets.
 
 ### Can I use a proxy?
 
-Yes, you can configure proxy settings for each account in the Accounts tab.
+Yes, configure proxy settings per account in the Accounts tab (HTTP/HTTPS/SOCKS4/SOCKS5). Treat the proxy operator as able to see destinations; prefer a proxy you trust. Proxy usernames/passwords are stored in the local SQLite database — protect `app_data/app.db` like sessions.
 
 ## Support
 

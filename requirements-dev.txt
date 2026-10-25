@@ -21,6 +21,9 @@ twine>=4.0.0
 build>=0.10.0
 setuptools>=65.0.0
 
+# Security / dependency audit (see SECURITY.md + .github/workflows/dependency-audit.yml)
+pip-audit>=2.7.0
+
 # Documentation
 sphinx>=6.0.0
 sphinx-rtd-theme>=1.2.0

@@ -106,6 +106,7 @@ Then launch with `telegram-sender` or `python -m app.cli`. Full setup: [docs/qui
 - **Error Handling**: Comprehensive error handling and recovery
 - **Dry Run Mode**: Test campaigns without sending actual messages
 - **Compliance Controls**: Built-in controls for responsible messaging
+- **Security posture**: Documented threat model for proxies/shared machines; `security-check` / `security-harden` for session and `.env` permissions; weekly `pip-audit` CI (see [SECURITY.md](SECURITY.md))
 
 ## 🖼️ Screenshots
 

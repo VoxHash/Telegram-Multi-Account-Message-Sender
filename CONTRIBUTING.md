@@ -338,6 +338,9 @@ mypy app/core app/services app/models app/plugins \
   app/gui/widgets/testing_widget.py \
   app/gui/widgets/telegram_selector.py
 
+# Dependency audit (also runs weekly in CI — see SECURITY.md)
+pip-audit -r requirements.txt
+
 # Run tests
 pytest
 

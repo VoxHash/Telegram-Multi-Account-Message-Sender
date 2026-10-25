@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.45] - 2026-10-25
+
+### Added
+- **Security: threat model + storage review + dependency audit**: `SECURITY.md` documents proxies/shared-machine assumptions, session/credential storage findings, and the periodic `pip-audit` process.
+- **`security-check` / `security-harden` CLI**: reviews Telethon sessions, `.env`, SQLite DB, and cloud token dirs without printing secrets; on POSIX hardens to owner-only modes (`0700` / `0600`).
+- **CI workflow** `.github/workflows/dependency-audit.yml`: weekly + on dependency manifest changes; baseline audit of `requirements.txt` reported clean at release time.
+- **Unit tests** for posture review, harden, and CLI argv/help.
+
+### Changed
+- Docs (CLI, FAQ, architecture, ROADMAP) and packaging metadata bump to **1.2.45**; next community leftover remains Discord / Discussions growth.
+
 ## [1.2.44] - 2026-10-25
 
 ### Added

@@ -148,10 +148,14 @@ class Settings(BaseSettings):
     onedrive_access_token: Optional[str] = None
     onedrive_folder: str = "TMAS/backups"
 
-    # Optional AI copy tools (OpenAI-compatible; user-supplied key, no SDK dependency)
+    # Optional AI copy tools (provider presets; user-supplied key, no SDK dependency)
+    # AI_PROVIDER: openai | azure | anthropic
+    ai_provider: str = "openai"
     ai_api_key: Optional[str] = None
     ai_base_url: str = "https://api.openai.com/v1"
     ai_model: str = "gpt-4o-mini"
+    # Azure OpenAI dated API only (ignored for openai / anthropic)
+    ai_azure_api_version: str = "2024-06-01"
 
     # Plugin marketplace / registry (curated JSON catalog; empty uses official default)
     plugin_registry_url: str = (
@@ -249,6 +253,24 @@ class Settings(BaseSettings):
             except ValueError:
                 return Language.ENGLISH
         return v
+
+    @field_validator("ai_provider", mode="before")
+    @classmethod
+    def validate_ai_provider(cls, v: Any) -> str:
+        """Normalize AI provider preset (openai | azure | anthropic)."""
+        # Inline aliases — do not import ai_copy here (circular with Settings()).
+        if v is None or v == "":
+            return "openai"
+        value = str(v).strip().lower()
+        if value in ("openai-compatible", "compatible", "open_ai"):
+            return "openai"
+        if value in ("azure_openai", "azure-openai", "aoai"):
+            return "azure"
+        if value in ("claude", "messages"):
+            return "anthropic"
+        if value in ("openai", "azure", "anthropic"):
+            return value
+        return "openai"
 
     def get_database_path(self) -> Path:
         """Get database file path."""

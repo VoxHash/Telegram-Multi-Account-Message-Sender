@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.38] - 2026-10-24
+
+### Added
+- **Phase 2 leftover: AI provider presets**: Settings / env `AI_PROVIDER` supports `openai` (default), `azure`, and `anthropic` beyond a generic OpenAI-compatible base URL.
+  - **Azure OpenAI**: builds `/openai/deployments/{deployment}/chat/completions?api-version=…`, sends `api-key` header; `AI_MODEL` is the deployment name; `AI_AZURE_API_VERSION` (default `2024-06-01`).
+  - **Anthropic**: native Messages API (`/v1/messages`) with `x-api-key` + `anthropic-version: 2023-06-01`; system prompt as top-level `system` field.
+- **Settings UI**: provider combo, Azure API version field (shown for Azure), deployment-name label; env write includes `AI_PROVIDER` / `AI_AZURE_API_VERSION`.
+- **Unit tests** for request builders, Azure/Anthropic HTTP headers and response parsing, settings provider wiring, and locale keys for the new AI settings strings.
+
+### Changed
+- Docs (configuration, usage, API, FAQ, README) and ROADMAP mark AI provider presets as shipped; still optional behind a user-supplied key (no AI SDK).
+
 ## [1.2.37] - 2026-10-24
 
 ### Added

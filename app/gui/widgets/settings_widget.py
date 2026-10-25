@@ -114,9 +114,30 @@ class SettingsWidget(QWidget):
 
         general_layout.addWidget(telegram_group)
 
-        # Optional AI copy tools (user-supplied key; no hard SDK dependency)
+        # Optional AI copy tools (user-supplied key; provider presets; no hard SDK)
         ai_group = QGroupBox(_("settings.ai_copy_settings"))
         ai_layout = QFormLayout(ai_group)
+
+        from ...services.ai_copy import (
+            DEFAULT_AZURE_API_VERSION,
+            PROVIDER_ANTHROPIC,
+            PROVIDER_AZURE,
+            PROVIDER_OPENAI,
+            default_base_url_for_provider,
+            default_model_for_provider,
+            normalize_provider,
+        )
+
+        self._ai_provider_ids = (PROVIDER_OPENAI, PROVIDER_AZURE, PROVIDER_ANTHROPIC)
+        self.ai_provider_combo = QComboBox()
+        self.ai_provider_combo.addItem(_("settings.ai_provider_openai"), PROVIDER_OPENAI)
+        self.ai_provider_combo.addItem(_("settings.ai_provider_azure"), PROVIDER_AZURE)
+        self.ai_provider_combo.addItem(_("settings.ai_provider_anthropic"), PROVIDER_ANTHROPIC)
+        current_provider = normalize_provider(getattr(self.settings, "ai_provider", None))
+        idx = self.ai_provider_combo.findData(current_provider)
+        self.ai_provider_combo.setCurrentIndex(idx if idx >= 0 else 0)
+        self.ai_provider_combo.currentIndexChanged.connect(self._on_ai_provider_changed)
+        ai_layout.addRow(f"{_('settings.ai_provider')}:", self.ai_provider_combo)
 
         self.ai_api_key_edit = QLineEdit()
         self.ai_api_key_edit.setText(self.settings.ai_api_key or "")
@@ -125,14 +146,27 @@ class SettingsWidget(QWidget):
         ai_layout.addRow(f"{_('settings.ai_api_key')}:", self.ai_api_key_edit)
 
         self.ai_base_url_edit = QLineEdit()
-        self.ai_base_url_edit.setText(self.settings.ai_base_url or "https://api.openai.com/v1")
-        self.ai_base_url_edit.setPlaceholderText("https://api.openai.com/v1")
+        self.ai_base_url_edit.setText(
+            self.settings.ai_base_url or default_base_url_for_provider(current_provider)
+        )
+        self.ai_base_url_edit.setPlaceholderText(default_base_url_for_provider(current_provider))
         ai_layout.addRow(f"{_('settings.ai_base_url')}:", self.ai_base_url_edit)
 
         self.ai_model_edit = QLineEdit()
-        self.ai_model_edit.setText(self.settings.ai_model or "gpt-4o-mini")
-        self.ai_model_edit.setPlaceholderText("gpt-4o-mini")
-        ai_layout.addRow(f"{_('settings.ai_model')}:", self.ai_model_edit)
+        self.ai_model_edit.setText(
+            self.settings.ai_model or default_model_for_provider(current_provider)
+        )
+        self.ai_model_edit.setPlaceholderText(default_model_for_provider(current_provider))
+        self.ai_model_label = QLabel(f"{_('settings.ai_model')}:")
+        ai_layout.addRow(self.ai_model_label, self.ai_model_edit)
+
+        self.ai_azure_api_version_edit = QLineEdit()
+        self.ai_azure_api_version_edit.setText(
+            getattr(self.settings, "ai_azure_api_version", None) or DEFAULT_AZURE_API_VERSION
+        )
+        self.ai_azure_api_version_edit.setPlaceholderText(DEFAULT_AZURE_API_VERSION)
+        self.ai_azure_api_version_label = QLabel(f"{_('settings.ai_azure_api_version')}:")
+        ai_layout.addRow(self.ai_azure_api_version_label, self.ai_azure_api_version_edit)
 
         ai_help = QLabel(_("settings.ai_copy_help"))
         ai_help.setWordWrap(True)
@@ -140,6 +174,7 @@ class SettingsWidget(QWidget):
         ai_layout.addRow(ai_help)
 
         general_layout.addWidget(ai_group)
+        self._sync_ai_provider_ui(apply_defaults=False)
 
         # Plugin registry / marketplace
         registry_group = QGroupBox(_("settings.plugin_registry_settings"))
@@ -496,6 +531,66 @@ class SettingsWidget(QWidget):
         self.status_label = QLabel(_("settings.settings_reloaded"))
         layout.addWidget(self.status_label)
 
+    def _current_ai_provider(self) -> str:
+        from ...services.ai_copy import normalize_provider
+
+        return normalize_provider(
+            self.ai_provider_combo.currentData() or self.ai_provider_combo.currentText()
+        )
+
+    def _on_ai_provider_changed(self, _index: int = 0) -> None:
+        self._sync_ai_provider_ui(apply_defaults=True)
+
+    def _sync_ai_provider_ui(self, *, apply_defaults: bool) -> None:
+        """Show Azure-only fields and optionally fill provider defaults."""
+        from ...services.ai_copy import (
+            DEFAULT_AZURE_API_VERSION,
+            DEFAULT_BASE_URL,
+            DEFAULT_MODEL,
+            PROVIDER_AZURE,
+            default_base_url_for_provider,
+            default_model_for_provider,
+        )
+
+        provider = self._current_ai_provider()
+        is_azure = provider == PROVIDER_AZURE
+        self.ai_azure_api_version_label.setVisible(is_azure)
+        self.ai_azure_api_version_edit.setVisible(is_azure)
+
+        if is_azure:
+            self.ai_model_label.setText(f"{_('settings.ai_model_deployment')}:")
+        else:
+            self.ai_model_label.setText(f"{_('settings.ai_model')}:")
+
+        self.ai_base_url_edit.setPlaceholderText(default_base_url_for_provider(provider))
+        self.ai_model_edit.setPlaceholderText(default_model_for_provider(provider))
+
+        if not apply_defaults:
+            return
+
+        # When switching presets, replace well-known defaults from other providers.
+        current_base = self.ai_base_url_edit.text().strip()
+        current_model = self.ai_model_edit.text().strip()
+        known_bases = {
+            DEFAULT_BASE_URL,
+            "https://api.openai.com/v1",
+            "https://YOUR_RESOURCE.openai.azure.com",
+            "https://api.anthropic.com",
+            "",
+        }
+        known_models = {
+            DEFAULT_MODEL,
+            "gpt-4o-mini",
+            "claude-3-5-haiku-latest",
+            "",
+        }
+        if current_base in known_bases:
+            self.ai_base_url_edit.setText(default_base_url_for_provider(provider))
+        if current_model in known_models:
+            self.ai_model_edit.setText(default_model_for_provider(provider))
+        if is_azure and not self.ai_azure_api_version_edit.text().strip():
+            self.ai_azure_api_version_edit.setText(DEFAULT_AZURE_API_VERSION)
+
     def load_settings(self):
         """Load current settings into the form."""
         # This is already done in setup_ui
@@ -516,11 +611,29 @@ class SettingsWidget(QWidget):
             self.settings.telegram_api_hash = self.api_hash_edit.text().strip() or None
 
             # Optional AI copy tools
+            from ...services.ai_copy import (
+                DEFAULT_AZURE_API_VERSION,
+                default_base_url_for_provider,
+                default_model_for_provider,
+                normalize_provider,
+            )
+
+            provider = normalize_provider(
+                self.ai_provider_combo.currentData()
+                or self.ai_provider_combo.currentText()
+            )
+            self.settings.ai_provider = provider
             self.settings.ai_api_key = self.ai_api_key_edit.text().strip() or None
             self.settings.ai_base_url = (
-                self.ai_base_url_edit.text().strip() or "https://api.openai.com/v1"
+                self.ai_base_url_edit.text().strip()
+                or default_base_url_for_provider(provider)
             )
-            self.settings.ai_model = self.ai_model_edit.text().strip() or "gpt-4o-mini"
+            self.settings.ai_model = (
+                self.ai_model_edit.text().strip() or default_model_for_provider(provider)
+            )
+            self.settings.ai_azure_api_version = (
+                self.ai_azure_api_version_edit.text().strip() or DEFAULT_AZURE_API_VERSION
+            )
 
             # Plugin registry
             default_registry = (
@@ -649,10 +762,12 @@ STOP_ON_ERROR={str(self.settings.stop_on_error).lower()}
 MAX_RETRIES={self.settings.max_retries}
 RETRY_DELAY_SECONDS={self.settings.retry_delay_seconds}
 
-# Optional AI copy tools (OpenAI-compatible; leave AI_API_KEY empty to disable)
+# Optional AI copy tools (provider presets; leave AI_API_KEY empty to disable)
+AI_PROVIDER={getattr(self.settings, 'ai_provider', None) or 'openai'}
 AI_API_KEY={self.settings.ai_api_key or ''}
 AI_BASE_URL={self.settings.ai_base_url or 'https://api.openai.com/v1'}
 AI_MODEL={self.settings.ai_model or 'gpt-4o-mini'}
+AI_AZURE_API_VERSION={getattr(self.settings, 'ai_azure_api_version', None) or '2024-06-01'}
 
 # Plugin registry / marketplace catalog URL
 PLUGIN_REGISTRY_URL={self.settings.plugin_registry_url or ''}
@@ -770,11 +885,29 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
             self.api_hash_edit.setText(self.settings.telegram_api_hash or "")
 
             # Optional AI copy tools
+            from ...services.ai_copy import (
+                DEFAULT_AZURE_API_VERSION,
+                default_base_url_for_provider,
+                default_model_for_provider,
+                normalize_provider,
+            )
+
+            provider = normalize_provider(getattr(self.settings, "ai_provider", None))
+            pidx = self.ai_provider_combo.findData(provider)
+            self.ai_provider_combo.blockSignals(True)
+            self.ai_provider_combo.setCurrentIndex(pidx if pidx >= 0 else 0)
+            self.ai_provider_combo.blockSignals(False)
             self.ai_api_key_edit.setText(self.settings.ai_api_key or "")
             self.ai_base_url_edit.setText(
-                self.settings.ai_base_url or "https://api.openai.com/v1"
+                self.settings.ai_base_url or default_base_url_for_provider(provider)
             )
-            self.ai_model_edit.setText(self.settings.ai_model or "gpt-4o-mini")
+            self.ai_model_edit.setText(
+                self.settings.ai_model or default_model_for_provider(provider)
+            )
+            self.ai_azure_api_version_edit.setText(
+                getattr(self.settings, "ai_azure_api_version", None) or DEFAULT_AZURE_API_VERSION
+            )
+            self._sync_ai_provider_ui(apply_defaults=False)
 
             # Plugin registry
             self.plugin_registry_url_edit.setText(self.settings.plugin_registry_url or "")

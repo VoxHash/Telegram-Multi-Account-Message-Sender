@@ -81,7 +81,7 @@ Validate a catalog submission or a plugin `.py` package before opening a registr
 ```bash
 telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins
 telegram-sender plugin-validate registry/plugins/url_strip_filter.py
-telegram-sender plugin-validate registry/templates/sample_filter_plugin.py --app-version 1.2.37
+telegram-sender plugin-validate registry/templates/sample_filter_plugin.py --app-version 1.2.38
 python -m app.cli plugin-validate path/to/plugin.py
 ```
 

@@ -101,7 +101,7 @@ This generates variations like:
 
 ### How do optional AI copy tools work?
 
-They are opt-in. Set your own OpenAI-compatible `AI_API_KEY` in Settings (or `.env`). Templates then offer rewrite, spintax conversion, and variations over HTTPS Chat Completions. No AI SDK is installed; leave the key empty to disable the feature.
+They are opt-in. Set your own `AI_API_KEY` in Settings (or `.env`) and choose a provider preset (`openai`, `azure`, or `anthropic`). Templates then offer rewrite, spintax conversion, and variations over HTTPS. Azure uses the deployments path + `api-version`; Anthropic uses the Messages API headers. No AI SDK is installed; leave the key empty to disable the feature.
 
 ### How does the plugin registry work?
 

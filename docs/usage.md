@@ -83,7 +83,7 @@ Monitor account health, campaign status, and recent activity in a browser withou
 
 ## AI Copy Tools (optional)
 
-1. Set `AI_API_KEY` (and optionally `AI_BASE_URL` / `AI_MODEL`) in `.env` or **Settings → General → AI Copy Tools**. See [Configuration Guide](configuration.md).
+1. In `.env` or **Settings → General → AI Copy Tools**, choose a provider preset (`openai`, `azure`, or `anthropic`), set `AI_API_KEY`, and fill base URL / model (Azure also needs deployment name + `AI_AZURE_API_VERSION`). See [Configuration Guide](configuration.md).
 2. Open **Templates → Add/Edit Template**.
 3. Enter draft text, then choose **Rewrite with AI**, **AI → Spintax**, or **AI variations**.
 4. Review the result before saving. Placeholders like `{name}` are preserved when the model follows instructions.

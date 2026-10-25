@@ -51,9 +51,11 @@ You can configure the application using environment variables. See `example_file
 - `ONEDRIVE_ACCESS_TOKEN`: Microsoft Graph Bearer access token for OneDrive cloud backup (Azure app with delegated `Files.ReadWrite`)
 - `ONEDRIVE_FOLDER`: OneDrive folder path for backups (default `TMAS/backups`)
 - Operator handoff (no cloud): Settings → **Export for Handoff…** / **Export Templates/Campaigns…**, or CLI `telegram-sender handoff-export` / `handoff-import` (`--entities`, `--mode`) — see [CLI](cli.md) and [Usage](usage.md)
-- `AI_API_KEY`: Optional OpenAI-compatible API key for AI copy tools (leave unset to disable)
-- `AI_BASE_URL`: Chat Completions base URL (default `https://api.openai.com/v1`)
-- `AI_MODEL`: Model id (default `gpt-4o-mini`)
+- `AI_PROVIDER`: AI copy preset — `openai` (default), `azure`, or `anthropic`
+- `AI_API_KEY`: Optional user-supplied API key for AI copy tools (leave unset to disable)
+- `AI_BASE_URL`: Provider base URL (OpenAI default `https://api.openai.com/v1`; Azure resource root; Anthropic `https://api.anthropic.com`)
+- `AI_MODEL`: Model id (OpenAI/Anthropic) or Azure **deployment name**
+- `AI_AZURE_API_VERSION`: Azure OpenAI dated API version query param (default `2024-06-01`; ignored for other providers)
 - `PLUGIN_REGISTRY_URL`: HTTPS URL of the curated plugin catalog JSON (default: official GitHub `registry/catalog.json`)
 - `PLUGIN_REGISTRY_REQUIRE_SIGNATURE`: When `true`, reject catalogs without a valid Ed25519 signature against bundled trusted keys (default `false`; signatures are still verified when present)
 - `WEB_COMPANION_ENABLED`: Start preference for the optional read-only web monitor (`true`/`false`, default `false`)
@@ -129,17 +131,38 @@ Installable entries download a verified `.py` file (SHA-256 when listed) into `a
 
 ### AI Copy Tools (optional)
 
-No AI SDK is bundled. When you set a user-supplied key, Templates can rewrite copy, convert to spintax, or suggest variations over HTTPS Chat Completions.
+No AI SDK is bundled. When you set a user-supplied key, Templates can rewrite copy, convert to spintax, or suggest variations over HTTPS. Choose a **provider preset** in Settings (or `AI_PROVIDER`).
 
-1. Create an API key with your OpenAI account (or an OpenAI-compatible gateway).
-2. Add to `.env` (or **Settings → General → AI Copy Tools**):
+**OpenAI-compatible** (`AI_PROVIDER=openai`, default):
 
 ```env
+AI_PROVIDER=openai
 AI_API_KEY=sk-your-key-here
 AI_BASE_URL=https://api.openai.com/v1
 AI_MODEL=gpt-4o-mini
 ```
 
+**Azure OpenAI** (`AI_PROVIDER=azure`) — deployment path + `api-version` + `api-key` header:
+
+```env
+AI_PROVIDER=azure
+AI_API_KEY=your-azure-key
+AI_BASE_URL=https://YOUR_RESOURCE.openai.azure.com
+AI_MODEL=your-deployment-name
+AI_AZURE_API_VERSION=2024-06-01
+```
+
+**Anthropic Messages API** (`AI_PROVIDER=anthropic`) — `x-api-key` + `anthropic-version: 2023-06-01`:
+
+```env
+AI_PROVIDER=anthropic
+AI_API_KEY=sk-ant-your-key
+AI_BASE_URL=https://api.anthropic.com
+AI_MODEL=claude-3-5-haiku-latest
+```
+
+1. Create an API key with your chosen provider.
+2. Add the matching block to `.env` (or **Settings → General → AI Copy Tools**).
 3. Save settings, open a template, and use **Rewrite with AI**, **AI → Spintax**, or **AI variations**.
 4. Leave `AI_API_KEY` empty to keep AI buttons inactive (no network calls, no hard dependency).
 5. AI Copy Tools UI labels (Settings group + Templates buttons/dialogs) are translated for all 13 app languages.

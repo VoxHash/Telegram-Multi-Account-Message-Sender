@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.37)
+## Current Status (v1.2.38)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -28,7 +28,7 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Circular-import hardening for `app.core` / `app.services` lazy exports
 - Incremental type hints on high-value core/services modules
 - **Blocking mypy** for `app/core`, `app/services`, `app/models` (strict flags; CI fails on errors)
-- **Optional AI copy tools** (user-supplied OpenAI-compatible API key; stdlib HTTP; Templates rewrite / spintax / variations; AI UI strings in all 13 locales)
+- **Optional AI copy tools** (user-supplied API key; provider presets: OpenAI-compatible, Azure OpenAI, Anthropic Messages API; stdlib HTTP; Templates rewrite / spintax / variations; AI UI strings in all 13 locales)
 - **Plugin marketplace / registry** (curated JSON catalog, offline bundled fallback, SHA-256 install into `app_data/plugins/`)
 - **Enhanced macOS/Linux packaging and file associations** (Linux desktop/MIME/`install.sh`; macOS `.app` Info.plist UTI; local `.tmas-backup.zip` restore)
 - **Optional lightweight web companion (read-only monitoring)** (stdlib `http.server`; CLI `web-monitor` + Settings open; localhost by default; Bearer token auth + reverse-proxy guidance; live SVG charts; optional GUI auto-start)
@@ -47,10 +47,11 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Contributor and sponsor community growth
 - Ongoing community registry PRs beyond the curated seed set
 
-### Latest release (v1.2.37 — 2026-10-24)
-- Phase 2 leftover: AI non-English locale strings for AI UI keys (all 13 languages)
+### Latest release (v1.2.38 — 2026-10-24)
+- Phase 2 leftover: AI provider presets (Azure OpenAI path/api-version + Anthropic Messages API)
 
 ### Previous highlights
+- **v1.2.37**: Phase 2 leftover: AI non-English locale strings for AI UI keys (all 13 languages)
 - **v1.2.36**: Phase 2/4 leftover: further third-party registry volume (Emoji Strip + Success Counter)
 - **v1.2.35**: Phase 2/4 leftover: richer community registry submissions (seed plugins + catalog-entry tooling)
 - **v1.2.34**: Phase 4 leftover: signed plugin catalogs (Ed25519)
@@ -114,7 +115,7 @@ Realistic, shippable work — not a full platform rewrite.
 - [x] Stronger campaign analytics export (CSV/JSON)
 - [x] AI-assisted copy tools only behind optional, user-supplied API keys (no hard dependency)
   - [x] Non-English locale strings for AI UI keys (all 13 languages) — v1.2.37
-  - Leftover: provider presets beyond generic OpenAI-compatible base URL (Azure path quirks, Anthropic native API)
+  - [x] Provider presets beyond generic OpenAI-compatible base URL (Azure path/api-version + Anthropic Messages API) — v1.2.38
 - [x] Plugin marketplace / registry (curated catalog discover + verified install)
   - [x] Community seed submissions beyond the original two official plugins (Whitespace Normalize Filter + Failure Counter Analytics; analytics sample template; `plugin-catalog-entry` CLI) — v1.2.35
   - [x] Further third-party registry volume (Emoji Strip Filter + Success Counter Analytics; six downloadable plugins) — v1.2.36

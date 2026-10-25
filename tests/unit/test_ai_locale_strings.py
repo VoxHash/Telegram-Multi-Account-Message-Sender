@@ -29,10 +29,16 @@ AI_TEMPLATE_KEYS = (
 
 AI_SETTINGS_KEYS = (
     "ai_copy_settings",
+    "ai_provider",
+    "ai_provider_openai",
+    "ai_provider_azure",
+    "ai_provider_anthropic",
     "ai_api_key",
     "ai_api_key_placeholder",
     "ai_base_url",
     "ai_model",
+    "ai_model_deployment",
+    "ai_azure_api_version",
     "ai_copy_help",
 )
 

@@ -419,9 +419,11 @@ settings = Settings()
 - `log_level: LogLevel`: Logging level
 - `start_with_windows: bool`: Start with Windows
 - `rate_limit_per_minute: int`: Default rate limit
-- `ai_api_key: Optional[str]`: User-supplied OpenAI-compatible key (optional AI copy)
-- `ai_base_url: str`: Chat Completions base URL (default `https://api.openai.com/v1`)
-- `ai_model: str`: Model id (default `gpt-4o-mini`)
+- `ai_provider: str`: AI copy preset — `openai` (default), `azure`, or `anthropic`
+- `ai_api_key: Optional[str]`: User-supplied API key (optional AI copy)
+- `ai_base_url: str`: Provider base URL (OpenAI default `https://api.openai.com/v1`)
+- `ai_model: str`: Model id or Azure deployment name (default `gpt-4o-mini`)
+- `ai_azure_api_version: str`: Azure OpenAI `api-version` query (default `2024-06-01`)
 - `plugin_registry_url: str`: HTTPS catalog URL for the plugin marketplace (default: official GitHub registry)
 - `web_companion_enabled: bool`: Preference for the optional read-only web monitor (default `False`)
 - `web_companion_auto_start: bool`: When `True`, desktop GUI launch starts the companion in the background (default `False`; env `WEB_COMPANION_AUTO_START`)
@@ -514,7 +516,7 @@ from app.services.plugin_sdk import (
     check_min_app_version,
 )
 
-catalog, report = validate_catalog_file(Path("registry/catalog.json"), app_version="1.2.37")
+catalog, report = validate_catalog_file(Path("registry/catalog.json"), app_version="1.2.38")
 assert report.ok
 sha_report = validate_catalog_sha256(catalog, Path("registry/plugins"))
 plugin_report = validate_plugin_file(Path("registry/templates/sample_filter_plugin.py"))
@@ -539,7 +541,7 @@ plugin_report = validate_plugin_file(Path("registry/templates/sample_filter_plug
 
 #### `AICopyService` / `get_ai_copy_service()`
 
-Optional campaign copy helpers over OpenAI-compatible Chat Completions. Uses stdlib `urllib` only — no `openai` package.
+Optional campaign copy helpers with provider presets (`openai`, `azure`, `anthropic`). Uses stdlib `urllib` only — no AI SDK packages.
 
 ```python
 from app.services.ai_copy import get_ai_copy_service
@@ -551,6 +553,7 @@ if service.is_configured():
     drafts = service.suggest_variations(rewritten, count=3)
 ```
 
+**Helpers:** `normalize_provider`, `build_request`, `AICopyConfig`  
 **Methods:**
 - `is_configured() -> bool`
 - `rewrite(text: str, instruction: Optional[str] = None) -> str`

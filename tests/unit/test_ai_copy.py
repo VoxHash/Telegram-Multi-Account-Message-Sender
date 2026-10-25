@@ -12,15 +12,23 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.services.ai_copy import (
+    DEFAULT_ANTHROPIC_BASE_URL,
+    DEFAULT_ANTHROPIC_VERSION,
+    DEFAULT_AZURE_API_VERSION,
     DEFAULT_BASE_URL,
     DEFAULT_MODEL,
+    PROVIDER_ANTHROPIC,
+    PROVIDER_AZURE,
+    PROVIDER_OPENAI,
     AICopyConfig,
     AICopyError,
     AICopyNotConfiguredError,
     AICopyOfflineError,
     AICopyService,
     _parse_variations_payload,
+    build_request,
     get_ai_copy_service,
+    normalize_provider,
 )
 
 
@@ -46,6 +54,15 @@ def _completion_payload(content: str) -> Dict[str, Any]:
     return {
         "id": "chatcmpl-test",
         "choices": [{"message": {"role": "assistant", "content": content}}],
+    }
+
+
+def _anthropic_payload(content: str) -> Dict[str, Any]:
+    return {
+        "id": "msg_test",
+        "type": "message",
+        "role": "assistant",
+        "content": [{"type": "text", "text": content}],
     }
 
 
@@ -165,12 +182,127 @@ class TestVariationParsing:
         assert _parse_variations_payload(payload, expected=3) == ["alpha", "beta", "gamma"]
 
 
+class TestProviderPresets:
+    def test_normalize_provider_aliases(self):
+        assert normalize_provider("OpenAI") == PROVIDER_OPENAI
+        assert normalize_provider("azure-openai") == PROVIDER_AZURE
+        assert normalize_provider("claude") == PROVIDER_ANTHROPIC
+        assert normalize_provider("unknown") == PROVIDER_OPENAI
+
+    def test_build_request_openai(self):
+        config = AICopyConfig(api_key="sk-test", provider=PROVIDER_OPENAI)
+        url, headers, payload = build_request(config, system="sys", user="hi")
+        assert url == f"{DEFAULT_BASE_URL}/chat/completions"
+        assert headers["Authorization"] == "Bearer sk-test"
+        assert payload["model"] == DEFAULT_MODEL
+        assert payload["messages"][0]["role"] == "system"
+
+    def test_build_request_azure_path_and_api_version(self):
+        config = AICopyConfig(
+            api_key="azure-key",
+            provider=PROVIDER_AZURE,
+            base_url="https://myres.openai.azure.com",
+            model="camp-copy",
+            azure_api_version="2024-06-01",
+        )
+        url, headers, payload = build_request(config, system="sys", user="hi")
+        assert url.startswith(
+            "https://myres.openai.azure.com/openai/deployments/camp-copy/chat/completions?"
+        )
+        assert "api-version=2024-06-01" in url
+        assert headers["api-key"] == "azure-key"
+        assert "Authorization" not in headers
+        assert "model" not in payload
+        assert payload["messages"][1]["content"] == "hi"
+
+    def test_build_request_azure_strips_openai_suffix(self):
+        config = AICopyConfig(
+            api_key="k",
+            provider=PROVIDER_AZURE,
+            base_url="https://myres.openai.azure.com/openai",
+            model="dep",
+        )
+        url, _headers, _payload = build_request(config, system="s", user="u")
+        assert url.startswith(
+            "https://myres.openai.azure.com/openai/deployments/dep/chat/completions?"
+        )
+
+    def test_build_request_anthropic_messages(self):
+        config = AICopyConfig(
+            api_key="anth-key",
+            provider=PROVIDER_ANTHROPIC,
+            base_url=DEFAULT_ANTHROPIC_BASE_URL,
+            model="claude-3-5-haiku-latest",
+        )
+        url, headers, payload = build_request(config, system="sys", user="hi")
+        assert url == f"{DEFAULT_ANTHROPIC_BASE_URL}/v1/messages"
+        assert headers["x-api-key"] == "anth-key"
+        assert headers["anthropic-version"] == DEFAULT_ANTHROPIC_VERSION
+        assert "Authorization" not in headers
+        assert payload["system"] == "sys"
+        assert payload["messages"] == [{"role": "user", "content": "hi"}]
+        assert payload["max_tokens"] >= 1
+        assert "model" in payload
+
+    def test_azure_rewrite_sends_api_key_header(self):
+        calls: list = []
+
+        def fake_urlopen(request, timeout: float = 60.0):
+            calls.append(request)
+            return _FakeHTTPResponse(_completion_payload("Azure rewritten"))
+
+        service = AICopyService(
+            config=AICopyConfig(
+                api_key="azure-key",
+                provider=PROVIDER_AZURE,
+                base_url="https://demo.openai.azure.com",
+                model="my-deploy",
+                azure_api_version=DEFAULT_AZURE_API_VERSION,
+            ),
+            urlopen=fake_urlopen,
+            network_check=lambda: True,
+        )
+        assert service.rewrite("Hello") == "Azure rewritten"
+        req = calls[0]
+        assert req.get_header("Api-key") == "azure-key"
+        assert "api-version=" in req.full_url
+        assert "/openai/deployments/my-deploy/chat/completions" in req.full_url
+
+    def test_anthropic_rewrite_parses_content_blocks(self):
+        calls: list = []
+
+        def fake_urlopen(request, timeout: float = 60.0):
+            calls.append(request)
+            return _FakeHTTPResponse(_anthropic_payload("Claude rewrite"))
+
+        service = AICopyService(
+            config=AICopyConfig(
+                api_key="anth-key",
+                provider=PROVIDER_ANTHROPIC,
+                base_url=DEFAULT_ANTHROPIC_BASE_URL,
+                model="claude-3-5-haiku-latest",
+            ),
+            urlopen=fake_urlopen,
+            network_check=lambda: True,
+        )
+        assert service.rewrite("Hello") == "Claude rewrite"
+        req = calls[0]
+        assert req.get_header("X-api-key") == "anth-key"
+        assert req.get_header("Anthropic-version") == DEFAULT_ANTHROPIC_VERSION
+        assert req.full_url.endswith("/v1/messages")
+        body = json.loads(req.data.decode("utf-8"))
+        assert body["system"]
+        assert body["messages"][0]["role"] == "user"
+
+
 class TestSettingsIntegration:
     def test_from_settings_reads_key(self, tmp_path, monkeypatch):
         for key in (
+            "AI_PROVIDER",
             "AI_API_KEY",
             "AI_BASE_URL",
             "AI_MODEL",
+            "AI_AZURE_API_VERSION",
             "TELEGRAM_API_ID",
             "TELEGRAM_API_HASH",
             "DATABASE_URL",
@@ -189,6 +321,7 @@ class TestSettingsIntegration:
             logs_dir=str(tmp_path / "logs"),
             content_dir=str(tmp_path / "content"),
             database_url=f"sqlite:///{tmp_path / 't.db'}",
+            ai_provider="openai",
             ai_api_key="sk-from-settings",
             ai_base_url="https://example.com/v1",
             ai_model="gpt-4o-mini",
@@ -202,8 +335,40 @@ class TestSettingsIntegration:
         service = AICopyService.from_settings()
         assert service.is_configured() is True
 
+    def test_from_settings_azure_provider(self, tmp_path, monkeypatch):
+        for key in (
+            "AI_PROVIDER",
+            "AI_API_KEY",
+            "AI_BASE_URL",
+            "AI_MODEL",
+            "AI_AZURE_API_VERSION",
+        ):
+            monkeypatch.delenv(key, raising=False)
+
+        from app.services.settings import Settings
+
+        settings = Settings(
+            app_data_dir=str(tmp_path / "data"),
+            sessions_dir=str(tmp_path / "sessions"),
+            logs_dir=str(tmp_path / "logs"),
+            content_dir=str(tmp_path / "content"),
+            database_url=f"sqlite:///{tmp_path / 't.db'}",
+            ai_provider="azure",
+            ai_api_key="azure-key",
+            ai_base_url="https://demo.openai.azure.com",
+            ai_model="camp-deploy",
+            ai_azure_api_version="2024-06-01",
+        )
+        assert settings.ai_provider == PROVIDER_AZURE
+        monkeypatch.setattr("app.services.settings.get_settings", lambda: settings)
+        service = AICopyService.from_settings()
+        config = service._resolve_config()
+        assert config is not None
+        assert config.provider == PROVIDER_AZURE
+        assert config.azure_api_version == "2024-06-01"
+
     def test_get_ai_copy_service_without_key(self, tmp_path, monkeypatch):
-        for key in ("AI_API_KEY", "AI_BASE_URL", "AI_MODEL"):
+        for key in ("AI_PROVIDER", "AI_API_KEY", "AI_BASE_URL", "AI_MODEL"):
             monkeypatch.delenv(key, raising=False)
 
         from app.services.settings import Settings

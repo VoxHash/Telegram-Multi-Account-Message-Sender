@@ -133,7 +133,7 @@ Yes. Set `ONEDRIVE_ACCESS_TOKEN` (optional `ONEDRIVE_FOLDER`, default `TMAS/back
 
 ### Can I back up to Proton Drive?
 
-Not as an in-app Settings provider yet. Proton does not offer a stable third-party Drive REST/OAuth API comparable to Google Drive, Dropbox, or Microsoft Graph. The [Proton Drive SDK](https://github.com/ProtonDriveApps/sdk) is still preview for first-party clients (auth/session not shipped for standalone apps). Use Google Drive, S3-compatible storage, Dropbox, OneDrive, or **Export for Handoff** / a password-protected local `.tmas-backup.zip`. External tools (official [Proton Drive CLI](https://proton.me/support/drive-cli), or community rclone) can upload that package outside TMAS — unsupported and not wired into Settings. Tracked on the [ROADMAP](../ROADMAP.md) as a deferred Phase 2 leftover.
+Yes, via the official [Proton Drive CLI](https://proton.me/support/drive-cli) (out-of-process). Install `proton-drive`, run `proton-drive auth login` once (browser; session in the OS keyring), optionally set `PROTON_DRIVE_CLI` / `PROTON_DRIVE_FOLDER`, then choose **Proton Drive (CLI)** under **Settings → Cloud Backup** and click **Verify Proton Drive Session**. TMAS does not store Proton credentials and does not embed reverse-engineered clients. See [Configuration](configuration.md) and [Usage](usage.md).
 
 ### How do I hand off my workspace to another machine?
 

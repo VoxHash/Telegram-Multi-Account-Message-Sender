@@ -50,6 +50,8 @@ You can configure the application using environment variables. See `example_file
 - `DROPBOX_FOLDER`: Dropbox folder for backups (default `/TMAS/backups`)
 - `ONEDRIVE_ACCESS_TOKEN`: Microsoft Graph Bearer access token for OneDrive cloud backup (Azure app with delegated `Files.ReadWrite`)
 - `ONEDRIVE_FOLDER`: OneDrive folder path for backups (default `TMAS/backups`)
+- `PROTON_DRIVE_CLI`: Optional absolute path to the official `proton-drive` binary (default: `PATH` / `~/.local/bin/proton-drive`; `PROTON_DRIVE_BIN` is also accepted)
+- `PROTON_DRIVE_FOLDER`: Proton Drive POSIX folder for backups (default `/my-files/TMAS/backups`)
 - Operator handoff (no cloud): Settings → **Export for Handoff…** / **Export Templates/Campaigns…**, or CLI `telegram-sender handoff-export` / `handoff-import` (`--entities`, `--mode`) — see [CLI](cli.md) and [Usage](usage.md)
 - `AI_PROVIDER`: AI copy preset — `openai` (default), `azure`, or `anthropic`
 - `AI_API_KEY`: Optional user-supplied API key for AI copy tools (leave unset to disable)
@@ -238,9 +240,39 @@ ONEDRIVE_FOLDER=TMAS/backups
 4. Use **Backup Now** / **Refresh List** / **Restore Selected Backup** as with Drive/S3/Dropbox. Disconnect clears in-memory auth only (`.env` token stays).
 5. Simple Graph upload supports packages up to 250 MiB; typical TMAS backups are far smaller.
 
-### Proton Drive (not in-app yet)
+### Proton Drive Cloud Backup (optional, CLI-backed)
 
-There is **no** Settings → Cloud Backup Proton Drive provider. Proton has no production third-party Drive OAuth/REST API like the providers above; the Drive SDK is not third-party-ready (auth still missing). Prefer Google Drive, S3, Dropbox, or OneDrive inside the app. For Proton storage, export a password-protected local package (**Export for Handoff…** / `handoff-export`) and upload it with Proton’s own tools outside TMAS. See [FAQ](faq.md) and [ROADMAP](../ROADMAP.md).
+Proton has no third-party Drive OAuth/REST API. TMAS integrates the **official** [`proton-drive` CLI](https://proton.me/support/drive-cli) out-of-process (same approach as [proton-drive-desktop](https://github.com/VoxHash/proton-drive-desktop)). Auth stays in the OS keyring — TMAS never stores Proton passwords or tokens.
+
+1. Install the official CLI from [Proton Drive CLI support](https://proton.me/support/drive-cli) and ensure `proton-drive` is on `PATH` (or under `~/.local/bin`).
+2. Sign in once in a terminal (browser flow):
+
+```bash
+proton-drive auth login
+```
+
+3. Optional `.env` overrides:
+
+```env
+# Absolute path if the binary is not on PATH:
+# PROTON_DRIVE_CLI=/home/you/.local/bin/proton-drive
+# Backup folder (created on first upload):
+PROTON_DRIVE_FOLDER=/my-files/TMAS/backups
+```
+
+4. In the app, open **Settings → Cloud Backup**, select **Proton Drive (CLI)**, and click **Verify Proton Drive Session**.
+5. Use **Backup Now** / **Refresh List** / **Restore Selected Backup** as with other providers. Disconnect clears in-memory verify state only (CLI keyring session stays).
+6. Exact CLI commands TMAS runs (JSON via trailing `-j` where applicable):
+
+```bash
+proton-drive filesystem list / -j
+proton-drive filesystem create-folder PARENT NAME
+proton-drive filesystem upload -f replace -d merge -t LOCAL.tmas-backup.zip /my-files/TMAS/backups
+proton-drive filesystem list /my-files/TMAS/backups -j
+proton-drive filesystem download -f skip -d merge REMOTE_PATH LOCAL_DIR
+proton-drive filesystem trash REMOTE_PATH
+proton-drive filesystem delete /trash/FILENAME
+```
 
 ## Account Configuration
 

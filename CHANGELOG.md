@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.48] - 2026-10-25
+
+### Added
+- **Phase 2: Proton Drive cloud backup**: `ProtonDriveProvider` wraps the official `proton-drive` CLI (subprocess JSON) for encrypted `.tmas-backup.zip` upload/list/download/delete. Settings → Cloud Backup provider selector; env `PROTON_DRIVE_CLI` (optional binary path) and `PROTON_DRIVE_FOLDER` (default `/my-files/TMAS/backups`). Auth is `proton-drive auth login` (OS keyring) — TMAS never stores Proton credentials.
+- **Unit tests** for CLI runner mocking and CloudBackupService Proton Drive paths.
+
+### Changed
+- Docs (configuration, usage, FAQ, architecture, troubleshooting, README, ROADMAP) and packaging metadata bump to **1.2.48**.
+- ROADMAP marks Proton Drive CLI integration done; leftover is an in-process SDK provider only if Proton ships third-party GA with documented auth.
+
+### Notes
+- Live e2e against an authenticated CLI session: tiny probe upload + trash/delete under `/my-files/TMAS/backups` succeeded on the release machine. No tokens or passwords are logged.
+
 ## [1.2.47] - 2026-10-25
 
 ### Added
@@ -21,10 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **`web-monitor --help` / `-h`**: print usage and exit instead of starting the read-only companion server (run hygiene).
 - Custom theme colors now feed the stylesheet builder correctly (`get_stylesheet_from_colors`).
-
-### Notes
-- **ROADMAP**: Proton Drive cloud backup remains a Phase 2 leftover (deferred). Feasibility notes cover Proton Drive SDK (not third-party GA / no auth yet), official Drive CLI for out-of-process upload, rclone Beta constraints, and absence of official WebDAV / Bridge-for-Drive — no in-app Proton provider until a viable first-party path exists.
-- **Docs (FAQ / configuration)**: Proton Drive is not a Settings provider yet; use Google Drive, S3, Dropbox, OneDrive, or local handoff export.
 
 ## [1.2.46] - 2026-10-25
 

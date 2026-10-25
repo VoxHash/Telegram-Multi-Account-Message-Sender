@@ -32,6 +32,7 @@ from .network import (
     is_offline_error_message,
 )
 from .onedrive_provider import OneDriveError, OneDriveProvider
+from .proton_drive_provider import ProtonDriveError, ProtonDriveProvider
 from .provider_base import CloudProvider, RemoteBackupItem
 from .s3_compatible import S3CompatibleError, S3CompatibleProvider
 from .token_store import DriveTokenStore
@@ -61,6 +62,8 @@ __all__ = [
     "GoogleDriveProvider",
     "OneDriveError",
     "OneDriveProvider",
+    "ProtonDriveError",
+    "ProtonDriveProvider",
     "RemoteBackupItem",
     "S3CompatibleError",
     "S3CompatibleProvider",

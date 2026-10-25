@@ -904,6 +904,8 @@ service.restore_from_local_package(entities, mode="merge")
 | `DropboxProvider` | `CloudProvider` for Dropbox folder upload/list/download |
 | `CloudBackupService.backup_to_onedrive` / `list_onedrive_backups` / `restore_from_onedrive` | OneDrive cloud backup (Microsoft Graph stdlib HTTP; `ONEDRIVE_ACCESS_TOKEN`) |
 | `OneDriveProvider` | `CloudProvider` for OneDrive folder upload/list/download |
+| `CloudBackupService.backup_to_proton_drive` / `list_proton_drive_backups` / `restore_from_proton_drive` | Proton Drive cloud backup (official `proton-drive` CLI; OS keyring session) |
+| `ProtonDriveProvider` | `CloudProvider` wrapping `proton-drive filesystem` upload/list/download/delete |
 | `collect_entities` / `import_entities` | Build / apply selective payload |
 | `parse_handoff_argv` / `run_handoff_cli` | CLI: `handoff-export` / `handoff-import` |
 

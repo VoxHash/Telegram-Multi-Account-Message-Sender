@@ -1,6 +1,6 @@
 """
 Orchestrates local backup packages and cloud upload/restore
-(Drive + S3 + Dropbox + OneDrive).
+(Drive + S3 + Dropbox + OneDrive + Proton Drive).
 """
 
 import json
@@ -38,6 +38,7 @@ from .entity_transfer import (
 from .google_drive import GoogleDriveError, GoogleDriveProvider
 from .network import check_network_available, format_offline_error
 from .onedrive_provider import OneDriveError, OneDriveProvider
+from .proton_drive_provider import ProtonDriveError, ProtonDriveProvider
 from .provider_base import RemoteBackupItem
 from .s3_compatible import S3CompatibleError, S3CompatibleProvider
 
@@ -55,6 +56,7 @@ class CloudBackupService:
         s3_provider: Optional[S3CompatibleProvider] = None,
         dropbox_provider: Optional[DropboxProvider] = None,
         onedrive_provider: Optional[OneDriveProvider] = None,
+        proton_drive_provider: Optional[ProtonDriveProvider] = None,
         package_builder: Optional[BackupPackageBuilder] = None,
     ) -> None:
         self.logger = get_logger()
@@ -63,6 +65,7 @@ class CloudBackupService:
         self.s3_provider = s3_provider or S3CompatibleProvider()
         self.dropbox_provider = dropbox_provider or DropboxProvider()
         self.onedrive_provider = onedrive_provider or OneDriveProvider()
+        self.proton_drive_provider = proton_drive_provider or ProtonDriveProvider()
         self.package_builder = package_builder or BackupPackageBuilder()
 
     def _require_online(self, operation: str) -> None:
@@ -622,4 +625,95 @@ class CloudBackupService:
                 package_path,
                 password=password,
                 source_label=f"OneDrive backup {remote_id}",
+            )
+
+    def connect_proton_drive(self) -> None:
+        """Verify official ``proton-drive`` CLI and keyring session (list ``/``)."""
+        self._require_online("Proton Drive connect")
+        try:
+            if not self.proton_drive_provider.authenticate():
+                raise CloudBackupServiceError("Proton Drive authentication failed")
+        except ProtonDriveError as exc:
+            raise CloudBackupServiceError(str(exc)) from exc
+
+    def disconnect_proton_drive(self) -> None:
+        """Clear in-memory Proton Drive auth (CLI keyring session is unchanged)."""
+        self.proton_drive_provider.disconnect()
+
+    def is_proton_drive_connected(self) -> bool:
+        """Return True when the Proton Drive CLI session verifies."""
+        return self.proton_drive_provider.is_authenticated()
+
+    def is_proton_drive_configured(self) -> bool:
+        """Return True when the official ``proton-drive`` CLI is available."""
+        return self.proton_drive_provider.is_configured()
+
+    def backup_to_proton_drive(self, password: Optional[str] = None) -> str:
+        """Build a backup package and upload it to Proton Drive via the CLI."""
+        if not self.is_proton_drive_connected():
+            raise CloudBackupServiceError(
+                "Verify Proton Drive CLI session before creating a backup"
+            )
+        self._require_online("cloud backup upload")
+
+        filename = BackupPackageBuilder.generate_filename()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package_path = Path(temp_dir) / filename
+            try:
+                self.package_builder.build(
+                    package_path,
+                    password=password,
+                    include_settings=True,
+                    include_sessions=False,
+                    purpose=PURPOSE_CLOUD_BACKUP,
+                )
+            except BackupPackageError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+            try:
+                remote_id = self.proton_drive_provider.upload(package_path, filename)
+            except ProtonDriveError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+        self.logger.info(f"Proton Drive cloud backup uploaded: {filename} ({remote_id})")
+        return remote_id
+
+    def list_proton_drive_backups(self) -> List[RemoteBackupItem]:
+        """List backup packages stored under the configured Proton Drive folder."""
+        if not self.is_proton_drive_connected():
+            raise CloudBackupServiceError(
+                "Verify Proton Drive CLI session to list backups"
+            )
+        self._require_online("listing cloud backups")
+        try:
+            return self.proton_drive_provider.list_backups()
+        except ProtonDriveError as exc:
+            raise CloudBackupServiceError(str(exc)) from exc
+
+    def restore_from_proton_drive(
+        self, remote_id: str, password: Optional[str] = None
+    ) -> Path:
+        """
+        Download a Proton Drive backup, verify it, snapshot the current DB, and restore.
+
+        Returns the path to the pre-restore local database snapshot.
+        Raises before modifying the local database when offline / CLI unreachable.
+        """
+        if not self.is_proton_drive_connected():
+            raise CloudBackupServiceError(
+                "Verify Proton Drive CLI session before restoring"
+            )
+        self._require_online("cloud restore")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package_path = Path(temp_dir) / "restore-package.tmas-backup.zip"
+            try:
+                self.proton_drive_provider.download(remote_id, package_path)
+            except ProtonDriveError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+            return self._snapshot_and_restore_package(
+                package_path,
+                password=password,
+                source_label=f"Proton Drive backup {remote_id}",
             )

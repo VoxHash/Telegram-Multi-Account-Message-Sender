@@ -148,6 +148,11 @@ class Settings(BaseSettings):
     onedrive_access_token: Optional[str] = None
     onedrive_folder: str = "TMAS/backups"
 
+    # Cloud backup (Proton Drive — official proton-drive CLI; OS keyring session)
+    # Optional absolute path to the CLI binary; empty uses PATH / ~/.local/bin.
+    proton_drive_cli: Optional[str] = None
+    proton_drive_folder: str = "/my-files/TMAS/backups"
+
     # Optional AI copy tools (provider presets; user-supplied key, no SDK dependency)
     # AI_PROVIDER: openai | azure | anthropic
     ai_provider: str = "openai"

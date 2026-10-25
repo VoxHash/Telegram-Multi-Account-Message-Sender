@@ -85,7 +85,7 @@ Python calls the sidecar once per batch via JSON on stdin/stdout (`app/core/nati
 
 **Expected benefit (local desktop):** bulk spintax prep uses OS threads without holding the GIL; schedule construction avoids large transient Python object graphs for long recipient lists, so the app competes less for RAM/CPU with other programs during campaign start.
 
-## Cloud backup (Google Drive + S3-compatible + Dropbox + OneDrive)
+## Cloud backup (Google Drive + S3-compatible + Dropbox + OneDrive + Proton Drive)
 
 Optional encrypted backup/restore lives under `app/services/cloud/`:
 
@@ -96,12 +96,13 @@ Optional encrypted backup/restore lives under `app/services/cloud/`:
 | `S3CompatibleProvider` | boto3 upload/list/download for AWS S3 and compatible endpoints (MinIO, R2, Wasabi, B2) |
 | `DropboxProvider` | Dropbox HTTP API (stdlib `urllib`) upload/list/download via `DROPBOX_ACCESS_TOKEN` |
 | `OneDriveProvider` | Microsoft Graph HTTP API (stdlib `urllib`) upload/list/download via `ONEDRIVE_ACCESS_TOKEN` |
-| `CloudBackupService` | Orchestrates Drive/S3/Dropbox/OneDrive backup/list/restore and local handoff / entity export/import |
+| `ProtonDriveProvider` | Official `proton-drive` CLI (subprocess JSON) upload/list/download/delete; OS keyring session |
+| `CloudBackupService` | Orchestrates Drive/S3/Dropbox/OneDrive/Proton Drive backup/list/restore and local handoff / entity export/import |
 | `entity_transfer` | Selective templates/campaigns `entities.json` collect + merge/replace import |
 | `handoff` CLI | `telegram-sender handoff-export` / `handoff-import` (`--entities`, `--mode`) |
-| Settings UI | **Settings → Cloud Backup** — provider selector (Drive / S3 / Dropbox / OneDrive) + **Export for Handoff…** |
+| Settings UI | **Settings → Cloud Backup** — provider selector (Drive / S3 / Dropbox / OneDrive / Proton Drive CLI) + **Export for Handoff…** |
 
-Cloud client libraries are optional (`pip install '.[cloud]'` for Drive/S3). Dropbox and OneDrive use stdlib HTTP (no extra package). Drive OAuth tokens are encrypted under `app_data/cloud/`; S3, Dropbox, and OneDrive use env credentials. Desktop remains single-operator; multi-user roles belong to SendGram.
+Cloud client libraries are optional (`pip install '.[cloud]'` for Drive/S3). Dropbox and OneDrive use stdlib HTTP (no extra package). Proton Drive shells out to the official CLI (no Proton credentials in TMAS). Drive OAuth tokens are encrypted under `app_data/cloud/`; S3, Dropbox, and OneDrive use env credentials. Desktop remains single-operator; multi-user roles belong to SendGram.
 
 ## Web companion (read-only)
 

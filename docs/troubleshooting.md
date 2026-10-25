@@ -69,12 +69,24 @@ Common issues and solutions for Telegram Multi-Account Message Sender.
 4. No extra Python package is required for OneDrive (stdlib HTTP); Drive/S3 still need `pip install '.[cloud]'`
 5. After restore, restart the app so the database connection reloads
 
+### Cloud backup / Proton Drive verify fails
+
+**Problem:** Settings → Cloud Backup → Proton Drive (CLI) cannot verify session or upload
+
+**Solutions:**
+1. Install the official CLI from [Proton Drive CLI](https://proton.me/support/drive-cli) and ensure `proton-drive` is on `PATH` (or set `PROTON_DRIVE_CLI` to the binary)
+2. Sign in once: `proton-drive auth login` (browser; session stays in the OS keyring — TMAS never stores Proton passwords)
+3. Optional: set `PROTON_DRIVE_FOLDER` (default `/my-files/TMAS/backups`); parent folders are created on first upload
+4. Confirm the CLI works: `proton-drive filesystem list / -j`
+5. No extra Python package is required; the provider shells out to the CLI (same model as proton-drive-desktop)
+6. After restore, restart the app so the database connection reloads
+
 ### Cloud restore fails while offline
 
 **Problem:** Restore (or list/backup) shows “Offline or cloud unreachable” / “Cannot restore while offline”
 
 **Solutions:**
-1. Confirm internet connectivity (and that VPN/firewall allows `googleapis.com`, `api.dropboxapi.com` / `content.dropboxapi.com`, `graph.microsoft.com`, or your S3 endpoint)
+1. Confirm internet connectivity (and that VPN/firewall allows `googleapis.com`, `api.dropboxapi.com` / `content.dropboxapi.com`, `graph.microsoft.com`, Proton Drive, or your S3 endpoint)
 2. Retry **Refresh List**, then restore when online
 3. Local data is left unchanged until a download succeeds; if a pre-restore snapshot path is shown after a mid-flight failure, keep that file under `app_data/`
 4. You can continue using the app fully offline; only cloud sync needs the network

@@ -1,0 +1,10 @@
+{
+  "keys": [
+    {
+      "alg": "ed25519",
+      "key_id": "voxhash-registry-2026",
+      "public_key_b64": "OHbAh6fsX9OVt81IH1jzOudb2SPjaTJw_QdRi2hkIyo"
+    }
+  ],
+  "schema_version": 1
+}

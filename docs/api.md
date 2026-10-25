@@ -501,9 +501,10 @@ Installable registry plugins must use absolute imports (`from app.core.plugin im
 
 #### Plugin SDK validation (`app.services.plugin_sdk`)
 
-Helpers for catalog / plugin package submissions (schema version, SHA-256, structural checks). CLI: `telegram-sender plugin-validate`.
+Helpers for catalog / plugin package submissions (schema version, SHA-256, Ed25519 signatures, structural checks). CLI: `telegram-sender plugin-validate` / `plugin-catalog-sign`.
 
 ```python
+from app.services.catalog_signing import verify_catalog_payload, sign_catalog_payload
 from app.services.plugin_sdk import (
     SUPPORTED_CATALOG_SCHEMA_VERSION,
     validate_catalog_file,
@@ -526,6 +527,8 @@ plugin_report = validate_plugin_file(Path("registry/templates/sample_filter_plug
 - `validate_catalog_schema` / `validate_catalog_file` / `validate_catalog_sha256`
 - `validate_plugin_file`
 - `parse_plugin_validate_argv` / `run_plugin_validate_cli`
+- `parse_plugin_catalog_sign_argv` / `run_plugin_catalog_sign_cli`
+- `app.services.catalog_signing` (`sign_catalog_payload` / `verify_catalog_payload` / trusted keys)
 
 **Sample template:** `registry/templates/sample_filter_plugin.py`  
 **Base classes:** `app.core.plugin` (`Plugin`, `MessageFilterPlugin`, `AnalyticsPlugin`, `PluginMetadata`, `PluginType`, `PluginAPI`)

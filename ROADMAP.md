@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.33)
+## Current Status (v1.2.34)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -38,16 +38,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **S3-compatible cloud backup** (AWS S3 / MinIO / R2 / Wasabi / B2 via boto3; Settings provider selector)
 - **Dropbox cloud backup** (Bearer access token + folder; stdlib HTTP; Settings provider selector)
 - **OneDrive cloud backup** (Microsoft Graph Bearer token + folder; stdlib HTTP; Settings provider selector)
+- **Signed plugin catalogs** (Ed25519 + `json-sorted-compact`; official `trusted_keys.json`; `plugin-catalog-sign` CLI)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
-- Signed plugin catalogs (Ed25519) and broader community registry submissions
+- Broader community registry submissions beyond official + template
 
-### Latest release (v1.2.33 — 2026-10-24)
-- Phase 2 leftover: OneDrive cloud backup provider (Microsoft Graph)
+### Latest release (v1.2.34 — 2026-10-24)
+- Phase 4 leftover: signed plugin catalogs (Ed25519)
 
 ### Previous highlights
+- **v1.2.33**: Phase 2 leftover: OneDrive cloud backup provider (Microsoft Graph)
 - **v1.2.32**: Phase 2 leftover: Dropbox cloud backup provider (beyond Google Drive + S3)
 - **v1.2.31**: Phase 2: S3-compatible cloud backup provider (beyond Google Drive)
 - **v1.2.30**: Phase 4: broader developer SDK polish as registry submissions grow
@@ -109,7 +111,7 @@ Realistic, shippable work — not a full platform rewrite.
   - Leftover: non-English locale strings for AI UI keys (English kit shipped; other locales fall back to key path until translated)
   - Leftover: provider presets beyond generic OpenAI-compatible base URL (Azure path quirks, Anthropic native API)
 - [x] Plugin marketplace / registry (curated catalog discover + verified install)
-  - Leftover: community submissions beyond the two official registry plugins (validation CLI + sample template shipped in v1.2.30); signed catalogs
+  - Leftover: community submissions beyond the two official registry plugins (validation CLI + sample template shipped in v1.2.30; signed catalogs in v1.2.34)
 
 ### Phase 3 (later): Platform expansion
 - [x] Enhanced macOS/Linux packaging and file associations
@@ -125,7 +127,8 @@ Realistic, shippable work — not a full platform rewrite.
 - [x] Desktop remains single-operator with export/import for handoff (v1.2.28)
 - [x] Selective entity export (templates/campaigns only) + merge-on-import vs replace (v1.2.29)
 - [x] Broader developer SDK polish as registry submissions grow (v1.2.30)
-  - Leftover: signed catalogs; richer third-party submission volume beyond official + template
+- [x] Signed plugin catalogs (Ed25519; `plugin-catalog-sign`; optional require-signature) — v1.2.34
+  - Leftover: richer third-party submission volume beyond official + template
 
 ---
 

@@ -119,6 +119,7 @@ Community plugins for the curated marketplace:
    telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins
    ```
 4. Keep the PR focused on the plugin + catalog entry; do not auto-enable third-party code on install.
+5. Maintainers re-sign the official catalog after merging catalog edits (`telegram-sender plugin-catalog-sign … --in-place`) and sync `app/plugins/registry/catalog.json`. Private keys stay offline (`registry/keys/*.priv` is gitignored).
 
 See [docs/api.md](docs/api.md) (Plugin SDK validation) and [docs/cli.md](docs/cli.md).
 

@@ -179,6 +179,21 @@ def validate_catalog_schema(
     if not catalog.updated_at.strip():
         report.add("warning", source, "updated_at is empty")
 
+    if catalog.signature_verified:
+        pass  # Official path: Ed25519 signature checked in parse_catalog
+    elif catalog.signature_present and not catalog.signature_verified:
+        report.add(
+            "error",
+            f"{source}.signature",
+            "signature present but not verified (unexpected parse state)",
+        )
+    else:
+        report.add(
+            "warning",
+            f"{source}.signature",
+            "catalog is unsigned; official registry catalogs should include an Ed25519 signature",
+        )
+
     for entry in catalog.plugins:
         _validate_entry_extras(entry, report, app_version=app_version)
 
@@ -612,3 +627,159 @@ def run_plugin_validate_cli(argv: Sequence[str]) -> int:
     print()
     print(_plugin_validate_help())
     return 1
+
+
+def parse_plugin_catalog_sign_argv(
+    argv: Sequence[str],
+) -> Tuple[
+    bool,
+    Optional[Path],
+    Optional[Path],
+    Optional[str],
+    Optional[Path],
+    bool,
+    bool,
+]:
+    """
+    Detect ``plugin-catalog-sign`` CLI mode.
+
+    Returns
+    ``(is_mode, catalog_path, private_key_path, key_id, output_path, in_place, help_requested)``.
+    """
+    tokens = list(argv[1:]) if argv else []
+    if not tokens:
+        return False, None, None, None, None, False, False
+
+    cmd = tokens[0].lower().replace("_", "-")
+    if cmd not in ("plugin-catalog-sign", "catalog-sign", "sign-catalog"):
+        return False, None, None, None, None, False, False
+
+    catalog_path: Optional[Path] = None
+    private_key_path: Optional[Path] = None
+    key_id: Optional[str] = None
+    output_path: Optional[Path] = None
+    in_place = False
+    help_requested = False
+    positional: List[str] = []
+    i = 1
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok in ("-h", "--help"):
+            help_requested = True
+            i += 1
+            continue
+        if tok in ("--private-key", "-k") and i + 1 < len(tokens):
+            private_key_path = Path(tokens[i + 1])
+            i += 2
+            continue
+        if tok.startswith("--private-key="):
+            private_key_path = Path(tok.split("=", 1)[1])
+            i += 1
+            continue
+        if tok in ("--key-id", "-i") and i + 1 < len(tokens):
+            key_id = tokens[i + 1]
+            i += 2
+            continue
+        if tok.startswith("--key-id="):
+            key_id = tok.split("=", 1)[1]
+            i += 1
+            continue
+        if tok in ("--output", "-o") and i + 1 < len(tokens):
+            output_path = Path(tokens[i + 1])
+            i += 2
+            continue
+        if tok.startswith("--output="):
+            output_path = Path(tok.split("=", 1)[1])
+            i += 1
+            continue
+        if tok in ("--in-place",):
+            in_place = True
+            i += 1
+            continue
+        if tok.startswith("-"):
+            positional.append(tok)
+            i += 1
+            continue
+        positional.append(tok)
+        i += 1
+
+    if positional:
+        catalog_path = Path(positional[0])
+    return True, catalog_path, private_key_path, key_id, output_path, in_place, help_requested
+
+
+def _plugin_catalog_sign_help() -> str:
+    return """Usage:
+  telegram-sender plugin-catalog-sign <catalog.json> --private-key KEY [--key-id ID] [--in-place|--output OUT]
+
+Sign a registry catalog with Ed25519 (json-sorted-compact canonicalization).
+
+  --private-key / -k   Path to raw base64 or PEM Ed25519 private key
+  --key-id / -i        Signature key id (default: voxhash-registry-2026)
+  --in-place           Overwrite the catalog file
+  --output / -o        Write signed catalog to a new path
+
+Examples:
+  telegram-sender plugin-catalog-sign registry/catalog.json -k registry/keys/voxhash-registry-2026.priv --in-place
+"""
+
+
+def run_plugin_catalog_sign_cli(argv: Sequence[str]) -> int:
+    """CLI entry for ``plugin-catalog-sign``. Returns process exit code."""
+    (
+        is_mode,
+        catalog_path,
+        private_key_path,
+        key_id,
+        output_path,
+        in_place,
+        help_requested,
+    ) = parse_plugin_catalog_sign_argv(argv)
+    if not is_mode:
+        raise ValueError("run_plugin_catalog_sign_cli requires a plugin-catalog-sign argv")
+
+    if help_requested:
+        print(_plugin_catalog_sign_help())
+        return 0
+    if catalog_path is None or private_key_path is None:
+        print(_plugin_catalog_sign_help())
+        return 1
+    if in_place and output_path is not None:
+        print("Use either --in-place or --output, not both.")
+        return 1
+    if not in_place and output_path is None:
+        print("Pass --in-place or --output PATH for the signed catalog.")
+        return 1
+
+    from app.services.catalog_signing import (
+        OFFICIAL_KEY_ID,
+        CatalogSignatureError,
+        load_private_key_file,
+        sign_catalog_payload,
+        verify_catalog_payload,
+    )
+
+    try:
+        payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"Could not read catalog: {exc}")
+        return 1
+    if not isinstance(payload, dict):
+        print("Catalog root must be a JSON object")
+        return 1
+
+    try:
+        private_key = load_private_key_file(private_key_path)
+        signed = sign_catalog_payload(
+            payload, private_key=private_key, key_id=(key_id or OFFICIAL_KEY_ID)
+        )
+        verify_catalog_payload(signed, require=True)
+    except CatalogSignatureError as exc:
+        print(f"Signing failed: {exc}")
+        return 1
+
+    dest = catalog_path if in_place else output_path
+    assert dest is not None
+    dest.write_text(json.dumps(signed, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Signed catalog written to {dest} (key_id={key_id or OFFICIAL_KEY_ID})")
+    return 0

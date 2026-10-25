@@ -68,6 +68,7 @@ Sideloading with **Load Plugin** remains available for local `.py` files that ar
 1. Copy `registry/templates/sample_filter_plugin.py` and use absolute imports only (`from app.core.plugin import …`).
 2. Place the installable `.py` under `registry/plugins/` and add a catalog entry in `registry/catalog.json` (HTTPS `download_url`, bare `filename`, `sha256`).
 3. Validate: `telegram-sender plugin-validate your_plugin.py` and `telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins`.
+4. Maintainers: after catalog edits, re-sign with `telegram-sender plugin-catalog-sign … --in-place` and sync `app/plugins/registry/catalog.json`.
 4. Open a pull request. See [CLI](cli.md) and [API](api.md).
 
 ## Web Companion (read-only monitoring, optional)

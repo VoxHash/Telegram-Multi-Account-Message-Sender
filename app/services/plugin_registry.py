@@ -83,6 +83,9 @@ class RegistryCatalog:
     homepage: Optional[str]
     plugins: List[RegistryPluginEntry]
     source: str  # "remote" | "bundled" | "path"
+    signature_present: bool = False
+    signature_verified: bool = False
+    signature_key_id: Optional[str] = None
 
 
 def bundled_catalog_path() -> Path:
@@ -104,12 +107,22 @@ def _require_str(data: Dict[str, Any], key: str) -> str:
     return value.strip()
 
 
-def parse_catalog(payload: Any, *, source: str) -> RegistryCatalog:
+def parse_catalog(
+    payload: Any,
+    *,
+    source: str,
+    require_signature: bool = False,
+    verify_signature: bool = True,
+) -> RegistryCatalog:
     """
     Validate and parse a catalog JSON object.
 
+    When ``verify_signature`` is True, an present Ed25519 ``signature`` block is
+    checked against bundled trusted keys. When ``require_signature`` is True,
+    unsigned catalogs are rejected.
+
     Raises:
-        PluginRegistryError: when the payload is invalid.
+        PluginRegistryError: when the payload is invalid or the signature fails.
     """
     if not isinstance(payload, dict):
         raise PluginRegistryError("Catalog root must be a JSON object")
@@ -145,6 +158,25 @@ def parse_catalog(payload: Any, *, source: str) -> RegistryCatalog:
         seen_ids.add(entry.id)
         plugins.append(entry)
 
+    signature_present = False
+    signature_verified = False
+    signature_key_id: Optional[str] = None
+    if verify_signature or require_signature:
+        from app.services.catalog_signing import (
+            CatalogSignatureError,
+            verify_catalog_payload,
+        )
+
+        try:
+            sig_result = verify_catalog_payload(
+                payload, require=require_signature
+            )
+        except CatalogSignatureError as exc:
+            raise PluginRegistryError(str(exc)) from exc
+        signature_present = sig_result.present
+        signature_verified = sig_result.verified
+        signature_key_id = sig_result.key_id
+
     return RegistryCatalog(
         schema_version=schema_version,
         name=name.strip(),
@@ -152,6 +184,9 @@ def parse_catalog(payload: Any, *, source: str) -> RegistryCatalog:
         homepage=homepage.strip() if isinstance(homepage, str) and homepage.strip() else None,
         plugins=plugins,
         source=source,
+        signature_present=signature_present,
+        signature_verified=signature_verified,
+        signature_key_id=signature_key_id,
     )
 
 
@@ -233,7 +268,13 @@ def _parse_entry(raw: Dict[str, Any], *, index: int) -> RegistryPluginEntry:
     )
 
 
-def load_catalog_from_path(path: Path, *, source: str = "path") -> RegistryCatalog:
+def load_catalog_from_path(
+    path: Path,
+    *,
+    source: str = "path",
+    require_signature: bool = False,
+    verify_signature: bool = True,
+) -> RegistryCatalog:
     """Load and parse a catalog JSON file from disk."""
     try:
         raw_text = path.read_text(encoding="utf-8")
@@ -243,7 +284,12 @@ def load_catalog_from_path(path: Path, *, source: str = "path") -> RegistryCatal
         payload = json.loads(raw_text)
     except json.JSONDecodeError as exc:
         raise PluginRegistryError(f"Invalid catalog JSON in {path}: {exc}") from exc
-    return parse_catalog(payload, source=source)
+    return parse_catalog(
+        payload,
+        source=source,
+        require_signature=require_signature,
+        verify_signature=verify_signature,
+    )
 
 
 def search_catalog(
@@ -297,6 +343,7 @@ class PluginRegistryService:
         urlopen: UrlOpen = urllib.request.urlopen,
         network_check: NetworkCheck = check_network_available,
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+        require_signature: bool = False,
     ) -> None:
         self.registry_url = (registry_url or DEFAULT_REGISTRY_URL).strip() or DEFAULT_REGISTRY_URL
         self.install_dir = Path(install_dir)
@@ -304,6 +351,7 @@ class PluginRegistryService:
         self._urlopen = urlopen
         self._network_check = network_check
         self.timeout_seconds = timeout_seconds
+        self.require_signature = bool(require_signature)
         self._last_catalog: Optional[RegistryCatalog] = None
 
     @property
@@ -312,7 +360,11 @@ class PluginRegistryService:
 
     def load_bundled_catalog(self) -> RegistryCatalog:
         """Load the offline catalog shipped with the application."""
-        catalog = load_catalog_from_path(self.bundled_path, source="bundled")
+        catalog = load_catalog_from_path(
+            self.bundled_path,
+            source="bundled",
+            require_signature=self.require_signature,
+        )
         self._last_catalog = catalog
         return catalog
 
@@ -361,7 +413,11 @@ class PluginRegistryService:
             payload = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise PluginRegistryError(f"Remote catalog is not valid JSON: {exc}") from exc
-        return parse_catalog(payload, source="remote")
+        return parse_catalog(
+            payload,
+            source="remote",
+            require_signature=self.require_signature,
+        )
 
     def search(
         self,
@@ -470,7 +526,11 @@ def get_plugin_registry_service(
     if url is None:
         url = getattr(settings, "plugin_registry_url", None) or DEFAULT_REGISTRY_URL
     data_dir = app_data_dir or settings.app_data_dir
+    require_signature = bool(
+        getattr(settings, "plugin_registry_require_signature", False)
+    )
     return PluginRegistryService(
         registry_url=str(url),
         install_dir=default_install_dir(data_dir),
+        require_signature=require_signature,
     )

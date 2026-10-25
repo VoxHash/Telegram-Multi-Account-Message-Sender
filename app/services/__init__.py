@@ -58,6 +58,8 @@ __all__ = [
     # Plugin SDK / registry submission validation
     "parse_plugin_validate_argv",
     "run_plugin_validate_cli",
+    "parse_plugin_catalog_sign_argv",
+    "run_plugin_catalog_sign_cli",
 ]
 
 # name -> (submodule, attribute)
@@ -101,6 +103,8 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "run_handoff_cli": (".handoff", "run_handoff_cli"),
     "parse_plugin_validate_argv": (".plugin_sdk", "parse_plugin_validate_argv"),
     "run_plugin_validate_cli": (".plugin_sdk", "run_plugin_validate_cli"),
+    "parse_plugin_catalog_sign_argv": (".plugin_sdk", "parse_plugin_catalog_sign_argv"),
+    "run_plugin_catalog_sign_cli": (".plugin_sdk", "run_plugin_catalog_sign_cli"),
 }
 
 

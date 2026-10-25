@@ -55,6 +55,7 @@ You can configure the application using environment variables. See `example_file
 - `AI_BASE_URL`: Chat Completions base URL (default `https://api.openai.com/v1`)
 - `AI_MODEL`: Model id (default `gpt-4o-mini`)
 - `PLUGIN_REGISTRY_URL`: HTTPS URL of the curated plugin catalog JSON (default: official GitHub `registry/catalog.json`)
+- `PLUGIN_REGISTRY_REQUIRE_SIGNATURE`: When `true`, reject catalogs without a valid Ed25519 signature against bundled trusted keys (default `false`; signatures are still verified when present)
 - `WEB_COMPANION_ENABLED`: Start preference for the optional read-only web monitor (`true`/`false`, default `false`)
 - `WEB_COMPANION_AUTO_START`: When `true`, starting the desktop GUI also starts the companion in the background (no browser open; default `false`)
 - `WEB_COMPANION_HOST`: Bind address (default `127.0.0.1`)
@@ -116,13 +117,15 @@ Clients still send `Authorization: Bearer <WEB_COMPANION_TOKEN>` (or open `https
 
 ### Plugin Registry (marketplace)
 
-Discover curated plugins from **Plugins → Browse Registry**. The app fetches the remote catalog when online and falls back to the bundled offline catalog under `app/plugins/registry/catalog.json`.
+Discover curated plugins from **Plugins → Browse Registry**. The app fetches the remote catalog when online and falls back to the bundled offline catalog under `app/plugins/registry/catalog.json`. Official catalogs include an Ed25519 `signature` verified against `app/plugins/registry/trusted_keys.json`.
 
 ```env
 PLUGIN_REGISTRY_URL=https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender/main/registry/catalog.json
+# Optional: reject unsigned catalogs (signatures are still verified when present)
+PLUGIN_REGISTRY_REQUIRE_SIGNATURE=false
 ```
 
-Installable entries download a verified `.py` file (SHA-256 when listed) into `app_data/plugins/`. Enable the plugin from the Plugins list after review. Documentation-only / bundled entries are listed but not downloaded.
+Installable entries download a verified `.py` file (SHA-256 when listed) into `app_data/plugins/`. Enable the plugin from the Plugins list after review. Documentation-only / bundled entries are listed but not downloaded. Maintainers re-sign with `telegram-sender plugin-catalog-sign` after catalog edits (see [CLI](cli.md)).
 
 ### AI Copy Tools (optional)
 

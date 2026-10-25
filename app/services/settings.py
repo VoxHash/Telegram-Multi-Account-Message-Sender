@@ -158,6 +158,8 @@ class Settings(BaseSettings):
         "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender"
         "/main/registry/catalog.json"
     )
+    # When True, reject catalogs without a valid Ed25519 signature (official keys).
+    plugin_registry_require_signature: bool = False
 
     # Optional read-only web companion (stdlib http.server; desktop remains primary)
     web_companion_enabled: bool = False

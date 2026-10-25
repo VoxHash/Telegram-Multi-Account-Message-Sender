@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.34] - 2026-10-24
+
+### Added
+- **Phase 4 leftover: signed plugin catalogs**: Ed25519 signatures over `json-sorted-compact` canonical JSON (`signature.alg` / `key_id` / `canonicalization` / `sig`). Official public keys in `registry/keys/trusted_keys.json` (bundled under `app/plugins/registry/`).
+- **CLI**: `telegram-sender plugin-catalog-sign <catalog.json> --private-key KEY [--in-place|--output OUT] [--key-id ID]`.
+- **Verification**: `parse_catalog` / registry fetch verify signatures when present; optional `PLUGIN_REGISTRY_REQUIRE_SIGNATURE=true` rejects unsigned catalogs.
+- **Unit tests** for canonicalize/sign/verify, tamper detection, bundled official catalog, and sign CLI.
+
+### Changed
+- Official `registry/catalog.json` and bundled offline copy are signed with `key_id=voxhash-registry-2026`.
+- Docs (CLI, configuration, API, FAQ, usage, README, ROADMAP) mark signed catalogs as shipped.
+
 ## [1.2.33] - 2026-10-24
 
 ### Added

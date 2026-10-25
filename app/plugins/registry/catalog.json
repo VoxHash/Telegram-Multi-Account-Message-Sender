@@ -11,7 +11,12 @@
       "description": "Removes or replaces HTTP(S) URLs in outgoing campaign messages.",
       "author": "VoxHash",
       "plugin_type": "filter",
-      "tags": ["filter", "url", "compliance", "registry"],
+      "tags": [
+        "filter",
+        "url",
+        "compliance",
+        "registry"
+      ],
       "homepage": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender",
       "repository": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/tree/main/registry/plugins",
       "license": "EPL-2.0",
@@ -28,7 +33,11 @@
       "description": "Tracks campaign/message events and writes them to the app logger.",
       "author": "VoxHash",
       "plugin_type": "analytics",
-      "tags": ["analytics", "logging", "registry"],
+      "tags": [
+        "analytics",
+        "logging",
+        "registry"
+      ],
       "homepage": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender",
       "repository": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/tree/main/registry/plugins",
       "license": "EPL-2.0",
@@ -45,7 +54,11 @@
       "description": "Built-in example filter plugin shipped with the application (documentation entry).",
       "author": "VoxHash",
       "plugin_type": "filter",
-      "tags": ["example", "filter", "bundled"],
+      "tags": [
+        "example",
+        "filter",
+        "bundled"
+      ],
       "homepage": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender",
       "repository": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/tree/main/app/plugins",
       "license": "EPL-2.0",
@@ -63,7 +76,11 @@
       "description": "Built-in example analytics plugin shipped with the application (documentation entry).",
       "author": "VoxHash",
       "plugin_type": "analytics",
-      "tags": ["example", "analytics", "bundled"],
+      "tags": [
+        "example",
+        "analytics",
+        "bundled"
+      ],
       "homepage": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender",
       "repository": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/tree/main/app/plugins",
       "license": "EPL-2.0",
@@ -74,5 +91,11 @@
       "bundled": true,
       "local_only": true
     }
-  ]
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "voxhash-registry-2026",
+    "canonicalization": "json-sorted-compact",
+    "sig": "Ivw9rJWEKsKCr15IbMyMQZpyhUUf00J1DWgZlIzk0DSrLj-O4DnU5_HEQe6fHWIEAGE4U5Ze2AqprmG-jVbmCg"
+  }
 }

@@ -105,7 +105,7 @@ They are opt-in. Set your own OpenAI-compatible `AI_API_KEY` in Settings (or `.e
 
 ### How does the plugin registry work?
 
-Open **Plugins → Browse Registry** to discover curated plugins from the official catalog (`registry/catalog.json`). Install downloads a SHA-256–verified `.py` file into `app_data/plugins/`; you still enable it manually after review. Offline, the app uses the bundled catalog. Override the catalog URL with `PLUGIN_REGISTRY_URL` if needed.
+Open **Plugins → Browse Registry** to discover curated plugins from the official catalog (`registry/catalog.json`, Ed25519-signed). Install downloads a SHA-256–verified `.py` file into `app_data/plugins/`; you still enable it manually after review. Offline, the app uses the bundled catalog. Override the catalog URL with `PLUGIN_REGISTRY_URL`; set `PLUGIN_REGISTRY_REQUIRE_SIGNATURE=true` to reject unsigned catalogs.
 
 ### How do I submit or validate a registry plugin?
 

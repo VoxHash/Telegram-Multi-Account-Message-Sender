@@ -91,7 +91,26 @@ python -m app.cli plugin-validate path/to/plugin.py
 | `--plugins-dir` / `-d` | With a catalog: verify SHA-256 digests against local plugin files |
 | `--app-version` / `-a` | App version for `min_app_version` checks (defaults to this install) |
 
-Catalog checks cover schema version, entry fields, versions, and known `plugin_type` values. Plugin checks require absolute imports (`from app.core.plugin import …`), a concrete `Plugin` subclass, metadata, and a valid default config. See [API](api.md) and `registry/templates/sample_filter_plugin.py`.
+Catalog checks cover schema version, entry fields, versions, and known `plugin_type` values. Unsigned catalogs warn; invalid signatures fail. Plugin checks require absolute imports (`from app.core.plugin import …`), a concrete `Plugin` subclass, metadata, and a valid default config. See [API](api.md) and `registry/templates/sample_filter_plugin.py`.
+
+### Sign a registry catalog (maintainers)
+
+Official catalogs carry an Ed25519 detached signature (`json-sorted-compact` canonicalization). Maintainers sign with the private key that matches an entry in `registry/keys/trusted_keys.json` (never commit `*.priv`).
+
+```bash
+telegram-sender plugin-catalog-sign registry/catalog.json \
+  --private-key registry/keys/voxhash-registry-2026.priv --in-place
+cp registry/catalog.json app/plugins/registry/catalog.json
+telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins
+```
+
+| Flag | Description |
+| --- | --- |
+| path | Catalog `.json` to sign |
+| `--private-key` / `-k` | Raw base64 or PEM Ed25519 private key |
+| `--key-id` / `-i` | Signature key id (default `voxhash-registry-2026`) |
+| `--in-place` | Overwrite the catalog file |
+| `--output` / `-o` | Write signed catalog to a new path |
 
 ## Python API
 

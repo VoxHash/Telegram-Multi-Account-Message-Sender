@@ -396,3 +396,7 @@ ipython_config.py
 *.swo
 *~
 .DS_Store
+
+# Plugin registry signing private keys
+registry/keys/*.priv
+*.priv

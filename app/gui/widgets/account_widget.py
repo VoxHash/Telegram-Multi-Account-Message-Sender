@@ -2,7 +2,7 @@
 Account management widgets.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from pathlib import Path
 from PyQt5.QtWidgets import (
     QWidget,
@@ -40,12 +40,12 @@ from ...services.db import get_session as db_get_session
 class ProgressDialog(QDialog):
     """Custom progress dialog for Telegram operations."""
 
-    def __init__(self, parent=None, title="Operation", initial_text="Processing..."):
+    def __init__(self, parent: Optional[QWidget] = None, title: str = "Operation", initial_text: str = "Processing...") -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setModal(True)
         self.setFixedSize(400, 150)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)  # type: ignore[arg-type]
 
         layout = QVBoxLayout(self)
 
@@ -64,16 +64,16 @@ class ProgressDialog(QDialog):
         self.cancel_button.clicked.connect(self.reject)
         layout.addWidget(self.cancel_button)
 
-    def update_status(self, text):
+    def update_status(self, text: str) -> None:
         """Update the status text."""
         self.status_label.setText(text)
 
-    def set_determinate(self, maximum):
+    def set_determinate(self, maximum: int) -> None:
         """Set progress bar to determinate mode."""
         self.progress_bar.setRange(0, maximum)
         self.progress_bar.setValue(0)
 
-    def set_progress(self, value):
+    def set_progress(self, value: int) -> None:
         """Set progress bar value."""
         self.progress_bar.setValue(value)
 
@@ -81,17 +81,17 @@ class ProgressDialog(QDialog):
 class VerificationCodeDialog(QDialog):
     """Dialog for entering Telegram verification code."""
 
-    def __init__(self, parent=None, phone_number=""):
+    def __init__(self, parent: Optional[QWidget] = None, phone_number: str = "") -> None:
         super().__init__(parent)
         self.phone_number = phone_number
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         self.setWindowTitle("Enter Verification Code")
         self.setModal(True)
         self.setFixedSize(400, 200)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)  # type: ignore[arg-type]
 
         layout = QVBoxLayout(self)
 
@@ -124,18 +124,20 @@ class VerificationCodeDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         self.ok_button = buttons.button(QDialogButtonBox.Ok)
-        self.ok_button.setEnabled(False)
+        if self.ok_button is not None:
+            self.ok_button.setEnabled(False)
         layout.addWidget(buttons)
 
-    def on_code_changed(self, text):
+    def on_code_changed(self, text: str) -> None:
         """Handle code input changes."""
-        self.ok_button.setEnabled(len(text) == 5 and text.isdigit())
+        if self.ok_button is not None:
+            self.ok_button.setEnabled(len(text) == 5 and text.isdigit())
 
-    def get_code(self):
+    def get_code(self) -> str:
         """Get the entered verification code."""
         return self.code_edit.text().strip()
 
-    def get_password(self):
+    def get_password(self) -> Optional[str]:
         """Get password if needed (for 2FA)."""
         from PyQt5.QtWidgets import QInputDialog
 
@@ -154,18 +156,18 @@ class TelegramWorker(QThread):
 
     def __init__(
         self,
-        operation,
-        account_id,
-        account_name,
-        api_id,
-        api_hash,
-        phone_number,
-        session_path=None,
-        proxy_config=None,
-        verification_code=None,
-        password=None,
-        phone_code_hash=None,
-    ):
+        operation: str,
+        account_id: Any,
+        account_name: str,
+        api_id: Any,
+        api_hash: str,
+        phone_number: str,
+        session_path: Optional[str] = None,
+        proxy_config: Any = None,
+        verification_code: Optional[str] = None,
+        password: Optional[str] = None,
+        phone_code_hash: Optional[str] = None,
+    ) -> None:
         super().__init__()
         self.operation = operation
         self.account_id = account_id
@@ -179,15 +181,15 @@ class TelegramWorker(QThread):
         self.password = password
         self.phone_code_hash = phone_code_hash
         self.logger = get_logger()
-        self._should_stop = False
+        self._should_stop: bool = False
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the worker thread."""
         self._should_stop = True
         self.quit()
         self.wait(5000)  # Wait up to 5 seconds for thread to finish
 
-    def run(self):
+    def run(self) -> None:
         """Run the Telegram operation."""
         try:
             if self._should_stop:
@@ -203,7 +205,7 @@ class TelegramWorker(QThread):
             self.logger.error(f"Error in Telegram worker: {e}")
             self.finished.emit(f"Error: {str(e)}", False)
 
-    def _authorize_account(self):
+    def _authorize_account(self) -> None:
         """Authorize account with Telegram."""
         try:
             if self._should_stop:
@@ -263,7 +265,7 @@ class TelegramWorker(QThread):
                 )
 
                 if self._should_stop:
-                    return
+                    return  # type: ignore[unreachable]
 
                 self.progress.emit("Connecting to Telegram...")
 
@@ -281,7 +283,7 @@ class TelegramWorker(QThread):
             self.logger.error(f"Authorization error: {e}")
             self.finished.emit(f"❌ Authorization failed: {str(e)}", False)
 
-    async def _async_authorize(self, client):
+    async def _async_authorize(self, client: Any) -> None:
         """Async authorization logic."""
         try:
             await client.connect()
@@ -348,7 +350,7 @@ class TelegramWorker(QThread):
             self.logger.error(f"Async authorization error: {e}")
             self.finished.emit(f"❌ Authorization failed: {str(e)}", False)
 
-    def _test_account(self):
+    def _test_account(self) -> None:
         """Test account connection."""
         try:
             if self._should_stop:
@@ -405,7 +407,7 @@ class TelegramWorker(QThread):
                 )
 
                 if self._should_stop:
-                    return
+                    return  # type: ignore[unreachable]
 
                 self.progress.emit("Connecting to Telegram...")
 
@@ -424,7 +426,7 @@ class TelegramWorker(QThread):
             self._update_account_status(AccountStatus.ERROR)
             self.finished.emit(f"❌ Test failed: {str(e)}", False)
 
-    async def _async_test(self, client):
+    async def _async_test(self, client: Any) -> None:
         """Async test logic."""
         try:
             await client.connect()
@@ -460,7 +462,7 @@ class TelegramWorker(QThread):
             self._update_account_status(AccountStatus.ERROR)
             self.finished.emit(f"❌ Test failed: {str(e)}", False)
 
-    def _connect_account(self):
+    def _connect_account(self) -> None:
         """Connect to account (for already authorized accounts)."""
         try:
             if self._should_stop:
@@ -517,7 +519,7 @@ class TelegramWorker(QThread):
                 )
 
                 if self._should_stop:
-                    return
+                    return  # type: ignore[unreachable]
 
                 self.progress.emit("Connecting to Telegram...")
 
@@ -536,7 +538,7 @@ class TelegramWorker(QThread):
             self._update_account_status(AccountStatus.ERROR)
             self.finished.emit(f"❌ Connection failed: {str(e)}", False)
 
-    async def _async_connect(self, client):
+    async def _async_connect(self, client: Any) -> None:
         """Async connect logic."""
         try:
             await client.connect()
@@ -566,7 +568,7 @@ class TelegramWorker(QThread):
             self._update_account_status(AccountStatus.ERROR)
             self.finished.emit(f"❌ Connection failed: {str(e)}", False)
 
-    def _update_account_status(self, status):
+    def _update_account_status(self, status: Any) -> None:
         """Update account status in database."""
         try:
             session = db_get_session()
@@ -590,12 +592,12 @@ class ProxyTestWorker(QThread):
     finished = pyqtSignal(bool, str)  # success, message
     progress = pyqtSignal(str)
 
-    def __init__(self, proxy_config: Dict[str, Any]):
+    def __init__(self, proxy_config: Dict[str, Any]) -> None:
         super().__init__()
         self.proxy_config = proxy_config
         self.logger = get_logger()
 
-    def run(self):
+    def run(self) -> None:
         """Test proxy connection."""
         try:
             self.progress.emit("Connecting to Telegram through proxy...")
@@ -632,7 +634,7 @@ class ProxyTestWorker(QThread):
                     )
 
                     # Test connection
-                    async def test_connection():
+                    async def test_connection() -> tuple[bool, str]:
                         try:
                             self.progress.emit("Attempting to connect...")
                             await client.connect()
@@ -700,12 +702,12 @@ class SessionImportWorker(QThread):
     finished = pyqtSignal(bool, dict)  # success, account_info
     progress = pyqtSignal(str)
 
-    def __init__(self, session_file_path: str):
+    def __init__(self, session_file_path: str) -> None:
         super().__init__()
         self.session_file_path = session_file_path
         self.logger = get_logger()
 
-    def run(self):
+    def run(self) -> None:
         """Import session file and extract account information."""
         try:
             self.progress.emit("Connecting to Telegram with session file...")
@@ -736,7 +738,7 @@ class SessionImportWorker(QThread):
                 )
 
                 # Connect and get account info
-                async def get_account_info():
+                async def get_account_info() -> Any:
                     try:
                         await client.connect()
 
@@ -786,24 +788,24 @@ class AccountDialog(QDialog):
 
     account_saved = pyqtSignal(int)
 
-    def __init__(self, parent=None, account: Optional[Account] = None):
+    def __init__(self, parent: Optional[QWidget] = None, account: Optional[Account] = None) -> None:
         super().__init__(parent)
         self.account = account
         self.logger = get_logger()
-        self.imported_session_path = None
+        self.imported_session_path: Optional[str] = None
         self.setup_ui()
 
         if account:
             self.load_account_data()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         self.setWindowTitle("Add Account" if not self.account else "Edit Account")
         self.setModal(True)
         self.resize(500, 600)
 
         # Add help button to title bar
-        self.setWindowFlags(self.windowFlags() | Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowContextHelpButtonHint)
 
         layout = QVBoxLayout(self)
 
@@ -976,7 +978,7 @@ class AccountDialog(QDialog):
         # Initialize proxy settings as disabled
         self.toggle_proxy_settings(False)
 
-    def show_help(self):
+    def show_help(self) -> None:
         """Show help information for adding accounts."""
         help_text = """
 <h3>Adding a Telegram Account</h3>
@@ -1024,16 +1026,16 @@ class AccountDialog(QDialog):
 
         QMessageBox.information(self, "Help - Adding Account", help_text)
 
-    def event(self, event):
+    def event(self, event: Any) -> bool:
         """Override event handling for help button."""
         from PyQt5.QtCore import QEvent
 
-        if event.type() == QEvent.EnterWhatsThisMode:
+        if event.type() == QEvent.Type.EnterWhatsThisMode:
             self.show_help()
             return True
         return super().event(event)
 
-    def on_import_method_changed(self):
+    def on_import_method_changed(self) -> None:
         """Handle import method selection change."""
         if self.import_method_phone.isChecked():
             self.phone_group.setVisible(True)
@@ -1044,7 +1046,7 @@ class AccountDialog(QDialog):
             self.session_group.setVisible(True)
             self.import_method_phone.setChecked(False)
 
-    def browse_session_file(self):
+    def browse_session_file(self) -> None:
         """Open file dialog to select session file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Session File", "", "Session Files (*.session);;All Files (*.*)"
@@ -1054,7 +1056,7 @@ class AccountDialog(QDialog):
             # Auto-import the session file
             self.import_session_file(file_path)
 
-    def import_session_file(self, session_file_path: str):
+    def import_session_file(self, session_file_path: str) -> None:
         """Import session file and extract account information."""
         if not session_file_path or not Path(session_file_path).exists():
             QMessageBox.warning(self, "Error", "Session file not found.")
@@ -1076,9 +1078,7 @@ class AccountDialog(QDialog):
         worker.progress.connect(progress_dialog.update_status)
         worker.start()
 
-    def on_session_imported(
-        self, progress_dialog, success: bool, account_info: Optional[Dict[str, Any]]
-    ):
+    def on_session_imported(self, progress_dialog: ProgressDialog, success: bool, account_info: Optional[Dict[str, Any]]) -> None:
         """Handle session import completion."""
         progress_dialog.close()
 
@@ -1139,7 +1139,7 @@ class AccountDialog(QDialog):
                 ),
             )
 
-    def toggle_proxy_settings(self, enabled: bool):
+    def toggle_proxy_settings(self, enabled: bool) -> None:
         """Toggle proxy settings visibility."""
         self.proxy_type_combo.setEnabled(enabled)
         self.proxy_host_edit.setEnabled(enabled)
@@ -1148,7 +1148,7 @@ class AccountDialog(QDialog):
         self.proxy_password_edit.setEnabled(enabled)
         self.test_proxy_btn.setEnabled(enabled)  # Enable test button when proxy is enabled
 
-    def test_proxy(self):
+    def test_proxy(self) -> None:
         """Test proxy connection."""
         # Validate proxy settings
         if not self.proxy_host_edit.text().strip():
@@ -1194,7 +1194,7 @@ class AccountDialog(QDialog):
         worker.progress.connect(progress_dialog.update_status)
         worker.start()
 
-    def on_proxy_test_finished(self, progress_dialog, success: bool, message: str):
+    def on_proxy_test_finished(self, progress_dialog: ProgressDialog, success: bool, message: str) -> None:
         """Handle proxy test completion."""
         progress_dialog.close()
 
@@ -1205,7 +1205,7 @@ class AccountDialog(QDialog):
         else:
             QMessageBox.critical(self, "Proxy Test", f"❌ Proxy connection failed!\n\n{message}")
 
-    def load_account_data(self):
+    def load_account_data(self) -> None:
         """Load account data into the form."""
         if not self.account:
             return
@@ -1235,7 +1235,7 @@ class AccountDialog(QDialog):
         # Notes
         self.notes_edit.setText(self.account.notes or "")
 
-    def save_account(self):
+    def save_account(self) -> None:
         """Save account data."""
         try:
             # Validate required fields
@@ -1313,6 +1313,7 @@ class AccountDialog(QDialog):
                 self.account.api_hash = settings.telegram_api_hash
             else:
                 # Determine session path
+                final_session_path: str
                 if (
                     use_session_file
                     and hasattr(self, "imported_session_path")
@@ -1320,7 +1321,7 @@ class AccountDialog(QDialog):
                 ):
                     final_session_path = self.imported_session_path
                 elif use_session_file:
-                    final_session_path = session_path
+                    final_session_path = session_path or ""
                 else:
                     phone = (
                         self.phone_edit.text()
@@ -1403,7 +1404,7 @@ class AccountListWidget(QWidget):
     account_selected = pyqtSignal(int)
     account_updated = pyqtSignal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.client_manager = TelegramClientManager()
@@ -1427,7 +1428,7 @@ class AccountListWidget(QWidget):
         self.refresh_timer.timeout.connect(self.refresh_accounts)
         self.refresh_timer.start(30000)  # Refresh every 30 seconds
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -1504,14 +1505,16 @@ class AccountListWidget(QWidget):
 
         # Configure table
         header = self.accounts_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)
+
+        if header is not None:
+            header.setSectionResizeMode(0, QHeaderView.Stretch)
+            header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(7, QHeaderView.ResizeToContents)
 
         self.accounts_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.accounts_table.setSelectionMode(QTableWidget.SingleSelection)
@@ -1554,7 +1557,7 @@ class AccountListWidget(QWidget):
         self.status_label = QLabel("Ready")
         layout.addWidget(self.status_label)
 
-    def load_accounts(self):
+    def load_accounts(self) -> None:
         """Load accounts from database."""
         try:
             session = db_get_session()
@@ -1562,7 +1565,7 @@ class AccountListWidget(QWidget):
                 from ...models import Account
                 from sqlmodel import select
 
-                accounts = session.exec(select(Account).where(Account.is_deleted.is_(False))).all()
+                accounts = session.exec(select(Account).where(Account.is_deleted.is_(False))).all()  # type: ignore[attr-defined]
             finally:
                 session.close()
 
@@ -1571,56 +1574,56 @@ class AccountListWidget(QWidget):
             for row, account in enumerate(accounts):
                 # Name - Disabled text field
                 name_item = QTableWidgetItem(account.name)
-                name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
                 # Store account ID in the name item for selection handling
-                name_item.setData(Qt.UserRole, account.id)
+                name_item.setData(Qt.ItemDataRole.UserRole, account.id)
                 self.accounts_table.setItem(row, 0, name_item)
 
                 # Phone - Disabled text field
                 phone_item = QTableWidgetItem(account.phone_number)
-                phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                phone_item.setFlags(phone_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
                 self.accounts_table.setItem(row, 1, phone_item)
 
                 # Status - Enhanced button-like appearance
                 status_item = QTableWidgetItem(account.status.value.title())
-                status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
 
                 # Set status-specific styling with button-like appearance
                 if account.status == AccountStatus.ONLINE:
                     status_item.setBackground(QColor(34, 197, 94))  # Green
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif account.status == AccountStatus.ERROR:
                     status_item.setBackground(QColor(239, 68, 68))  # Red
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif account.status == AccountStatus.OFFLINE:
                     status_item.setBackground(QColor(107, 114, 128))  # Gray
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif account.status == AccountStatus.CONNECTING:
                     status_item.setBackground(QColor(245, 158, 11))  # Orange
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif account.status == AccountStatus.SUSPENDED:
                     status_item.setBackground(QColor(156, 163, 175))  # Light gray
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
 
                 # Center align status text
-                status_item.setTextAlignment(Qt.AlignCenter)
+                status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.accounts_table.setItem(row, 2, status_item)
 
                 # Messages sent - Disabled text field
                 messages_item = QTableWidgetItem(str(account.total_messages_sent))
                 messages_item.setFlags(
-                    messages_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    messages_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                messages_item.setTextAlignment(Qt.AlignCenter)
+                messages_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.accounts_table.setItem(row, 3, messages_item)
 
                 # Success rate - Disabled text field
                 success_rate = account.get_success_rate()
                 success_item = QTableWidgetItem(f"{success_rate:.1f}%")
                 success_item.setFlags(
-                    success_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    success_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                success_item.setTextAlignment(Qt.AlignCenter)
+                success_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.accounts_table.setItem(row, 4, success_item)
 
                 # Last activity - Disabled text field
@@ -1631,9 +1634,9 @@ class AccountListWidget(QWidget):
                 )
                 activity_item = QTableWidgetItem(last_activity)
                 activity_item.setFlags(
-                    activity_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    activity_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                activity_item.setTextAlignment(Qt.AlignCenter)
+                activity_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.accounts_table.setItem(row, 5, activity_item)
 
                 # Warmup status - Disabled text field
@@ -1643,17 +1646,17 @@ class AccountListWidget(QWidget):
                     else f"{account.warmup_messages_sent}/{account.warmup_target_messages}"
                 )
                 warmup_item = QTableWidgetItem(warmup_status)
-                warmup_item.setFlags(warmup_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                warmup_item.setTextAlignment(Qt.AlignCenter)
+                warmup_item.setFlags(warmup_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
+                warmup_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.accounts_table.setItem(row, 6, warmup_item)
 
                 # Actions - Create action buttons
                 actions_item = QTableWidgetItem("Connect | Test | Authorize")
                 actions_item.setFlags(
-                    actions_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    actions_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                actions_item.setTextAlignment(Qt.AlignCenter)
-                actions_item.setData(Qt.UserRole, account.id)  # Store account ID for actions
+                actions_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                actions_item.setData(Qt.ItemDataRole.UserRole, account.id)  # Store account ID for actions
                 self.accounts_table.setItem(row, 7, actions_item)
 
             self.status_label.setText(f"Loaded {len(accounts)} accounts")
@@ -1665,11 +1668,11 @@ class AccountListWidget(QWidget):
             self.logger.error(f"Error loading accounts: {e}")
             self.status_label.setText(f"Error loading accounts: {e}")
 
-    def refresh_accounts(self):
+    def refresh_accounts(self) -> None:
         """Refresh accounts data."""
         self.load_accounts()
 
-    def filter_accounts(self):
+    def filter_accounts(self) -> None:
         """Filter accounts based on search text."""
         search_text = self.search_edit.text().lower().strip()
 
@@ -1694,10 +1697,11 @@ class AccountListWidget(QWidget):
 
             self.accounts_table.setRowHidden(row, not should_show)
 
-    def on_cell_clicked(self, row, column):
+    def on_cell_clicked(self, row: int, column: int) -> None:
         """Handle cell click events."""
         if column == 7:  # Actions column
-            account_id = self.accounts_table.item(row, 0).data(Qt.UserRole)
+            _item = self.accounts_table.item(row, 0)
+            account_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
             if account_id is not None:
                 self.show_action_menu(row, column, account_id)
         else:
@@ -1706,28 +1710,28 @@ class AccountListWidget(QWidget):
             # Also trigger selection changed manually
             self.on_selection_changed()
 
-    def show_action_menu(self, row, column, account_id):
+    def show_action_menu(self, row: int, column: int, account_id: Any) -> None:
         """Show action menu for account actions."""
         from PyQt5.QtWidgets import QMenu
 
         # Get account name for display
-        account_name = self.accounts_table.item(row, 0).text()
-
+        _item = self.accounts_table.item(row, 0)
+        account_name = _item.text() if _item is not None else ""
         # Create context menu
         menu = QMenu(self)
 
         # Connect action
         connect_action = menu.addAction("🔗 Connect")
-        connect_action.triggered.connect(lambda: self.connect_account(account_id, account_name))
-
+        if connect_action is not None:
+            connect_action.triggered.connect(lambda: self.connect_account(account_id, account_name))
         # Test action
         test_action = menu.addAction("🧪 Test")
-        test_action.triggered.connect(lambda: self.test_account(account_id, account_name))
-
+        if test_action is not None:
+            test_action.triggered.connect(lambda: self.test_account(account_id, account_name))
         # Authorize action
         authorize_action = menu.addAction("🔐 Authorize")
-        authorize_action.triggered.connect(lambda: self.authorize_account(account_id, account_name))
-
+        if authorize_action is not None:
+            authorize_action.triggered.connect(lambda: self.authorize_account(account_id, account_name))
         # Show menu at cursor position
         menu.exec_(
             self.accounts_table.mapToGlobal(
@@ -1737,19 +1741,19 @@ class AccountListWidget(QWidget):
             )
         )
 
-    def connect_account(self, account_id, account_name):
+    def connect_account(self, account_id: Any, account_name: str) -> None:
         """Connect to account."""
         self._start_telegram_operation("connect", account_id, account_name)
 
-    def test_account(self, account_id, account_name):
+    def test_account(self, account_id: Any, account_name: str) -> None:
         """Test account connection."""
         self._start_telegram_operation("test", account_id, account_name)
 
-    def authorize_account(self, account_id, account_name):
+    def authorize_account(self, account_id: Any, account_name: str) -> None:
         """Authorize account."""
         self._start_telegram_operation("authorize", account_id, account_name)
 
-    def _start_telegram_operation(self, operation, account_id, account_name):
+    def _start_telegram_operation(self, operation: str, account_id: Any, account_name: str) -> None:
         """Start a Telegram operation in a worker thread."""
         try:
             # Get account details from database
@@ -1842,7 +1846,7 @@ class AccountListWidget(QWidget):
             self.logger.error(f"Error starting {operation} operation: {e}")
             QMessageBox.critical(self, "Error", f"Failed to start {operation}: {e}")
 
-    def _handle_timeout(self, progress_dialog, operation, account_name):
+    def _handle_timeout(self, progress_dialog: ProgressDialog, operation: str, account_name: str) -> None:
         """Handle operation timeout."""
         progress_dialog.close()
         self.worker.stop()
@@ -1852,7 +1856,7 @@ class AccountListWidget(QWidget):
             f"The {operation} operation for {account_name} timed out after 30 seconds. Please try again.",
         )
 
-    def _handle_code_required(self, progress_dialog, account_id, account_name, phone_data):
+    def _handle_code_required(self, progress_dialog: ProgressDialog, account_id: Any, account_name: str, phone_data: Any) -> None:
         """Handle when verification code is required."""
         progress_dialog.close()
 
@@ -1878,13 +1882,13 @@ class AccountListWidget(QWidget):
 
     def _start_telegram_operation_with_code(
         self,
-        operation,
-        account_id,
-        account_name,
-        verification_code,
-        password=None,
-        phone_code_hash=None,
-    ):
+        operation: str,
+        account_id: Any,
+        account_name: str,
+        verification_code: Optional[str],
+        password: Optional[str] = None,
+        phone_code_hash: Optional[str] = None,
+    ) -> None:
         """Start a Telegram operation with verification code."""
         try:
             # Get account details from database
@@ -1962,7 +1966,7 @@ class AccountListWidget(QWidget):
             self.logger.error(f"Error starting {operation} operation with code: {e}")
             QMessageBox.critical(self, "Error", f"Failed to start {operation}: {e}")
 
-    def _update_account_status(self, account_id, status):
+    def _update_account_status(self, account_id: Any, status: Any) -> None:
         """Update account status in database."""
         try:
             session = db_get_session()
@@ -1980,8 +1984,13 @@ class AccountListWidget(QWidget):
             self.logger.error(f"Error updating account status: {e}")
 
     def _on_operation_finished(
-        self, progress_dialog, message, success, account_id=None, account_name=None
-    ):
+        self,
+        progress_dialog: ProgressDialog,
+        message: str,
+        success: bool,
+        account_id: Any = None,
+        account_name: Optional[str] = None,
+    ) -> None:
         """Handle operation completion."""
         progress_dialog.close()
 
@@ -2020,9 +2029,10 @@ class AccountListWidget(QWidget):
         else:
             QMessageBox.critical(self, "Error", message)
 
-    def on_selection_changed(self):
+    def on_selection_changed(self) -> None:
         """Handle selection change."""
-        selected_rows = self.accounts_table.selectionModel().selectedRows()
+        _sel = self.accounts_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         has_selection = len(selected_rows) > 0
 
         self.logger.debug(f"Selection changed: {len(selected_rows)} rows selected")
@@ -2036,7 +2046,7 @@ class AccountListWidget(QWidget):
             # Try to get account ID from the first column (Name column)
             name_item = self.accounts_table.item(row, 0)
             if name_item:
-                account_id = name_item.data(Qt.UserRole)
+                account_id = name_item.data(Qt.ItemDataRole.UserRole)
                 self.logger.debug(f"Account ID for row {row}: {account_id}")
                 if account_id is not None:
                     # Emit signal with account ID for further processing
@@ -2046,21 +2056,22 @@ class AccountListWidget(QWidget):
             else:
                 self.logger.warning(f"No name item found for row {row}")
 
-    def add_account(self):
+    def add_account(self) -> None:
         """Add new account."""
         dialog = AccountDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             self.load_accounts()
 
-    def edit_account(self):
+    def edit_account(self) -> None:
         """Edit selected account."""
-        selected_rows = self.accounts_table.selectionModel().selectedRows()
+        _sel = self.accounts_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             return
 
         row = selected_rows[0].row()
-        account_id = self.accounts_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.accounts_table.item(row, 0)
+        account_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         # Load account from database
         session = db_get_session()
         try:
@@ -2076,16 +2087,18 @@ class AccountListWidget(QWidget):
             if dialog.exec_() == QDialog.Accepted:
                 self.load_accounts()
 
-    def delete_account(self):
+    def delete_account(self) -> None:
         """Delete selected account."""
-        selected_rows = self.accounts_table.selectionModel().selectedRows()
+        _sel = self.accounts_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             return
 
         row = selected_rows[0].row()
-        account_name = self.accounts_table.item(row, 0).text()
-        account_id = self.accounts_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.accounts_table.item(row, 0)
+        account_name = _item.text() if _item is not None else ""
+        _item = self.accounts_table.item(row, 0)
+        account_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         reply = QMessageBox.question(
             self,
             "Delete Account",
@@ -2114,7 +2127,7 @@ class AccountListWidget(QWidget):
                 self.logger.error(f"Error deleting account: {e}")
                 QMessageBox.critical(self, "Error", f"Failed to delete account: {e}")
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Recreate the UI with new translations
@@ -2122,28 +2135,28 @@ class AccountListWidget(QWidget):
         self.load_accounts()
 
     @pyqtSlot(int)
-    def on_warmup_started(self, account_id: int):
+    def on_warmup_started(self, account_id: int) -> None:
         """Handle warmup started signal."""
         self.logger.info(f"Warmup started for account {account_id}")
         # Refresh the accounts table to show updated status
         self.refresh_accounts()
 
     @pyqtSlot(int, int, int)
-    def on_warmup_progress(self, account_id: int, sent: int, total: int):
+    def on_warmup_progress(self, account_id: int, sent: int, total: int) -> None:
         """Handle warmup progress signal."""
         self.logger.debug(f"Warmup progress for account {account_id}: {sent}/{total}")
         # Refresh the accounts table to show updated progress
         self.refresh_accounts()
 
     @pyqtSlot(int)
-    def on_warmup_completed(self, account_id: int):
+    def on_warmup_completed(self, account_id: int) -> None:
         """Handle warmup completed signal."""
         self.logger.info(f"Warmup completed for account {account_id}")
         # Refresh the accounts table to show completed status
         self.refresh_accounts()
 
     @pyqtSlot(int, str)
-    def on_warmup_error(self, account_id: int, error: str):
+    def on_warmup_error(self, account_id: int, error: str) -> None:
         """Handle warmup error signal."""
         self.logger.error(f"Warmup error for account {account_id}: {error}")
         # Refresh the accounts table to show error status
@@ -2153,7 +2166,7 @@ class AccountListWidget(QWidget):
 class AccountWidget(QWidget):
     """Main account management widget."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
@@ -2163,7 +2176,7 @@ class AccountWidget(QWidget):
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -2175,16 +2188,16 @@ class AccountWidget(QWidget):
         self.account_list.account_selected.connect(self.on_account_selected)
         self.account_list.account_updated.connect(self.on_account_updated)
 
-    def on_account_selected(self, account_id):
+    def on_account_selected(self, account_id: Any) -> None:
         """Handle account selection."""
         # This could show account details in a side panel
 
-    def on_account_updated(self, account_id):
+    def on_account_updated(self, account_id: Any) -> None:
         """Handle account update."""
         # Refresh the list
         self.account_list.refresh_accounts()
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # The account_list widget will handle its own language change

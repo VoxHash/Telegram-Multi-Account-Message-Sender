@@ -1,6 +1,6 @@
 [project]
 name = "telegram-multi-account-sender"
-version = "1.2.42"
+version = "1.2.43"
 description = "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"
 readme = "README.md"
 license = {text = "Eclipse Public License 2.0"}
@@ -161,8 +161,8 @@ max-line-length = 100
 
 [tool.mypy]
 python_version = "3.10"
-# Blocking CI scope (v1.2.42+): core/services/models + plugins + expanded GUI subset.
-# Remaining large PyQt widgets (settings/account/campaign) stay outside until further passes (see ROADMAP).
+# Blocking CI scope (v1.2.43+): core/services/models + plugins + expanded GUI subset (incl. settings/account/campaign).
+# Optional leftover: app/utils / app/cli.py (see ROADMAP).
 files = [
     "app/core",
     "app/services",
@@ -173,11 +173,14 @@ files = [
     "app/gui/theme.py",
     "app/gui/widgets/__init__.py",
     "app/gui/widgets/about_widget.py",
+    "app/gui/widgets/account_widget.py",
+    "app/gui/widgets/campaign_widget.py",
     "app/gui/widgets/cloud_backup_widget.py",
     "app/gui/widgets/dashboard_widget.py",
     "app/gui/widgets/log_widget.py",
     "app/gui/widgets/plugin_widget.py",
     "app/gui/widgets/recipient_widget.py",
+    "app/gui/widgets/settings_widget.py",
     "app/gui/widgets/template_widget.py",
     "app/gui/widgets/testing_widget.py",
     "app/gui/widgets/telegram_selector.py",
@@ -196,8 +199,7 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
-# Remaining GUI widgets (settings/account/campaign)
-# are still outside the blocking files= scope; see ROADMAP.
+# Optional: app/utils / app/cli.py still outside the blocking files= scope; see ROADMAP.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

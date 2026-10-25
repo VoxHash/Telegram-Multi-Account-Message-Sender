@@ -2,7 +2,7 @@
 Campaign management widgets.
 """
 
-from typing import Optional
+from typing import Any, Optional
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -42,7 +42,7 @@ class CampaignDialog(QDialog):
 
     campaign_saved = pyqtSignal(int)
 
-    def __init__(self, parent=None, campaign: Optional[Campaign] = None):
+    def __init__(self, parent: Optional[QWidget] = None, campaign: Optional[Campaign] = None) -> None:
         super().__init__(parent)
         self.campaign = campaign
         self.logger = get_logger()
@@ -52,7 +52,7 @@ class CampaignDialog(QDialog):
         if campaign:
             self.load_campaign_data()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         self.setWindowTitle(
             _("campaigns.create_campaign") if not self.campaign else _("campaigns.edit_campaign")
@@ -373,27 +373,27 @@ class CampaignDialog(QDialog):
 
         QTimer.singleShot(100, self.position_help_button)
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: Any) -> None:
         """Handle dialog resize to reposition help button."""
         super().resizeEvent(event)
         self.position_help_button()
 
-    def position_help_button(self):
+    def position_help_button(self) -> None:
         """Position the help button in the top right corner."""
         if hasattr(self, "help_button"):
             self.help_button.move(self.width() - 35, 10)
 
-    def toggle_spintax(self, enabled: bool):
+    def toggle_spintax(self, enabled: bool) -> None:
         """Toggle spintax controls."""
         self.preview_spintax_button.setEnabled(enabled)
 
-    def toggle_forwarding(self):
+    def toggle_forwarding(self) -> None:
         """Toggle forwarding controls."""
         enabled = self.forward_enabled_check.isChecked()
         for widget in self.forward_widgets:
             widget.setEnabled(enabled)
 
-    def browse_forward_source(self):
+    def browse_forward_source(self) -> None:
         """Browse Telegram to select message to forward."""
         try:
             selector = TelegramSelectorDialog(self)
@@ -414,11 +414,11 @@ class CampaignDialog(QDialog):
             self.logger.error(f"Error opening Telegram selector: {e}")
             QMessageBox.critical(self, _("common.error"), str(e))
 
-    def toggle_ab_testing(self, enabled: bool):
+    def toggle_ab_testing(self, enabled: bool) -> None:
         """Toggle A/B testing controls."""
         self.ab_variants_edit.setEnabled(enabled)
 
-    def preview_spintax(self):
+    def preview_spintax(self) -> None:
         """Preview spintax processing."""
         text = self.message_text_edit.toPlainText()
         if not text:
@@ -439,7 +439,7 @@ class CampaignDialog(QDialog):
                 self, _("templates.spintax_preview"), f"Error processing spintax: {e}"
             )
 
-    def browse_media(self):
+    def browse_media(self) -> None:
         """Browse for media file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -451,13 +451,13 @@ class CampaignDialog(QDialog):
         if file_path:
             self.media_path_edit.setText(file_path)
 
-    def update_recipient_count(self):
+    def update_recipient_count(self) -> None:
         """Update recipient count display."""
         text = self.manual_recipients_edit.toPlainText()
         lines = [line.strip() for line in text.split("\n") if line.strip()]
         self.recipient_count_label.setText(f"{len(lines)} recipients")
 
-    def on_recipient_source_changed(self, source: str):
+    def on_recipient_source_changed(self, source: str) -> None:
         """Handle recipient source selection change."""
         # Show/hide appropriate sections based on selection
         if source == "Manual":
@@ -467,7 +467,7 @@ class CampaignDialog(QDialog):
             self.manual_group.setVisible(False)
             self.csv_group.setVisible(True)
 
-    def browse_csv_file(self):
+    def browse_csv_file(self) -> None:
         """Browse for CSV file to import recipients."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select CSV File", "", "CSV Files (*.csv);;All Files (*)"
@@ -478,7 +478,7 @@ class CampaignDialog(QDialog):
             # Parse CSV and update recipient count
             self.parse_csv_recipients(file_path)
 
-    def parse_csv_recipients(self, file_path: str):
+    def parse_csv_recipients(self, file_path: str) -> None:
         """Parse CSV file and update recipient count."""
         try:
             import csv
@@ -497,7 +497,7 @@ class CampaignDialog(QDialog):
             QMessageBox.warning(self, "CSV Import Error", f"Error reading CSV file: {e}")
             self.recipient_count_label.setText("0 recipients")
 
-    def show_help(self):
+    def show_help(self) -> None:
         """Show help information for the campaign dialog."""
         help_text = """
         <h2>Campaign Creation Help</h2>
@@ -576,7 +576,7 @@ class CampaignDialog(QDialog):
         # Create a custom message box with HTML support
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle("Campaign Help")
-        msg_box.setTextFormat(Qt.RichText)
+        msg_box.setTextFormat(Qt.TextFormat.RichText)
         msg_box.setText(help_text)
         msg_box.setStandardButtons(QMessageBox.Ok)
 
@@ -587,7 +587,7 @@ class CampaignDialog(QDialog):
 
         msg_box.exec_()
 
-    def load_campaign_data(self):
+    def load_campaign_data(self) -> None:
         """Load campaign data into the form."""
         if not self.campaign:
             return
@@ -640,7 +640,7 @@ class CampaignDialog(QDialog):
         # Recipients
         self.recipient_count_label.setText(f"{self.campaign.total_recipients} recipients")
 
-    def save_campaign(self):
+    def save_campaign(self) -> None:
         """Save campaign data."""
         try:
             # Validate required fields
@@ -796,7 +796,7 @@ class CampaignListWidget(QWidget):
     campaign_selected = pyqtSignal(int)
     campaign_updated = pyqtSignal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.campaign_manager = get_campaign_manager()
@@ -821,7 +821,7 @@ class CampaignListWidget(QWidget):
         self.refresh_timer.timeout.connect(self.refresh_campaigns)
         self.refresh_timer.start(5000)  # Refresh every 5 seconds
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -928,15 +928,17 @@ class CampaignListWidget(QWidget):
 
         # Configure table
         header = self.campaigns_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(8, QHeaderView.ResizeToContents)
+
+        if header is not None:
+            header.setSectionResizeMode(0, QHeaderView.Stretch)
+            header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(7, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(8, QHeaderView.ResizeToContents)
 
         self.campaigns_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.campaigns_table.setSelectionMode(QTableWidget.SingleSelection)
@@ -979,7 +981,7 @@ class CampaignListWidget(QWidget):
         self.status_label = QLabel(_("campaigns.ready"))
         layout.addWidget(self.status_label)
 
-    def load_campaigns(self):
+    def load_campaigns(self) -> None:
         """Load campaigns from database."""
         try:
             session = get_session()
@@ -987,7 +989,7 @@ class CampaignListWidget(QWidget):
                 from ...models import Campaign
                 from sqlmodel import select
 
-                campaigns = session.exec(select(Campaign).where(Campaign.is_deleted.is_(False))).all()
+                campaigns = session.exec(select(Campaign).where(Campaign.is_deleted.is_(False))).all()  # type: ignore[attr-defined]
             finally:
                 session.close()
 
@@ -996,63 +998,63 @@ class CampaignListWidget(QWidget):
             for row, campaign in enumerate(campaigns):
                 # Name - Disabled text field
                 name_item = QTableWidgetItem(campaign.name)
-                name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
                 # Store campaign ID in the name item for selection handling
-                name_item.setData(Qt.UserRole, campaign.id)
+                name_item.setData(Qt.ItemDataRole.UserRole, campaign.id)
                 self.campaigns_table.setItem(row, 0, name_item)
 
                 # Status - Enhanced button-like appearance
                 status_item = QTableWidgetItem(campaign.status.value.title())
-                status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
 
                 # Set status-specific styling with button-like appearance
                 if campaign.status == CampaignStatus.RUNNING:
                     status_item.setBackground(QColor(34, 197, 94))  # Green
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif campaign.status == CampaignStatus.PAUSED:
                     status_item.setBackground(QColor(245, 158, 11))  # Orange
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif campaign.status == CampaignStatus.COMPLETED:
                     status_item.setBackground(QColor(59, 130, 246))  # Blue
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif campaign.status == CampaignStatus.ERROR:
                     status_item.setBackground(QColor(239, 68, 68))  # Red
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif campaign.status == CampaignStatus.DRAFT:
                     status_item.setBackground(QColor(107, 114, 128))  # Gray
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
 
                 # Center align status text
-                status_item.setTextAlignment(Qt.AlignCenter)
+                status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.campaigns_table.setItem(row, 1, status_item)
 
                 # Recipients - Disabled text field
                 recipients_item = QTableWidgetItem(str(campaign.total_recipients))
                 recipients_item.setFlags(
-                    recipients_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    recipients_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                recipients_item.setTextAlignment(Qt.AlignCenter)
+                recipients_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.campaigns_table.setItem(row, 2, recipients_item)
 
                 # Sent - Disabled text field
                 sent_item = QTableWidgetItem(str(campaign.sent_count))
-                sent_item.setFlags(sent_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                sent_item.setTextAlignment(Qt.AlignCenter)
+                sent_item.setFlags(sent_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
+                sent_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.campaigns_table.setItem(row, 3, sent_item)
 
                 # Failed - Disabled text field
                 failed_item = QTableWidgetItem(str(campaign.failed_count))
-                failed_item.setFlags(failed_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                failed_item.setTextAlignment(Qt.AlignCenter)
+                failed_item.setFlags(failed_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
+                failed_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.campaigns_table.setItem(row, 4, failed_item)
 
                 # Progress - Disabled text field
                 progress = f"{campaign.progress_percentage:.1f}%"
                 progress_item = QTableWidgetItem(progress)
                 progress_item.setFlags(
-                    progress_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    progress_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                progress_item.setTextAlignment(Qt.AlignCenter)
+                progress_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.campaigns_table.setItem(row, 5, progress_item)
 
                 # Start time - Disabled text field
@@ -1062,8 +1064,8 @@ class CampaignListWidget(QWidget):
                     else _("campaigns.not_scheduled")
                 )
                 start_item = QTableWidgetItem(start_time)
-                start_item.setFlags(start_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                start_item.setTextAlignment(Qt.AlignCenter)
+                start_item.setFlags(start_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
+                start_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.campaigns_table.setItem(row, 6, start_item)
 
                 # Last activity - Disabled text field
@@ -1074,9 +1076,9 @@ class CampaignListWidget(QWidget):
                 )
                 activity_item = QTableWidgetItem(last_activity)
                 activity_item.setFlags(
-                    activity_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    activity_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                activity_item.setTextAlignment(Qt.AlignCenter)
+                activity_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.campaigns_table.setItem(row, 7, activity_item)
 
                 # Actions - Create action buttons based on status
@@ -1112,10 +1114,10 @@ class CampaignListWidget(QWidget):
                 actions_text = " | ".join(actions) if actions else _("campaigns.no_actions")
                 actions_item = QTableWidgetItem(actions_text)
                 actions_item.setFlags(
-                    actions_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    actions_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                actions_item.setTextAlignment(Qt.AlignCenter)
-                actions_item.setData(Qt.UserRole, campaign.id)  # Store campaign ID for actions
+                actions_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                actions_item.setData(Qt.ItemDataRole.UserRole, campaign.id)  # Store campaign ID for actions
                 self.campaigns_table.setItem(row, 8, actions_item)
 
             self.status_label.setText(_("campaigns.loaded_campaigns").format(count=len(campaigns)))
@@ -1127,9 +1129,10 @@ class CampaignListWidget(QWidget):
             self.logger.error(f"Error loading campaigns: {e}")
             self.status_label.setText(_("campaigns.error_loading_campaigns").format(error=str(e)))
 
-    def update_button_states(self):
+    def update_button_states(self) -> None:
         """Update button states based on selected campaign."""
-        selected_rows = self.campaigns_table.selectionModel().selectedRows()
+        _sel = self.campaigns_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             # No selection - disable all action buttons
             self.start_button.setEnabled(False)
@@ -1155,8 +1158,8 @@ class CampaignListWidget(QWidget):
             return
 
         row = selected_rows[0].row()
-        campaign_id = self.campaigns_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.campaigns_table.item(row, 0)
+        campaign_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         if not campaign_id:
             self.start_button.setEnabled(False)
             self.start_button.setStyleSheet(
@@ -1396,7 +1399,7 @@ class CampaignListWidget(QWidget):
                     )  # Gray
                 else:
                     # For any other statuses, disable all action buttons
-                    self.start_button.setEnabled(False)
+                    self.start_button.setEnabled(False)  # type: ignore[unreachable]
                     self.start_button.setStyleSheet(
                         "QPushButton { background-color: #6b7280; color: #9ca3af; }"
                     )  # Gray
@@ -1441,11 +1444,11 @@ class CampaignListWidget(QWidget):
                 "QPushButton { background-color: #6b7280; color: #9ca3af; }"
             )  # Gray
 
-    def refresh_campaigns(self):
+    def refresh_campaigns(self) -> None:
         """Refresh campaigns data."""
         self.load_campaigns()
 
-    def filter_campaigns(self):
+    def filter_campaigns(self) -> None:
         """Filter campaigns based on search text."""
         search_text = self.search_edit.text().lower().strip()
 
@@ -1470,10 +1473,11 @@ class CampaignListWidget(QWidget):
 
             self.campaigns_table.setRowHidden(row, not should_show)
 
-    def on_cell_clicked(self, row, column):
+    def on_cell_clicked(self, row: int, column: int) -> None:
         """Handle cell click events."""
         if column == 8:  # Actions column
-            campaign_id = self.campaigns_table.item(row, 0).data(Qt.UserRole)
+            _item = self.campaigns_table.item(row, 0)
+            campaign_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
             if campaign_id is not None:
                 self.show_action_menu(row, column, campaign_id)
         else:
@@ -1482,13 +1486,14 @@ class CampaignListWidget(QWidget):
             # Also trigger selection changed manually
             self.on_selection_changed()
 
-    def show_action_menu(self, row, column, campaign_id):
+    def show_action_menu(self, row: int, column: int, campaign_id: Any) -> None:
         """Show action menu for campaign actions."""
         from PyQt5.QtWidgets import QMenu
 
         # Get campaign name for display
-        self.campaigns_table.item(row, 0).text()
-
+        _item = self.campaigns_table.item(row, 0)
+        if _item is not None:
+            _item.text()
         # Create context menu
         menu = QMenu(self)
 
@@ -1506,40 +1511,48 @@ class CampaignListWidget(QWidget):
             # Status-based action menu logic (matching the table actions)
             if campaign.status == CampaignStatus.COMPLETED:
                 duplicate_action = menu.addAction("📋 Duplicate Campaign")
-                duplicate_action.triggered.connect(
-                    lambda: self.duplicate_campaign_by_id(campaign_id)
-                )
+                if duplicate_action is not None:
+                    duplicate_action.triggered.connect(
+                        lambda: self.duplicate_campaign_by_id(campaign_id)
+                    )
             elif campaign.status in [
                 CampaignStatus.FAILED,
                 CampaignStatus.INCOMPLETED,
                 CampaignStatus.ERROR,
             ]:
                 retry_action = menu.addAction("🔄 Retry")
-                retry_action.triggered.connect(lambda: self.retry_campaign_by_id(campaign_id))
+                if retry_action is not None:
+                    retry_action.triggered.connect(lambda: self.retry_campaign_by_id(campaign_id))
             elif campaign.status == CampaignStatus.DRAFT:
                 if campaign.total_recipients > 0:
                     start_action = menu.addAction("▶️ Start")
-                    start_action.triggered.connect(lambda: self.start_campaign_by_id(campaign_id))
+                    if start_action is not None:
+                        start_action.triggered.connect(lambda: self.start_campaign_by_id(campaign_id))
                 else:
                     assign_action = menu.addAction("👥 Assign Recipients")
-                    assign_action.triggered.connect(lambda: self.edit_campaign())
+                    if assign_action is not None:
+                        assign_action.triggered.connect(lambda: self.edit_campaign())
             elif campaign.status == CampaignStatus.SCHEDULED:
                 # No actions for SCHEDULED (will start automatically)
                 pass
             elif campaign.status == CampaignStatus.RUNNING:
                 pause_action = menu.addAction("⏸️ Pause")
-                pause_action.triggered.connect(lambda: self.pause_campaign_by_id(campaign_id))
+                if pause_action is not None:
+                    pause_action.triggered.connect(lambda: self.pause_campaign_by_id(campaign_id))
                 stop_action = menu.addAction("⏹️ Stop")
-                stop_action.triggered.connect(lambda: self.stop_campaign_by_id(campaign_id))
+                if stop_action is not None:
+                    stop_action.triggered.connect(lambda: self.stop_campaign_by_id(campaign_id))
             elif campaign.status == CampaignStatus.PAUSED:
                 start_action = menu.addAction("▶️ Start")
-                start_action.triggered.connect(lambda: self.start_campaign_by_id(campaign_id))
+                if start_action is not None:
+                    start_action.triggered.connect(lambda: self.start_campaign_by_id(campaign_id))
                 resume_action = menu.addAction("▶️ Resume")
-                resume_action.triggered.connect(lambda: self.resume_campaign_by_id(campaign_id))
+                if resume_action is not None:
+                    resume_action.triggered.connect(lambda: self.resume_campaign_by_id(campaign_id))
             elif campaign.status == CampaignStatus.STOPPED:
                 retry_action = menu.addAction("🔄 Retry")
-                retry_action.triggered.connect(lambda: self.retry_campaign_by_id(campaign_id))
-
+                if retry_action is not None:
+                    retry_action.triggered.connect(lambda: self.retry_campaign_by_id(campaign_id))
         # Show menu at cursor position
         menu.exec_(
             self.campaigns_table.mapToGlobal(
@@ -1549,7 +1562,7 @@ class CampaignListWidget(QWidget):
             )
         )
 
-    def start_campaign_by_id(self, campaign_id):
+    def start_campaign_by_id(self, campaign_id: Any) -> None:
         """Start campaign by ID."""
         try:
             # Check if campaign is already running
@@ -1575,7 +1588,7 @@ class CampaignListWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, _("campaigns.error"), f"Error starting campaign: {str(e)}")
 
-    def retry_campaign_by_id(self, campaign_id):
+    def retry_campaign_by_id(self, campaign_id: Any) -> None:
         """Retry campaign by ID."""
         try:
             # Check if campaign can be retried
@@ -1599,7 +1612,7 @@ class CampaignListWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, _("campaigns.error"), f"Error retrying campaign: {str(e)}")
 
-    def duplicate_campaign_by_id(self, campaign_id):
+    def duplicate_campaign_by_id(self, campaign_id: Any) -> None:
         """Duplicate campaign by ID."""
         # Check if campaign is completed
         try:
@@ -1657,7 +1670,7 @@ class CampaignListWidget(QWidget):
                     _("campaigns.duplication_failed_message"),
                 )
 
-    def pause_campaign_by_id(self, campaign_id):
+    def pause_campaign_by_id(self, campaign_id: Any) -> None:
         """Pause campaign by ID."""
         try:
             success = self.campaign_manager.pause_campaign(campaign_id)
@@ -1673,7 +1686,7 @@ class CampaignListWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, _("campaigns.error"), f"Error pausing campaign: {str(e)}")
 
-    def resume_campaign_by_id(self, campaign_id):
+    def resume_campaign_by_id(self, campaign_id: Any) -> None:
         """Resume campaign by ID."""
         try:
             success = self.campaign_manager.resume_campaign(campaign_id)
@@ -1691,7 +1704,7 @@ class CampaignListWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, _("campaigns.error"), f"Error resuming campaign: {str(e)}")
 
-    def stop_campaign_by_id(self, campaign_id):
+    def stop_campaign_by_id(self, campaign_id: Any) -> None:
         """Stop campaign by ID."""
         try:
             success = self.campaign_manager.stop_campaign(campaign_id)
@@ -1707,9 +1720,10 @@ class CampaignListWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, _("campaigns.error"), f"Error stopping campaign: {str(e)}")
 
-    def on_selection_changed(self):
+    def on_selection_changed(self) -> None:
         """Handle selection change."""
-        selected_rows = self.campaigns_table.selectionModel().selectedRows()
+        _sel = self.campaigns_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         has_selection = len(selected_rows) > 0
 
         self.edit_button.setEnabled(has_selection)
@@ -1723,7 +1737,7 @@ class CampaignListWidget(QWidget):
             # Try to get campaign ID from the first column (Name column)
             name_item = self.campaigns_table.item(row, 0)
             if name_item:
-                campaign_id = name_item.data(Qt.UserRole)
+                campaign_id = name_item.data(Qt.ItemDataRole.UserRole)
                 if campaign_id is not None:
                     # Emit signal with campaign ID for further processing
                     self.campaign_selected.emit(campaign_id)
@@ -1749,21 +1763,22 @@ class CampaignListWidget(QWidget):
             else:
                 self.logger.warning(f"No name item found for row {row}")
 
-    def create_campaign(self):
+    def create_campaign(self) -> None:
         """Create new campaign."""
         dialog = CampaignDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             self.load_campaigns()
 
-    def edit_campaign(self):
+    def edit_campaign(self) -> None:
         """Edit selected campaign."""
-        selected_rows = self.campaigns_table.selectionModel().selectedRows()
+        _sel = self.campaigns_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             return
 
         row = selected_rows[0].row()
-        campaign_id = self.campaigns_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.campaigns_table.item(row, 0)
+        campaign_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         # Load campaign from database
         session = get_session()
         try:
@@ -1779,9 +1794,10 @@ class CampaignListWidget(QWidget):
             if dialog.exec_() == QDialog.Accepted:
                 self.load_campaigns()
 
-    def start_campaign(self):
+    def start_campaign(self) -> None:
         """Start selected campaign (or resume if paused)."""
-        selected_rows = self.campaigns_table.selectionModel().selectedRows()
+        _sel = self.campaigns_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             QMessageBox.warning(
                 self, _("campaigns.no_selection"), _("campaigns.no_selection_start")
@@ -1789,8 +1805,8 @@ class CampaignListWidget(QWidget):
             return
 
         row = selected_rows[0].row()
-        campaign_id = self.campaigns_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.campaigns_table.item(row, 0)
+        campaign_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         if not campaign_id:
             QMessageBox.warning(
                 self, _("campaigns.invalid_campaign"), _("campaigns.invalid_campaign_message")
@@ -1856,9 +1872,10 @@ class CampaignListWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, _("campaigns.error"), f"Error: {str(e)}")
 
-    def retry_campaign(self):
+    def retry_campaign(self) -> None:
         """Retry selected campaign (only failed messages or when recipients changed)."""
-        selected_rows = self.campaigns_table.selectionModel().selectedRows()
+        _sel = self.campaigns_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             QMessageBox.warning(
                 self, _("campaigns.no_selection"), _("campaigns.no_selection_retry")
@@ -1866,8 +1883,8 @@ class CampaignListWidget(QWidget):
             return
 
         row = selected_rows[0].row()
-        campaign_id = self.campaigns_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.campaigns_table.item(row, 0)
+        campaign_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         if not campaign_id:
             QMessageBox.warning(
                 self, _("campaigns.invalid_campaign"), _("campaigns.invalid_campaign_message")
@@ -1911,9 +1928,10 @@ class CampaignListWidget(QWidget):
                     self, _("campaigns.retry_failed"), _("campaigns.retry_failed_message")
                 )
 
-    def duplicate_campaign(self):
+    def duplicate_campaign(self) -> None:
         """Duplicate selected completed campaign as a new draft campaign."""
-        selected_rows = self.campaigns_table.selectionModel().selectedRows()
+        _sel = self.campaigns_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             QMessageBox.warning(
                 self, _("campaigns.no_selection"), _("campaigns.no_selection_duplicate")
@@ -1921,8 +1939,8 @@ class CampaignListWidget(QWidget):
             return
 
         row = selected_rows[0].row()
-        campaign_id = self.campaigns_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.campaigns_table.item(row, 0)
+        campaign_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         if not campaign_id:
             QMessageBox.warning(
                 self, _("campaigns.invalid_campaign"), _("campaigns.invalid_campaign_message")
@@ -1985,9 +2003,10 @@ class CampaignListWidget(QWidget):
                     _("campaigns.duplication_failed_message"),
                 )
 
-    def pause_campaign(self):
+    def pause_campaign(self) -> None:
         """Pause or resume selected campaign based on current status."""
-        selected_rows = self.campaigns_table.selectionModel().selectedRows()
+        _sel = self.campaigns_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             QMessageBox.warning(
                 self, _("campaigns.no_selection"), _("campaigns.no_selection_pause")
@@ -1995,8 +2014,8 @@ class CampaignListWidget(QWidget):
             return
 
         row = selected_rows[0].row()
-        campaign_id = self.campaigns_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.campaigns_table.item(row, 0)
+        campaign_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         if not campaign_id:
             QMessageBox.warning(
                 self, _("campaigns.invalid_campaign"), _("campaigns.invalid_campaign_message")
@@ -2051,16 +2070,17 @@ class CampaignListWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, _("campaigns.error"), f"Error: {str(e)}")
 
-    def stop_campaign(self):
+    def stop_campaign(self) -> None:
         """Stop selected campaign."""
-        selected_rows = self.campaigns_table.selectionModel().selectedRows()
+        _sel = self.campaigns_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             QMessageBox.warning(self, _("campaigns.no_selection"), _("campaigns.no_selection_stop"))
             return
 
         row = selected_rows[0].row()
-        campaign_id = self.campaigns_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.campaigns_table.item(row, 0)
+        campaign_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         if not campaign_id:
             QMessageBox.warning(
                 self, _("campaigns.invalid_campaign"), _("campaigns.invalid_campaign_message")
@@ -2088,32 +2108,32 @@ class CampaignListWidget(QWidget):
                     self, _("campaigns.stop_failed"), _("campaigns.stop_failed_message")
                 )
 
-    def on_campaign_started(self, campaign_id: int):
+    def on_campaign_started(self, campaign_id: int) -> None:
         """Handle campaign started signal."""
         self.logger.info(f"Campaign {campaign_id} started")
         self.refresh_campaigns()
 
-    def on_campaign_paused(self, campaign_id: int):
+    def on_campaign_paused(self, campaign_id: int) -> None:
         """Handle campaign paused signal."""
         self.logger.info(f"Campaign {campaign_id} paused")
         self.refresh_campaigns()
 
-    def on_campaign_stopped(self, campaign_id: int):
+    def on_campaign_stopped(self, campaign_id: int) -> None:
         """Handle campaign stopped signal."""
         self.logger.info(f"Campaign {campaign_id} stopped")
         self.refresh_campaigns()
 
-    def on_campaign_completed(self, campaign_id: int):
+    def on_campaign_completed(self, campaign_id: int) -> None:
         """Handle campaign completed signal."""
         self.logger.info(f"Campaign {campaign_id} completed")
         self.refresh_campaigns()
 
-    def on_campaign_progress_updated(self, campaign_id: int, progress_data: dict):
+    def on_campaign_progress_updated(self, campaign_id: int, progress_data: dict) -> None:
         """Handle campaign progress updated signal."""
         self.logger.debug(f"Campaign {campaign_id} progress: {progress_data}")
         self.refresh_campaigns()
 
-    def on_campaign_error(self, campaign_id: int, error_message: str):
+    def on_campaign_error(self, campaign_id: int, error_message: str) -> None:
         """Handle campaign error signal."""
         self.logger.error(f"Campaign {campaign_id} error: {error_message}")
         QMessageBox.warning(
@@ -2121,16 +2141,18 @@ class CampaignListWidget(QWidget):
         )
         self.refresh_campaigns()
 
-    def delete_campaign(self):
+    def delete_campaign(self) -> None:
         """Delete selected campaign."""
-        selected_rows = self.campaigns_table.selectionModel().selectedRows()
+        _sel = self.campaigns_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             return
 
         row = selected_rows[0].row()
-        campaign_name = self.campaigns_table.item(row, 0).text()
-        campaign_id = self.campaigns_table.item(row, 0).data(Qt.UserRole)
-
+        _item = self.campaigns_table.item(row, 0)
+        campaign_name = _item.text() if _item is not None else ""
+        _item = self.campaigns_table.item(row, 0)
+        campaign_id = _item.data(Qt.ItemDataRole.UserRole) if _item is not None else None
         reply = QMessageBox.question(
             self,
             "Delete Campaign",
@@ -2161,7 +2183,7 @@ class CampaignListWidget(QWidget):
                 self.logger.error(f"Error deleting campaign: {e}")
                 QMessageBox.critical(self, "Error", f"Failed to delete campaign: {e}")
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Recreate the UI with new translations
@@ -2172,7 +2194,7 @@ class CampaignListWidget(QWidget):
 class CampaignWidget(QWidget):
     """Main campaign management widget."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
@@ -2182,7 +2204,7 @@ class CampaignWidget(QWidget):
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -2194,16 +2216,16 @@ class CampaignWidget(QWidget):
         self.campaign_list.campaign_selected.connect(self.on_campaign_selected)
         self.campaign_list.campaign_updated.connect(self.on_campaign_updated)
 
-    def on_campaign_selected(self, campaign_id):
+    def on_campaign_selected(self, campaign_id: Any) -> None:
         """Handle campaign selection."""
         # This could show campaign details in a side panel
 
-    def on_campaign_updated(self, campaign_id):
+    def on_campaign_updated(self, campaign_id: Any) -> None:
         """Handle campaign update."""
         # Refresh the list
         self.campaign_list.refresh_campaigns()
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # The campaign_list widget will handle its own language change

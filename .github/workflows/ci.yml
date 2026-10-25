@@ -83,18 +83,20 @@ jobs:
         isort --check-only app/ || true
 
     # Blocking mypy: core/services/models + plugins + expanded GUI subset
-    # (main/theme/about/cloud_backup/dashboard/log/plugin/recipient/template/
-    # testing/telegram_selector/inits). Remaining: settings/account/campaign; see ROADMAP.
+    # (incl. settings/account/campaign). Optional leftover: utils/cli; see ROADMAP.
     - name: Type check with mypy
       run: >
         mypy app/core app/services app/models app/plugins
         app/gui/__init__.py app/gui/main.py app/gui/theme.py
         app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
+        app/gui/widgets/account_widget.py
+        app/gui/widgets/campaign_widget.py
         app/gui/widgets/cloud_backup_widget.py
         app/gui/widgets/dashboard_widget.py
         app/gui/widgets/log_widget.py
         app/gui/widgets/plugin_widget.py
         app/gui/widgets/recipient_widget.py
+        app/gui/widgets/settings_widget.py
         app/gui/widgets/template_widget.py
         app/gui/widgets/testing_widget.py
         app/gui/widgets/telegram_selector.py

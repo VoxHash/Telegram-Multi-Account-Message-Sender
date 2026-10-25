@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.43] - 2026-10-25
+
+### Added
+- **Technical debt: expand blocking mypy GUI subset**: CI / `[tool.mypy]` now also gates `settings_widget.py`, `account_widget.py`, and `campaign_widget.py` under the same strict flags as core/services/models/plugins.
+- **Unit tests** for blocking mypy path presence updated to include the three large widgets.
+
+### Changed
+- Annotated settings, account, and campaign widgets for strict mypy (return types, Qt enum paths, null-safe headers/selection/items/actions, SQLModel ignores).
+- Docs (architecture, README, CONTRIBUTING) and ROADMAP document the expanded gate; optional leftover is `app/utils` / `app/cli.py`.
+
 ## [1.2.42] - 2026-10-25
 
 ### Added

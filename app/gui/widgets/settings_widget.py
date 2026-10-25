@@ -2,6 +2,7 @@
 Settings management widget.
 """
 
+from typing import Any, Optional, cast
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -32,7 +33,7 @@ class SettingsWidget(QWidget):
 
     settings_updated = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.settings = get_settings()
@@ -54,22 +55,26 @@ class SettingsWidget(QWidget):
         # Initial warmup status update
         self.update_warmup_status()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         # Clear existing layout if it exists
-        if hasattr(self, "layout") and self.layout() is not None:
+        raw_layout = self.layout()
+        if raw_layout is not None:
             # Clear existing widgets
-            while self.layout().count():
-                child = self.layout().takeAt(0)
-                if child.widget():
-                    child.widget().deleteLater()
+            while raw_layout.count():
+                child = raw_layout.takeAt(0)
+                if child is not None:
+                    w = child.widget()
+                    if w is not None:
+                        w.deleteLater()
+            root_layout = cast(QVBoxLayout, raw_layout)
         else:
             # Create new layout only if it doesn't exist
-            layout = QVBoxLayout(self)
+            root_layout = QVBoxLayout(self)
 
         # Create tab widget
         self.tab_widget = QTabWidget()
-        self.layout().addWidget(self.tab_widget)
+        root_layout.addWidget(self.tab_widget)
 
         # General Settings Tab
         general_tab = QWidget()
@@ -430,11 +435,11 @@ class SettingsWidget(QWidget):
 
         # Warmup Controls
         warmup_group = QGroupBox(_("settings.warmup_settings"))
-        warmup_layout = QVBoxLayout(warmup_group)
+        warmup_status_layout = QVBoxLayout(warmup_group)
 
         # Warmup status
         self.warmup_status_label = QLabel(f"{_('settings.warmup_status')}: Not Available")
-        warmup_layout.addWidget(self.warmup_status_label)
+        warmup_status_layout.addWidget(self.warmup_status_label)
 
         # Warmup controls
         warmup_controls_layout = QHBoxLayout()
@@ -451,7 +456,7 @@ class SettingsWidget(QWidget):
         self.reset_warmup_button.clicked.connect(self.reset_all_warmup)
         warmup_controls_layout.addWidget(self.reset_warmup_button)
 
-        warmup_layout.addLayout(warmup_controls_layout)
+        warmup_status_layout.addLayout(warmup_controls_layout)
 
         # Warmup settings info
         warmup_help_text = _("settings.warmup_help").replace("\n", "<br>")
@@ -463,7 +468,7 @@ class SettingsWidget(QWidget):
         self.warmup_info.setStyleSheet(
             "QLabel { background-color: #2d2d2d; color: #ffffff; padding: 10px; border-radius: 5px; border: 1px solid #404040; }"
         )
-        warmup_layout.addWidget(self.warmup_info)
+        warmup_status_layout.addWidget(self.warmup_info)
 
         safety_layout.addWidget(warmup_group)
 
@@ -525,11 +530,11 @@ class SettingsWidget(QWidget):
 
         button_layout.addStretch()
 
-        layout.addLayout(button_layout)
+        root_layout.addLayout(button_layout)
 
         # Status label
         self.status_label = QLabel(_("settings.settings_reloaded"))
-        layout.addWidget(self.status_label)
+        root_layout.addWidget(self.status_label)
 
     def _current_ai_provider(self) -> str:
         from ...services.ai_copy import normalize_provider
@@ -591,11 +596,11 @@ class SettingsWidget(QWidget):
         if is_azure and not self.ai_azure_api_version_edit.text().strip():
             self.ai_azure_api_version_edit.setText(DEFAULT_AZURE_API_VERSION)
 
-    def load_settings(self):
+    def load_settings(self) -> None:
         """Load current settings into the form."""
         # This is already done in setup_ui
 
-    def save_settings(self):
+    def save_settings(self) -> None:
         """Save settings to file."""
         try:
             # Update settings object
@@ -722,7 +727,7 @@ class SettingsWidget(QWidget):
                 self, _("common.error"), _("settings.settings_save_failed").format(error=str(e))
             )
 
-    def save_to_env_file(self):
+    def save_to_env_file(self) -> None:
         """Save settings to .env file."""
         try:
             env_content = f"""# Telegram API Configuration
@@ -786,7 +791,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         except Exception as e:
             self.logger.error(f"Error saving to .env file: {e}")
 
-    def refresh_web_companion_status(self):
+    def refresh_web_companion_status(self) -> None:
         """Update the companion running/stopped status line in Settings."""
         if not hasattr(self, "web_companion_status_label"):
             return
@@ -808,7 +813,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                 _("settings.web_companion_status_stopped")
             )
 
-    def generate_web_companion_token(self):
+    def generate_web_companion_token(self) -> None:
         """Fill the companion token field with a fresh URL-safe secret."""
         from ...services.web_companion import generate_companion_token
 
@@ -816,7 +821,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         self.web_companion_token_edit.setText(token)
         self.status_label.setText(_("settings.web_companion_token_generated"))
 
-    def open_web_companion(self):
+    def open_web_companion(self) -> None:
         """Start the read-only web companion (if needed) and open it in a browser."""
         import webbrowser
 
@@ -858,7 +863,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                 _("settings.web_companion_open_failed").format(error=str(e)),
             )
 
-    def reset_settings(self):
+    def reset_settings(self) -> None:
         """Reset settings to defaults."""
         reply = QMessageBox.question(
             self,
@@ -982,7 +987,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                 self, _("settings.settings_reset"), _("settings.settings_reset")
             )
 
-    def on_language_combo_changed(self, text: str):
+    def on_language_combo_changed(self, text: str) -> None:
         """Handle language combo box change."""
         try:
             # Get the language value from the combo box
@@ -1005,7 +1010,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         except Exception as e:
             self.logger.error(f"Error changing language: {e}")
 
-    def on_startup_changed(self, state: int):
+    def on_startup_changed(self, state: int) -> None:
         """Handle startup checkbox change."""
         try:
             enabled = state == 2  # Qt.Checked = 2
@@ -1042,7 +1047,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
             # Revert checkbox state
             self.startup_check.setChecked(not enabled)
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Update button texts
@@ -1061,7 +1066,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         # Reload settings to refresh any other translated content
         self.load_settings()
 
-    def update_ui_translations(self):
+    def update_ui_translations(self) -> None:
         """Update UI elements with current translations."""
         try:
             # Update debug checkbox
@@ -1149,7 +1154,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         except Exception as e:
             self.logger.error(f"Error updating UI translations: {e}")
 
-    def start_all_warmup(self):
+    def start_all_warmup(self) -> None:
         """Start warmup for all eligible accounts."""
         try:
             from ...services.db import get_session
@@ -1167,9 +1172,9 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                 accounts = (
                     session.query(Account)
                     .filter(
-                        Account.warmup_enabled.is_(True),
-                        Account.is_active.is_(True),
-                        Account.is_deleted.is_(False),
+                        Account.warmup_enabled.is_(True),  # type: ignore[attr-defined]
+                        Account.is_active.is_(True),  # type: ignore[attr-defined]
+                        Account.is_deleted.is_(False),  # type: ignore[attr-defined]
                     )
                     .all()
                 )
@@ -1220,7 +1225,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                 self, _("common.error"), _("settings.error_starting_warmup").format(error=str(e))
             )
 
-    def on_warmup_started(self, account_id: int):
+    def on_warmup_started(self, account_id: int) -> None:
         """Handle warmup started signal."""
         try:
             from ...services.db import get_session
@@ -1239,7 +1244,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         except Exception as e:
             self.logger.error(f"Error handling warmup started: {e}")
 
-    def on_warmup_progress(self, account_id: int, sent: int, target: int):
+    def on_warmup_progress(self, account_id: int, sent: int, target: int) -> None:
         """Handle warmup progress signal."""
         try:
             from ...services.db import get_session
@@ -1258,7 +1263,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         except Exception as e:
             self.logger.error(f"Error handling warmup progress: {e}")
 
-    def on_warmup_completed(self, account_id: int):
+    def on_warmup_completed(self, account_id: int) -> None:
         """Handle warmup completed signal."""
         try:
             from ...services.db import get_session
@@ -1274,7 +1279,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         except Exception as e:
             self.logger.error(f"Error handling warmup completed: {e}")
 
-    def on_warmup_error(self, account_id: int, error_message: str):
+    def on_warmup_error(self, account_id: int, error_message: str) -> None:
         """Handle warmup error signal."""
         try:
             from ...services.db import get_session
@@ -1290,7 +1295,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
         except Exception as e:
             self.logger.error(f"Error handling warmup error: {e}")
 
-    def stop_all_warmup(self):
+    def stop_all_warmup(self) -> None:
         """Stop warmup for all accounts."""
         try:
             # Note: This is a simple implementation. In a real scenario, you'd want to track
@@ -1306,7 +1311,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                 self, _("common.error"), _("settings.error_stopping_warmup").format(error=str(e))
             )
 
-    def reset_all_warmup(self):
+    def reset_all_warmup(self) -> None:
         """Reset warmup progress for all accounts."""
         try:
             reply = QMessageBox.question(
@@ -1325,9 +1330,9 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                     accounts = (
                         session.query(Account)
                         .filter(
-                            Account.warmup_enabled.is_(True),
-                            Account.is_active.is_(True),
-                            Account.is_deleted.is_(False),
+                            Account.warmup_enabled.is_(True),  # type: ignore[attr-defined]
+                            Account.is_active.is_(True),  # type: ignore[attr-defined]
+                            Account.is_deleted.is_(False),  # type: ignore[attr-defined]
                         )
                         .all()
                     )
@@ -1352,7 +1357,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                 self, _("common.error"), _("settings.error_resetting_warmup").format(error=str(e))
             )
 
-    def delete_all_logs(self):
+    def delete_all_logs(self) -> None:
         """Delete all log files to free memory space."""
         try:
             reply = QMessageBox.question(
@@ -1418,7 +1423,7 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                 self, _("common.error"), _("settings.error_deleting_logs").format(error=str(e))
             )
 
-    def update_warmup_status(self):
+    def update_warmup_status(self) -> None:
         """Update warmup status display."""
         try:
             from ...services.db import get_session
@@ -1429,9 +1434,9 @@ WEB_COMPANION_TOKEN={self.settings.web_companion_token or ''}
                 accounts = (
                     session.query(Account)
                     .filter(
-                        Account.warmup_enabled.is_(True),
-                        Account.is_active.is_(True),
-                        Account.is_deleted.is_(False),
+                        Account.warmup_enabled.is_(True),  # type: ignore[attr-defined]
+                        Account.is_active.is_(True),  # type: ignore[attr-defined]
+                        Account.is_deleted.is_(False),  # type: ignore[attr-defined]
                     )
                     .all()
                 )

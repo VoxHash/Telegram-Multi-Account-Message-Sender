@@ -89,6 +89,7 @@ We welcome feature suggestions! Please:
    isort app/
    flake8 app/
    mypy app/core app/services app/models app/plugins \
+     app/utils app/cli.py \
      app/gui/__init__.py app/gui/main.py app/gui/theme.py \
      app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
      app/gui/widgets/account_widget.py \
@@ -228,6 +229,7 @@ We use a clear branching strategy to organize development:
    isort app/ --check
    flake8 app/
    mypy app/core app/services app/models app/plugins \
+     app/utils app/cli.py \
      app/gui/__init__.py app/gui/main.py app/gui/theme.py \
      app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
      app/gui/widgets/account_widget.py \
@@ -319,8 +321,9 @@ isort app/
 # Lint code
 flake8 app/
 
-# Type checking (blocking CI scope; optional utils/cli deferred)
+# Type checking (blocking CI scope)
 mypy app/core app/services app/models app/plugins \
+  app/utils app/cli.py \
   app/gui/__init__.py app/gui/main.py app/gui/theme.py \
   app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
   app/gui/widgets/account_widget.py \

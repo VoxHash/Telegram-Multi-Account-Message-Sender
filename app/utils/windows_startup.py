@@ -2,10 +2,19 @@
 Windows startup management utilities.
 """
 
+from __future__ import annotations
+
 import os
 import sys
-import winreg
-from typing import bool
+from typing import Any
+
+# winreg stubs only expose APIs when platform is win32; use Any for cross-platform mypy.
+if sys.platform == "win32":
+    import winreg as _winreg
+else:
+    _winreg = None
+
+winreg: Any = _winreg
 
 
 def add_to_startup(app_name: str, app_path: str) -> bool:
@@ -19,6 +28,8 @@ def add_to_startup(app_name: str, app_path: str) -> bool:
     Returns:
         True if successful, False otherwise
     """
+    if winreg is None:
+        return False
     try:
         # Open the registry key for startup programs
         key = winreg.OpenKey(
@@ -51,6 +62,8 @@ def remove_from_startup(app_name: str) -> bool:
     Returns:
         True if successful, False otherwise
     """
+    if winreg is None:
+        return False
     try:
         # Open the registry key for startup programs
         key = winreg.OpenKey(
@@ -86,6 +99,8 @@ def is_in_startup(app_name: str) -> bool:
     Returns:
         True if in startup, False otherwise
     """
+    if winreg is None:
+        return False
     try:
         # Open the registry key for startup programs
         key = winreg.OpenKey(

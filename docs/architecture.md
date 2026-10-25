@@ -135,9 +135,10 @@ CI runs **blocking** mypy (strict flags in `pyproject.toml`) on:
 
 - `app/core`, `app/services`, `app/models`
 - `app/plugins` (example built-ins)
+- `app/utils` and `app/cli.py`
 - Expanded GUI subset: `app/gui/main.py`, `theme.py`, `about_widget.py`, `account_widget.py`, `campaign_widget.py`, `cloud_backup_widget.py`, `dashboard_widget.py`, `log_widget.py`, `plugin_widget.py`, `recipient_widget.py`, `settings_widget.py`, `template_widget.py`, `testing_widget.py`, `telegram_selector.py`, and package `__init__` modules
 
-Optional leftover outside the gate: `app/utils` / `app/cli.py`. See [ROADMAP](../ROADMAP.md) and [CONTRIBUTING](../CONTRIBUTING.md).
+See [ROADMAP](../ROADMAP.md) and [CONTRIBUTING](../CONTRIBUTING.md).
 
 ## See Also
 

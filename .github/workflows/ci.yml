@@ -82,11 +82,11 @@ jobs:
       run: |
         isort --check-only app/ || true
 
-    # Blocking mypy: core/services/models + plugins + expanded GUI subset
-    # (incl. settings/account/campaign). Optional leftover: utils/cli; see ROADMAP.
+    # Blocking mypy: core/services/models + plugins + expanded GUI + utils/cli.
     - name: Type check with mypy
       run: >
         mypy app/core app/services app/models app/plugins
+        app/utils app/cli.py
         app/gui/__init__.py app/gui/main.py app/gui/theme.py
         app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
         app/gui/widgets/account_widget.py

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.44] - 2026-10-25
+
+### Added
+- **Technical debt: blocking mypy for `app/utils` + `app/cli.py`**: CI / `[tool.mypy]` now gates the utils package and CLI entrypoint under the same strict flags as core/services/models/plugins/GUI.
+- **Unit tests** for crypto round-trip / password hash, file helpers, Windows-startup no-ops off Windows, and blocking mypy path presence for utils/cli.
+
+### Changed
+- `windows_startup` uses a cross-platform `winreg` Any stub so Linux CI type-checks without `warn_unreachable` false positives; registry helpers return `False` when `winreg` is unavailable.
+- Docs (architecture, README, CONTRIBUTING) and ROADMAP mark the utils/cli mypy leftover as shipped; next tracked items are security (threat model / audits) and community channel.
+
 ## [1.2.43] - 2026-10-25
 
 ### Added

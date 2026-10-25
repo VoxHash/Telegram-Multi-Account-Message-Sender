@@ -1,6 +1,6 @@
 [project]
 name = "telegram-multi-account-sender"
-version = "1.2.43"
+version = "1.2.44"
 description = "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"
 readme = "README.md"
 license = {text = "Eclipse Public License 2.0"}
@@ -161,13 +161,14 @@ max-line-length = 100
 
 [tool.mypy]
 python_version = "3.10"
-# Blocking CI scope (v1.2.43+): core/services/models + plugins + expanded GUI subset (incl. settings/account/campaign).
-# Optional leftover: app/utils / app/cli.py (see ROADMAP).
+# Blocking CI scope (v1.2.44+): core/services/models + plugins + expanded GUI + utils/cli.
 files = [
     "app/core",
     "app/services",
     "app/models",
     "app/plugins",
+    "app/utils",
+    "app/cli.py",
     "app/gui/__init__.py",
     "app/gui/main.py",
     "app/gui/theme.py",
@@ -199,7 +200,6 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
-# Optional: app/utils / app/cli.py still outside the blocking files= scope; see ROADMAP.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

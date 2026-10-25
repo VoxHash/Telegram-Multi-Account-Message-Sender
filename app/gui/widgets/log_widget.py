@@ -2,6 +2,7 @@
 Log viewing widgets.
 """
 
+from typing import Any, Optional
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -31,12 +32,12 @@ from datetime import datetime
 class LogViewer(QWidget):
     """Real-time log viewer widget."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.settings = get_settings()
         self.translation_manager = get_translation_manager()
-        self.filtered_logs = []  # Initialize filtered logs list
+        self.filtered_logs: list[str] = []  # Initialize filtered logs list
 
         # Connect language change signal
         self.translation_manager.language_changed.connect(self.on_language_changed)
@@ -44,7 +45,7 @@ class LogViewer(QWidget):
         self.setup_ui()
         self.setup_log_monitoring()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -100,7 +101,7 @@ class LogViewer(QWidget):
         self.status_label = QLabel(_("app.ready"))
         layout.addWidget(self.status_label)
 
-    def setup_log_monitoring(self):
+    def setup_log_monitoring(self) -> None:
         """Set up log file monitoring."""
         self.log_file_path = self.settings.get_log_file_path()
         self.last_position = 0
@@ -113,7 +114,7 @@ class LogViewer(QWidget):
         # Load existing logs
         self.load_existing_logs()
 
-    def load_existing_logs(self):
+    def load_existing_logs(self) -> None:
         """Load existing log content."""
         try:
             if self.log_file_path.exists():
@@ -129,7 +130,7 @@ class LogViewer(QWidget):
         except Exception as e:
             self.logger.error(f"Error loading existing logs: {e}")
 
-    def check_log_file(self):
+    def check_log_file(self) -> None:
         """Check for new log entries."""
         try:
             if not self.log_file_path.exists():
@@ -166,7 +167,7 @@ class LogViewer(QWidget):
         except Exception as e:
             self.logger.error(f"Error checking log file: {e}")
 
-    def filter_logs(self):
+    def filter_logs(self) -> None:
         """Filter logs by level."""
         try:
             if not self.log_file_path.exists():
@@ -210,13 +211,13 @@ class LogViewer(QWidget):
             self.logger.error(f"Error filtering logs: {e}")
             self.status_label.setText(f"Error filtering logs: {e}")
 
-    def scroll_to_bottom(self):
+    def scroll_to_bottom(self) -> None:
         """Scroll to bottom of log text."""
         cursor = self.log_text.textCursor()
         cursor.movePosition(QTextCursor.End)
         self.log_text.setTextCursor(cursor)
 
-    def clear_logs(self):
+    def clear_logs(self) -> None:
         """Clear the log display and file."""
         self.log_text.clear()
 
@@ -237,12 +238,12 @@ class LogViewer(QWidget):
 
         self.status_label.setText("Logs cleared - file and display cleared")
 
-    def refresh_logs(self):
+    def refresh_logs(self) -> None:
         """Refresh logs from file."""
         self.load_existing_logs()
         self.status_label.setText("Logs refreshed")
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Update UI elements with new translations
@@ -268,7 +269,7 @@ class LogViewer(QWidget):
 class SendLogWidget(QWidget):
     """Widget for viewing send logs from database."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
@@ -287,7 +288,7 @@ class SendLogWidget(QWidget):
         # Don't start auto-refresh by default - let user control it
         # self.refresh_timer.start(30000)  # Refresh every 30 seconds if enabled
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -580,14 +581,15 @@ class SendLogWidget(QWidget):
 
         # Configure table
         header = self.logs_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Timestamp
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Campaign
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Account
-        header.setSectionResizeMode(3, QHeaderView.Stretch)  # Recipient
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Status
-        header.setSectionResizeMode(5, QHeaderView.Stretch)  # Error Message
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Duration
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Retry Count
+        if header is not None:
+            header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Timestamp
+            header.setSectionResizeMode(1, QHeaderView.Stretch)  # Campaign
+            header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Account
+            header.setSectionResizeMode(3, QHeaderView.Stretch)  # Recipient
+            header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Status
+            header.setSectionResizeMode(5, QHeaderView.Stretch)  # Error Message
+            header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Duration
+            header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Retry Count
 
         self.logs_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.logs_table.setAlternatingRowColors(True)
@@ -621,7 +623,7 @@ class SendLogWidget(QWidget):
 
         layout.addWidget(status_widget)
 
-    def load_send_logs(self):
+    def load_send_logs(self) -> None:
         """Load send logs from database."""
         try:
             from ...services.db import get_session
@@ -634,9 +636,9 @@ class SendLogWidget(QWidget):
                 from sqlalchemy.orm import selectinload
 
                 query = select(SendLog).options(
-                    selectinload(SendLog.campaign),
-                    selectinload(SendLog.account),
-                    selectinload(SendLog.recipient),
+                    selectinload(SendLog.campaign),  # type: ignore[arg-type]
+                    selectinload(SendLog.account),  # type: ignore[arg-type]
+                    selectinload(SendLog.recipient),  # type: ignore[arg-type]
                 )
 
                 # Status filter
@@ -666,7 +668,7 @@ class SendLogWidget(QWidget):
                     query = query.join(Campaign).where(Campaign.name == campaign_filter)
 
                 # Execute query and load all data within session
-                logs = session.exec(query.order_by(SendLog.created_at.desc()).limit(1000)).all()
+                logs = session.exec(query.order_by(SendLog.created_at.desc()).limit(1000)).all()  # type: ignore[attr-defined]
 
                 # Update campaign combo with available campaigns (only if not already loaded)
                 if not self.campaigns_loaded:
@@ -682,7 +684,7 @@ class SendLogWidget(QWidget):
                     # Timestamp
                     timestamp = log.created_at.strftime("%Y-%m-%d %H:%M:%S")
                     timestamp_item = QTableWidgetItem(timestamp)
-                    timestamp_item.setFlags(timestamp_item.flags() & ~Qt.ItemIsEditable)
+                    timestamp_item.setFlags(timestamp_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # type: ignore[arg-type]
                     self.logs_table.setItem(row, 0, timestamp_item)
 
                     # Campaign - access within session
@@ -690,7 +692,7 @@ class SendLogWidget(QWidget):
                     if log.campaign:
                         campaign_name = log.campaign.name
                     campaign_item = QTableWidgetItem(campaign_name)
-                    campaign_item.setFlags(campaign_item.flags() & ~Qt.ItemIsEditable)
+                    campaign_item.setFlags(campaign_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # type: ignore[arg-type]
                     self.logs_table.setItem(row, 1, campaign_item)
 
                     # Account - access within session
@@ -698,7 +700,7 @@ class SendLogWidget(QWidget):
                     if log.account:
                         account_name = log.account.name
                     account_item = QTableWidgetItem(account_name)
-                    account_item.setFlags(account_item.flags() & ~Qt.ItemIsEditable)
+                    account_item.setFlags(account_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # type: ignore[arg-type]
                     self.logs_table.setItem(row, 2, account_item)
 
                     # Recipient - access within session
@@ -706,14 +708,14 @@ class SendLogWidget(QWidget):
                     if log.recipient:
                         recipient_info = log.recipient.get_display_name()
                     recipient_item = QTableWidgetItem(recipient_info)
-                    recipient_item.setFlags(recipient_item.flags() & ~Qt.ItemIsEditable)
+                    recipient_item.setFlags(recipient_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # type: ignore[arg-type]
                     self.logs_table.setItem(row, 3, recipient_item)
 
                     # Status with enhanced styling
                     status_text = log.status.value.title()
                     status_item = QTableWidgetItem(status_text)
-                    status_item.setTextAlignment(Qt.AlignCenter)
-                    status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable)
+                    status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # type: ignore[arg-type]
 
                     # Enhanced status styling
                     if log.status == SendStatus.SENT:
@@ -743,18 +745,18 @@ class SendLogWidget(QWidget):
                     # Error message
                     error_msg = log.get_error_summary() if log.error_message else ""
                     error_item = QTableWidgetItem(error_msg)
-                    error_item.setFlags(error_item.flags() & ~Qt.ItemIsEditable)
+                    error_item.setFlags(error_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # type: ignore[arg-type]
                     self.logs_table.setItem(row, 5, error_item)
 
                     # Duration
                     duration = str(log.duration_ms) if log.duration_ms else "N/A"
                     duration_item = QTableWidgetItem(duration)
-                    duration_item.setFlags(duration_item.flags() & ~Qt.ItemIsEditable)
+                    duration_item.setFlags(duration_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # type: ignore[arg-type]
                     self.logs_table.setItem(row, 6, duration_item)
 
                     # Retry count
                     retry_item = QTableWidgetItem(str(log.retry_count))
-                    retry_item.setFlags(retry_item.flags() & ~Qt.ItemIsEditable)
+                    retry_item.setFlags(retry_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # type: ignore[arg-type]
                     self.logs_table.setItem(row, 7, retry_item)
 
             finally:
@@ -783,16 +785,16 @@ class SendLogWidget(QWidget):
             self.status_indicator.setText("🔴 Error")
             self.status_indicator.setStyleSheet("color: #F44336; font-weight: bold;")
 
-    def refresh_send_logs(self):
+    def refresh_send_logs(self) -> None:
         """Refresh send logs."""
         self.load_send_logs()
 
-    def filter_logs(self):
+    def filter_logs(self) -> None:
         """Apply filters to logs."""
         if not self.updating_campaigns:
             self.load_send_logs()
 
-    def filter_logs_by_search(self):
+    def filter_logs_by_search(self) -> None:
         """Filter logs based on search text."""
         search_text = self.search_edit.text().lower().strip()
 
@@ -815,12 +817,12 @@ class SendLogWidget(QWidget):
 
             self.logs_table.setRowHidden(row, not should_show)
 
-    def refresh_campaigns(self):
+    def refresh_campaigns(self) -> None:
         """Refresh campaign list from database."""
         self.campaigns_loaded = False
         self.load_send_logs()
 
-    def update_campaign_combo(self, session):
+    def update_campaign_combo(self, session: Any) -> None:
         """Update campaign combo with available campaigns."""
         try:
             from sqlmodel import select
@@ -879,13 +881,13 @@ class SendLogWidget(QWidget):
             # Clear flag to allow normal filtering
             self.updating_campaigns = False
 
-    def export_logs(self):
+    def export_logs(self) -> None:
         """Export logs to CSV."""
         try:
             from PyQt5.QtWidgets import QFileDialog
             import csv
 
-            file_path, _ = QFileDialog.getSaveFileName(
+            file_path, _selected_filter = QFileDialog.getSaveFileName(
                 self,
                 "Export Send Logs",
                 f"send_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
@@ -923,7 +925,7 @@ class SendLogWidget(QWidget):
 
                 # Update status
                 self.status_label.setText(
-                    f"📊 {_('logs.exported_successfully').format(count=exported_count)}"
+                    f"📊 {_('logs.exported_successfully', count=exported_count)}"
                 )
 
                 QMessageBox.information(
@@ -939,7 +941,7 @@ class SendLogWidget(QWidget):
                 self, _("logs.export_failed"), _("logs.export_failed").format(error=str(e))
             )
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Update UI elements with new translations
@@ -973,7 +975,7 @@ class SendLogWidget(QWidget):
 class LogWidget(QWidget):
     """Main log management widget."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
@@ -983,7 +985,7 @@ class LogWidget(QWidget):
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -999,7 +1001,7 @@ class LogWidget(QWidget):
         self.send_log_widget = SendLogWidget()
         tab_widget.addTab(self.send_log_widget, _("logs.send_logs"))
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Update tab names

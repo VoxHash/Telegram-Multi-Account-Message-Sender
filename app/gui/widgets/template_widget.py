@@ -2,7 +2,7 @@
 Template management widgets.
 """
 
-from typing import Optional
+from typing import Any, Optional
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -37,7 +37,7 @@ class TemplateDialog(QDialog):
 
     template_saved = pyqtSignal(int)
 
-    def __init__(self, parent=None, template: Optional[MessageTemplate] = None):
+    def __init__(self, parent: Optional[QWidget] = None, template: Optional[MessageTemplate] = None) -> None:
         super().__init__(parent)
         self.template = template
         self.logger = get_logger()
@@ -47,7 +47,7 @@ class TemplateDialog(QDialog):
         if template:
             self.load_template_data()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         self.setWindowTitle(
             _("templates.add_template") if not self.template else _("templates.edit_template")
@@ -56,7 +56,7 @@ class TemplateDialog(QDialog):
         self.resize(600, 500)
 
         # Enable help button
-        self.setWindowFlags(self.windowFlags() | Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowContextHelpButtonHint)
 
         layout = QVBoxLayout(self)
 
@@ -158,14 +158,14 @@ class TemplateDialog(QDialog):
         # Initialize spintax settings as disabled
         self.toggle_spintax_settings(False)
 
-    def event(self, event):
+    def event(self, event: Any) -> bool:
         """Handle events including help button clicks."""
         if event.type() == event.EnterWhatsThisMode:
             self.show_help()
             return True
         return super().event(event)
 
-    def show_help(self):
+    def show_help(self) -> None:
         """Show help dialog."""
         help_text = """
         <h3>Template Creation Help</h3>
@@ -218,7 +218,7 @@ class TemplateDialog(QDialog):
 
         msg = QMessageBox(self)
         msg.setWindowTitle(_("templates.help"))
-        msg.setTextFormat(Qt.RichText)
+        msg.setTextFormat(Qt.TextFormat.RichText)
         msg.setText(help_text)
         msg.setIcon(QMessageBox.Information)
         msg.exec_()
@@ -248,7 +248,7 @@ class TemplateDialog(QDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             if mode == "rewrite":
                 result = service.rewrite(source)
@@ -311,7 +311,7 @@ class TemplateDialog(QDialog):
         """Suggest alternate drafts via the optional AI provider."""
         self._run_ai_copy("variations")
 
-    def toggle_spintax_settings(self, enabled: bool):
+    def toggle_spintax_settings(self, enabled: bool) -> None:
         """Toggle spintax settings visibility."""
         self.spintax_example_edit.setEnabled(enabled)
         self.preview_spintax_button.setEnabled(enabled)
@@ -325,7 +325,7 @@ class TemplateDialog(QDialog):
                 )
             self.validate_spintax_syntax()
 
-    def validate_spintax_syntax(self):
+    def validate_spintax_syntax(self) -> bool:
         """Validate spintax syntax in the message."""
         message_text = self.message_edit.toPlainText()
         if not message_text.strip():
@@ -392,7 +392,7 @@ class TemplateDialog(QDialog):
             )
             return False
 
-    def preview_spintax(self):
+    def preview_spintax(self) -> None:
         """Preview spintax generation."""
         message_text = self.message_edit.toPlainText()
         if not message_text.strip():
@@ -478,7 +478,7 @@ class TemplateDialog(QDialog):
                 "Please check your spintax syntax.",
             )
 
-    def load_template_data(self):
+    def load_template_data(self) -> None:
         """Load template data into the form."""
         if not self.template:
             return
@@ -494,7 +494,7 @@ class TemplateDialog(QDialog):
             tags_list = self.template.get_tags_list()
             self.tags_edit.setText(", ".join(tags_list))
 
-    def save_template(self):
+    def save_template(self) -> None:
         """Save template data."""
         try:
             # Validate required fields
@@ -591,7 +591,7 @@ class TemplateListWidget(QWidget):
     template_selected = pyqtSignal(int)
     template_updated = pyqtSignal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
@@ -602,7 +602,7 @@ class TemplateListWidget(QWidget):
         self.setup_ui()
         self.load_templates()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -676,12 +676,13 @@ class TemplateListWidget(QWidget):
 
         # Configure table
         header = self.templates_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.Stretch)
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        if header is not None:
+            header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(2, QHeaderView.Stretch)
+            header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
 
         self.templates_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.templates_table.setSelectionMode(QTableWidget.SingleSelection)
@@ -724,7 +725,7 @@ class TemplateListWidget(QWidget):
         self.status_label = QLabel("Ready")
         layout.addWidget(self.status_label)
 
-    def load_templates(self):
+    def load_templates(self) -> None:
         """Load templates from database."""
         try:
             session = get_session()
@@ -733,7 +734,7 @@ class TemplateListWidget(QWidget):
                 from sqlmodel import select
 
                 templates = session.exec(
-                    select(MessageTemplate).where(MessageTemplate.is_deleted.is_(False))
+                    select(MessageTemplate).where(MessageTemplate.is_deleted.is_(False))  # type: ignore[attr-defined]
                 ).all()
             finally:
                 session.close()
@@ -743,15 +744,15 @@ class TemplateListWidget(QWidget):
             for row, template in enumerate(templates):
                 # Name - Disabled text field
                 name_item = QTableWidgetItem(template.name)
-                name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
                 # Store template ID in the name item for selection handling
-                name_item.setData(Qt.UserRole, template.id)
+                name_item.setData(Qt.ItemDataRole.UserRole, template.id)
                 self.templates_table.setItem(row, 0, name_item)
 
                 # Description - Disabled text field
                 description_item = QTableWidgetItem(template.description or "")
                 description_item.setFlags(
-                    description_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    description_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
                 self.templates_table.setItem(row, 1, description_item)
 
@@ -761,42 +762,42 @@ class TemplateListWidget(QWidget):
                 )
                 message_item = QTableWidgetItem(message_preview)
                 message_item.setFlags(
-                    message_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    message_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
                 self.templates_table.setItem(row, 2, message_item)
 
                 # Spintax - Enhanced button-like appearance
                 spintax_item = QTableWidgetItem("Yes" if template.use_spintax else "No")
                 spintax_item.setFlags(
-                    spintax_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    spintax_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
 
                 # Set spintax-specific styling
                 if template.use_spintax:
                     spintax_item.setBackground(QColor(34, 197, 94))  # Green
-                    spintax_item.setForeground(Qt.white)
+                    spintax_item.setForeground(Qt.GlobalColor.white)
                 else:
                     spintax_item.setBackground(QColor(107, 114, 128))  # Gray
-                    spintax_item.setForeground(Qt.white)
+                    spintax_item.setForeground(Qt.GlobalColor.white)
 
                 # Center align spintax text
-                spintax_item.setTextAlignment(Qt.AlignCenter)
+                spintax_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.templates_table.setItem(row, 3, spintax_item)
 
                 # Tags - Disabled text field
                 tags_list = template.get_tags_list()
                 tags_text = ", ".join(tags_list) if tags_list else "No tags"
                 tags_item = QTableWidgetItem(tags_text)
-                tags_item.setFlags(tags_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                tags_item.setFlags(tags_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
                 self.templates_table.setItem(row, 4, tags_item)
 
                 # Actions - Create action buttons
                 actions_item = QTableWidgetItem("Edit | Delete | Preview")
                 actions_item.setFlags(
-                    actions_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    actions_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                actions_item.setTextAlignment(Qt.AlignCenter)
-                actions_item.setData(Qt.UserRole, template.id)  # Store template ID for actions
+                actions_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                actions_item.setData(Qt.ItemDataRole.UserRole, template.id)  # Store template ID for actions
                 self.templates_table.setItem(row, 5, actions_item)
 
             self.status_label.setText(f"Loaded {len(templates)} templates")
@@ -808,10 +809,13 @@ class TemplateListWidget(QWidget):
             self.logger.error(f"Error loading templates: {e}")
             self.status_label.setText(f"Error loading templates: {e}")
 
-    def on_cell_clicked(self, row, column):
+    def on_cell_clicked(self, row: int, column: int) -> None:
         """Handle cell click events."""
         if column == 5:  # Actions column
-            template_id = self.templates_table.item(row, 0).data(Qt.UserRole)
+            name_item = self.templates_table.item(row, 0)
+            if name_item is None:
+                return
+            template_id = name_item.data(Qt.ItemDataRole.UserRole)
             if template_id is not None:
                 self.show_action_menu(row, column, template_id)
         else:
@@ -820,27 +824,32 @@ class TemplateListWidget(QWidget):
             # Also trigger selection changed manually
             self.on_selection_changed()
 
-    def show_action_menu(self, row, column, template_id):
+    def show_action_menu(self, row: int, column: int, template_id: int) -> None:
         """Show action menu for template actions."""
         from PyQt5.QtWidgets import QMenu
 
         # Get template name for display
-        self.templates_table.item(row, 0).text()
+        name_item = self.templates_table.item(row, 0)
+        if name_item is not None:
+            name_item.text()
 
         # Create context menu
         menu = QMenu(self)
 
         # Edit action
         edit_action = menu.addAction("✏️ Edit")
-        edit_action.triggered.connect(lambda: self.edit_template_by_id(template_id))
+        if edit_action is not None:
+            edit_action.triggered.connect(lambda: self.edit_template_by_id(template_id))
 
         # Delete action
         delete_action = menu.addAction("🗑️ Delete")
-        delete_action.triggered.connect(lambda: self.delete_template_by_id(template_id))
+        if delete_action is not None:
+            delete_action.triggered.connect(lambda: self.delete_template_by_id(template_id))
 
         # Preview action
         preview_action = menu.addAction("👁️ Preview")
-        preview_action.triggered.connect(lambda: self.preview_template_by_id(template_id))
+        if preview_action is not None:
+            preview_action.triggered.connect(lambda: self.preview_template_by_id(template_id))
 
         # Show menu at cursor position
         menu.exec_(
@@ -851,7 +860,7 @@ class TemplateListWidget(QWidget):
             )
         )
 
-    def edit_template_by_id(self, template_id):
+    def edit_template_by_id(self, template_id: int) -> None:
         """Edit template by ID."""
         session = get_session()
         try:
@@ -869,7 +878,7 @@ class TemplateListWidget(QWidget):
             if dialog.exec_() == QDialog.Accepted:
                 self.load_templates()
 
-    def delete_template_by_id(self, template_id):
+    def delete_template_by_id(self, template_id: int) -> None:
         """Delete template by ID."""
         session = get_session()
         try:
@@ -900,7 +909,7 @@ class TemplateListWidget(QWidget):
                     self.logger.error(f"Error deleting template: {e}")
                     QMessageBox.critical(self, "Error", f"Failed to delete template: {e}")
 
-    def preview_template_by_id(self, template_id):
+    def preview_template_by_id(self, template_id: int) -> None:
         """Preview template by ID."""
         session = get_session()
         try:
@@ -924,9 +933,10 @@ class TemplateListWidget(QWidget):
 
             QMessageBox.information(self, f"Template Preview - {template.name}", preview_text)
 
-    def on_selection_changed(self):
+    def on_selection_changed(self) -> None:
         """Handle selection change."""
-        selected_rows = self.templates_table.selectionModel().selectedRows()
+        _sel = self.templates_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         has_selection = len(selected_rows) > 0
 
         self.edit_button.setEnabled(has_selection)
@@ -937,7 +947,7 @@ class TemplateListWidget(QWidget):
             # Try to get template ID from the first column (Name column)
             name_item = self.templates_table.item(row, 0)
             if name_item:
-                template_id = name_item.data(Qt.UserRole)
+                template_id = name_item.data(Qt.ItemDataRole.UserRole)
                 if template_id is not None:
                     # Emit signal with template ID for further processing
                     self.template_selected.emit(template_id)
@@ -946,20 +956,24 @@ class TemplateListWidget(QWidget):
             else:
                 self.logger.warning(f"No name item found for row {row}")
 
-    def add_template(self):
+    def add_template(self) -> None:
         """Add new template."""
         dialog = TemplateDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             self.load_templates()
 
-    def edit_template(self):
+    def edit_template(self) -> None:
         """Edit selected template."""
-        selected_rows = self.templates_table.selectionModel().selectedRows()
+        _sel = self.templates_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             return
 
         row = selected_rows[0].row()
-        template_id = self.templates_table.item(row, 0).data(Qt.UserRole)
+        name_item = self.templates_table.item(row, 0)
+        if name_item is None:
+            return
+        template_id = name_item.data(Qt.ItemDataRole.UserRole)
 
         # Load template from database
         session = get_session()
@@ -978,15 +992,19 @@ class TemplateListWidget(QWidget):
             if dialog.exec_() == QDialog.Accepted:
                 self.load_templates()
 
-    def delete_template(self):
+    def delete_template(self) -> None:
         """Delete selected template."""
-        selected_rows = self.templates_table.selectionModel().selectedRows()
+        _sel = self.templates_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             return
 
         row = selected_rows[0].row()
-        template_name = self.templates_table.item(row, 0).text()
-        template_id = self.templates_table.item(row, 0).data(Qt.UserRole)
+        name_item = self.templates_table.item(row, 0)
+        if name_item is None:
+            return
+        template_name = name_item.text()
+        template_id = name_item.data(Qt.ItemDataRole.UserRole)
 
         reply = QMessageBox.question(
             self,
@@ -1018,7 +1036,7 @@ class TemplateListWidget(QWidget):
                 self.logger.error(f"Error deleting template: {e}")
                 QMessageBox.critical(self, "Error", f"Failed to delete template: {e}")
 
-    def import_csv(self):
+    def import_csv(self) -> None:
         """Import templates from CSV file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Import Templates from CSV", "", "CSV Files (*.csv)"
@@ -1097,7 +1115,7 @@ class TemplateListWidget(QWidget):
             self.logger.error(f"Error importing CSV: {e}")
             QMessageBox.critical(self, "Import Error", f"Failed to import CSV: {e}")
 
-    def export_csv(self):
+    def export_csv(self) -> None:
         """Export templates to CSV file."""
         file_path, _ = QFileDialog.getSaveFileName(
             self, "Export Templates to CSV", "templates.csv", "CSV Files (*.csv)"
@@ -1114,7 +1132,7 @@ class TemplateListWidget(QWidget):
             try:
                 templates = (
                     session.query(MessageTemplate)
-                    .filter(MessageTemplate.deleted_at.is_(None))
+                    .filter(MessageTemplate.deleted_at.is_(None))  # type: ignore[union-attr]
                     .all()
                 )
 
@@ -1166,7 +1184,7 @@ class TemplateListWidget(QWidget):
             self.logger.error(f"Error exporting CSV: {e}")
             QMessageBox.critical(self, "Export Error", f"Failed to export CSV: {e}")
 
-    def filter_templates(self):
+    def filter_templates(self) -> None:
         """Filter templates based on search text."""
         search_text = self.search_edit.text().lower().strip()
 
@@ -1191,7 +1209,7 @@ class TemplateListWidget(QWidget):
 
             self.templates_table.setRowHidden(row, not should_show)
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Recreate the UI with new translations
@@ -1202,7 +1220,7 @@ class TemplateListWidget(QWidget):
 class TemplateWidget(QWidget):
     """Main template management widget."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
@@ -1212,7 +1230,7 @@ class TemplateWidget(QWidget):
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -1224,16 +1242,16 @@ class TemplateWidget(QWidget):
         self.template_list.template_selected.connect(self.on_template_selected)
         self.template_list.template_updated.connect(self.on_template_updated)
 
-    def on_template_selected(self, template_id):
+    def on_template_selected(self, template_id: int) -> None:
         """Handle template selection."""
         # This could show template details in a side panel
 
-    def on_template_updated(self, template_id):
+    def on_template_updated(self, template_id: int) -> None:
         """Handle template update."""
         # Refresh the list
         self.template_list.load_templates()
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # The template_list widget will handle its own language change

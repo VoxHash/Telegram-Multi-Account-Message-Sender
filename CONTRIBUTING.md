@@ -93,7 +93,10 @@ We welcome feature suggestions! Please:
      app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
      app/gui/widgets/cloud_backup_widget.py \
      app/gui/widgets/dashboard_widget.py \
+     app/gui/widgets/log_widget.py \
      app/gui/widgets/plugin_widget.py \
+     app/gui/widgets/recipient_widget.py \
+     app/gui/widgets/template_widget.py \
      app/gui/widgets/testing_widget.py \
      app/gui/widgets/telegram_selector.py
    ```
@@ -226,7 +229,10 @@ We use a clear branching strategy to organize development:
      app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
      app/gui/widgets/cloud_backup_widget.py \
      app/gui/widgets/dashboard_widget.py \
+     app/gui/widgets/log_widget.py \
      app/gui/widgets/plugin_widget.py \
+     app/gui/widgets/recipient_widget.py \
+     app/gui/widgets/template_widget.py \
      app/gui/widgets/testing_widget.py \
      app/gui/widgets/telegram_selector.py
    ```
@@ -307,13 +313,16 @@ isort app/
 # Lint code
 flake8 app/
 
-# Type checking (blocking CI scope; remaining large PyQt widgets deferred)
+# Type checking (blocking CI scope; settings/account/campaign widgets deferred)
 mypy app/core app/services app/models app/plugins \
   app/gui/__init__.py app/gui/main.py app/gui/theme.py \
   app/gui/widgets/__init__.py app/gui/widgets/about_widget.py \
   app/gui/widgets/cloud_backup_widget.py \
   app/gui/widgets/dashboard_widget.py \
+  app/gui/widgets/log_widget.py \
   app/gui/widgets/plugin_widget.py \
+  app/gui/widgets/recipient_widget.py \
+  app/gui/widgets/template_widget.py \
   app/gui/widgets/testing_widget.py \
   app/gui/widgets/telegram_selector.py
 

@@ -135,9 +135,9 @@ CI runs **blocking** mypy (strict flags in `pyproject.toml`) on:
 
 - `app/core`, `app/services`, `app/models`
 - `app/plugins` (example built-ins)
-- Expanded GUI subset: `app/gui/main.py`, `theme.py`, `about_widget.py`, `cloud_backup_widget.py`, `dashboard_widget.py`, `plugin_widget.py`, `testing_widget.py`, `telegram_selector.py`, and package `__init__` modules
+- Expanded GUI subset: `app/gui/main.py`, `theme.py`, `about_widget.py`, `cloud_backup_widget.py`, `dashboard_widget.py`, `log_widget.py`, `plugin_widget.py`, `recipient_widget.py`, `template_widget.py`, `testing_widget.py`, `telegram_selector.py`, and package `__init__` modules
 
-Remaining large PyQt widgets (settings/account/campaign/recipient/template/log) stay outside the gate until further typing passes. See [ROADMAP](../ROADMAP.md) and [CONTRIBUTING](../CONTRIBUTING.md).
+Remaining large PyQt widgets (settings/account/campaign) stay outside the gate until further typing passes. See [ROADMAP](../ROADMAP.md) and [CONTRIBUTING](../CONTRIBUTING.md).
 
 ## See Also
 

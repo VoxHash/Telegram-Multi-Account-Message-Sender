@@ -2,7 +2,7 @@
 Recipient management widgets.
 """
 
-from typing import Optional
+from typing import Any, Optional
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -39,7 +39,7 @@ class RecipientDialog(QDialog):
 
     recipient_saved = pyqtSignal(int)
 
-    def __init__(self, parent=None, recipient: Optional[Recipient] = None):
+    def __init__(self, parent: Optional[QWidget] = None, recipient: Optional[Recipient] = None) -> None:
         super().__init__(parent)
         self.recipient = recipient
         self.logger = get_logger()
@@ -51,7 +51,7 @@ class RecipientDialog(QDialog):
         # Initialize form based on type
         self.on_type_changed()
 
-    def on_type_changed(self):
+    def on_type_changed(self) -> None:
         """Handle recipient type change."""
         recipient_type = self.type_combo.currentText().lower()
 
@@ -96,7 +96,7 @@ class RecipientDialog(QDialog):
             self.first_name_edit.clear()
             self.last_name_edit.clear()
 
-    def browse_telegram_chats(self):
+    def browse_telegram_chats(self) -> None:
         """Open Telegram chat selector dialog."""
         try:
             selector = TelegramSelectorDialog(self)
@@ -130,14 +130,14 @@ class RecipientDialog(QDialog):
             self.logger.error(f"Error opening Telegram selector: {e}")
             QMessageBox.critical(self, _("common.error"), str(e))
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         self.setWindowTitle("Add Recipient" if not self.recipient else "Edit Recipient")
         self.setModal(True)
         self.resize(500, 400)
 
         # Enable help button
-        self.setWindowFlags(self.windowFlags() | Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowContextHelpButtonHint)
 
         layout = QVBoxLayout(self)
 
@@ -245,7 +245,7 @@ class RecipientDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
-    def load_recipient_data(self):
+    def load_recipient_data(self) -> None:
         """Load recipient data into the form."""
         if not self.recipient:
             return
@@ -282,7 +282,7 @@ class RecipientDialog(QDialog):
                 str(self.recipient.thread_id) if self.recipient.thread_id else ""
             )
 
-    def save_recipient(self):
+    def save_recipient(self) -> None:
         """Save recipient data."""
         try:
             # Get recipient type
@@ -356,7 +356,7 @@ class RecipientDialog(QDialog):
                     )
             else:
                 # Create new recipient
-                recipient_data = {
+                recipient_data: dict[str, Any] = {
                     "recipient_type": recipient_type,
                     "email": self.email_edit.text().strip() or None,
                     "bio": self.bio_edit.toPlainText().strip() or None,
@@ -431,14 +431,14 @@ class RecipientDialog(QDialog):
             self.logger.error(f"Error saving recipient: {e}")
             QMessageBox.critical(self, "Error", f"Failed to save recipient: {e}")
 
-    def event(self, event):
+    def event(self, event: Any) -> bool:
         """Handle events including help button clicks."""
         if event.type() == event.EnterWhatsThisMode:
             self.show_help()
             return True
         return super().event(event)
 
-    def show_help(self):
+    def show_help(self) -> None:
         """Show help dialog."""
         help_text = """
         <h3>Add/Edit Recipient Help</h3>
@@ -484,7 +484,7 @@ class RecipientDialog(QDialog):
 
         msg = QMessageBox(self)
         msg.setWindowTitle("Recipient Help")
-        msg.setTextFormat(Qt.RichText)
+        msg.setTextFormat(Qt.TextFormat.RichText)
         msg.setText(help_text)
         msg.setIcon(QMessageBox.Information)
         msg.exec_()
@@ -495,12 +495,12 @@ class CSVImportDialog(QDialog):
 
     recipients_imported = pyqtSignal(list)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         self.setWindowTitle("Import Recipients from CSV")
         self.setModal(True)
@@ -564,14 +564,16 @@ class CSVImportDialog(QDialog):
 
         # Buttons
         buttons = QDialogButtonBox(QDialogButtonBox.Import | QDialogButtonBox.Cancel)
-        buttons.button(QDialogButtonBox.Import).setText("Import")
+        _import_btn = buttons.button(QDialogButtonBox.Import)
+        if _import_btn is not None:
+            _import_btn.setText("Import")
         buttons.accepted.connect(self.import_recipients)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
-    def browse_file(self):
+    def browse_file(self) -> None:
         """Browse for CSV file."""
-        file_path, _ = QFileDialog.getOpenFileName(
+        file_path, _selected_filter = QFileDialog.getOpenFileName(
             self, "Select CSV File", "", "CSV Files (*.csv);;All Files (*)"
         )
 
@@ -579,7 +581,7 @@ class CSVImportDialog(QDialog):
             self.file_path_edit.setText(file_path)
             self.load_csv_columns()
 
-    def load_csv_columns(self):
+    def load_csv_columns(self) -> None:
         """Load CSV columns into mapping combos."""
         try:
             file_path = self.file_path_edit.text()
@@ -600,7 +602,7 @@ class CSVImportDialog(QDialog):
             self.logger.error(f"Error loading CSV columns: {e}")
             QMessageBox.warning(self, "Error", f"Failed to load CSV file: {e}")
 
-    def load_preview(self):
+    def load_preview(self) -> None:
         """Load preview of CSV data."""
         try:
             file_path = self.file_path_edit.text()
@@ -628,7 +630,7 @@ class CSVImportDialog(QDialog):
             self.logger.error(f"Error loading preview: {e}")
             QMessageBox.warning(self, "Error", f"Failed to load preview: {e}")
 
-    def import_recipients(self):
+    def import_recipients(self) -> None:
         """Import recipients from CSV."""
         try:
             file_path = self.file_path_edit.text()
@@ -721,7 +723,7 @@ class RecipientListWidget(QWidget):
     recipient_selected = pyqtSignal(int)
     recipient_updated = pyqtSignal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
@@ -737,7 +739,7 @@ class RecipientListWidget(QWidget):
         self.refresh_timer.timeout.connect(self.refresh_recipients)
         self.refresh_timer.start(30000)  # Refresh every 30 seconds
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -811,14 +813,15 @@ class RecipientListWidget(QWidget):
 
         # Configure table
         header = self.recipients_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Type
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Display Name
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Username/Group
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # ID
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Phone
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Source
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Status
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Messages
+        if header is not None:
+            header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Type
+            header.setSectionResizeMode(1, QHeaderView.Stretch)  # Display Name
+            header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Username/Group
+            header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # ID
+            header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Phone
+            header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Source
+            header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Status
+            header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Messages
 
         self.recipients_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.recipients_table.setSelectionMode(QTableWidget.SingleSelection)
@@ -861,7 +864,7 @@ class RecipientListWidget(QWidget):
         self.status_label = QLabel("Ready")
         layout.addWidget(self.status_label)
 
-    def load_recipients(self):
+    def load_recipients(self) -> None:
         """Load recipients from database."""
         try:
             session = get_session()
@@ -870,7 +873,7 @@ class RecipientListWidget(QWidget):
                 from sqlmodel import select
 
                 recipients = session.exec(
-                    select(Recipient).where(Recipient.is_deleted.is_(False))
+                    select(Recipient).where(Recipient.is_deleted.is_(False))  # type: ignore[attr-defined]
                 ).all()
             finally:
                 session.close()
@@ -887,17 +890,17 @@ class RecipientListWidget(QWidget):
                     type_text = "👤 User"
 
                 type_item = QTableWidgetItem(type_text)
-                type_item.setFlags(type_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                type_item.setTextAlignment(Qt.AlignCenter)
+                type_item.setFlags(type_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
+                type_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.recipients_table.setItem(row, 0, type_item)
 
                 # Display name - Disabled text field
                 display_name_item = QTableWidgetItem(recipient.get_display_name())
                 display_name_item.setFlags(
-                    display_name_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    display_name_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
                 # Store recipient ID in the display name item for selection handling
-                display_name_item.setData(Qt.UserRole, recipient.id)
+                display_name_item.setData(Qt.ItemDataRole.UserRole, recipient.id)
                 self.recipients_table.setItem(row, 1, display_name_item)
 
                 # Username/Group - Disabled text field
@@ -907,7 +910,7 @@ class RecipientListWidget(QWidget):
                     username = f"@{recipient.username}" if recipient.username else ""
                 username_item = QTableWidgetItem(username)
                 username_item.setFlags(
-                    username_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    username_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
                 self.recipients_table.setItem(row, 2, username_item)
 
@@ -917,8 +920,8 @@ class RecipientListWidget(QWidget):
                 else:
                     id_text = str(recipient.user_id) if recipient.user_id else ""
                 id_item = QTableWidgetItem(id_text)
-                id_item.setFlags(id_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                id_item.setTextAlignment(Qt.AlignCenter)
+                id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
+                id_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.recipients_table.setItem(row, 3, id_item)
 
                 # Phone - Disabled text field (only for users)
@@ -926,42 +929,42 @@ class RecipientListWidget(QWidget):
                     recipient.phone_number if recipient.recipient_type.value == "USER" else ""
                 )
                 phone_item = QTableWidgetItem(phone_text or "")
-                phone_item.setFlags(phone_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                phone_item.setTextAlignment(Qt.AlignCenter)
+                phone_item.setFlags(phone_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
+                phone_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.recipients_table.setItem(row, 4, phone_item)
 
                 # Source - Disabled text field
                 source_item = QTableWidgetItem(recipient.source.value.title())
-                source_item.setFlags(source_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
-                source_item.setTextAlignment(Qt.AlignCenter)
+                source_item.setFlags(source_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
+                source_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.recipients_table.setItem(row, 5, source_item)
 
                 # Status - Enhanced button-like appearance
                 status_item = QTableWidgetItem(recipient.status.value.title())
-                status_item.setFlags(status_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable)
+                status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)  # type: ignore[arg-type]
 
                 # Set status-specific styling with button-like appearance
                 if recipient.status == RecipientStatus.ACTIVE:
                     status_item.setBackground(QColor(34, 197, 94))  # Green
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif recipient.status == RecipientStatus.BLOCKED:
                     status_item.setBackground(QColor(239, 68, 68))  # Red
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
                 elif recipient.status == RecipientStatus.INACTIVE:
                     status_item.setBackground(QColor(107, 114, 128))  # Gray
-                    status_item.setForeground(Qt.white)
+                    status_item.setForeground(Qt.GlobalColor.white)
 
                 # Center align status text
-                status_item.setTextAlignment(Qt.AlignCenter)
+                status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.recipients_table.setItem(row, 6, status_item)
 
                 # Messages - Disabled text field
                 messages = f"{recipient.total_messages_sent}/{recipient.total_messages_sent + recipient.total_messages_failed}"
                 messages_item = QTableWidgetItem(messages)
                 messages_item.setFlags(
-                    messages_item.flags() & ~Qt.ItemIsEditable | Qt.ItemIsSelectable
+                    messages_item.flags() & ~Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable  # type: ignore[arg-type]
                 )
-                messages_item.setTextAlignment(Qt.AlignCenter)
+                messages_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.recipients_table.setItem(row, 7, messages_item)
 
             self.status_label.setText(f"Loaded {len(recipients)} recipients")
@@ -973,20 +976,21 @@ class RecipientListWidget(QWidget):
             self.logger.error(f"Error loading recipients: {e}")
             self.status_label.setText(f"Error loading recipients: {e}")
 
-    def refresh_recipients(self):
+    def refresh_recipients(self) -> None:
         """Refresh recipients data."""
         self.load_recipients()
 
-    def on_cell_clicked(self, row, column):
+    def on_cell_clicked(self, row: int, column: int) -> None:
         """Handle cell click events."""
         # For all columns, ensure the row is selected
         self.recipients_table.selectRow(row)
         # Also trigger selection changed manually
         self.on_selection_changed()
 
-    def on_selection_changed(self):
+    def on_selection_changed(self) -> None:
         """Handle selection change."""
-        selected_rows = self.recipients_table.selectionModel().selectedRows()
+        _sel = self.recipients_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         has_selection = len(selected_rows) > 0
 
         self.edit_button.setEnabled(has_selection)
@@ -997,7 +1001,7 @@ class RecipientListWidget(QWidget):
             # Try to get recipient ID from the first column (Display Name column)
             display_name_item = self.recipients_table.item(row, 0)
             if display_name_item:
-                recipient_id = display_name_item.data(Qt.UserRole)
+                recipient_id = display_name_item.data(Qt.ItemDataRole.UserRole)
                 if recipient_id is not None:
                     # Emit signal with recipient ID for further processing
                     self.recipient_selected.emit(recipient_id)
@@ -1006,15 +1010,16 @@ class RecipientListWidget(QWidget):
             else:
                 self.logger.warning(f"No display name item found for row {row}")
 
-    def add_recipient(self):
+    def add_recipient(self) -> None:
         """Add new recipient."""
         dialog = RecipientDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             self.load_recipients()
 
-    def edit_recipient(self):
+    def edit_recipient(self) -> None:
         """Edit selected recipient."""
-        selected_rows = self.recipients_table.selectionModel().selectedRows()
+        _sel = self.recipients_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             return
 
@@ -1024,7 +1029,7 @@ class RecipientListWidget(QWidget):
         if not display_name_item:
             QMessageBox.warning(self, "Selection Error", "No recipient selected")
             return
-        recipient_id = display_name_item.data(Qt.UserRole)
+        recipient_id = display_name_item.data(Qt.ItemDataRole.UserRole)
 
         # Load recipient from database
         session = get_session()
@@ -1041,15 +1046,16 @@ class RecipientListWidget(QWidget):
             if dialog.exec_() == QDialog.Accepted:
                 self.load_recipients()
 
-    def import_csv(self):
+    def import_csv(self) -> None:
         """Import recipients from CSV."""
         dialog = CSVImportDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             self.load_recipients()
 
-    def delete_recipient(self):
+    def delete_recipient(self) -> None:
         """Delete selected recipient."""
-        selected_rows = self.recipients_table.selectionModel().selectedRows()
+        _sel = self.recipients_table.selectionModel()
+        selected_rows = _sel.selectedRows() if _sel is not None else []
         if not selected_rows:
             return
 
@@ -1060,7 +1066,7 @@ class RecipientListWidget(QWidget):
             QMessageBox.warning(self, "Selection Error", "No recipient selected")
             return
         recipient_name = display_name_item.text()
-        recipient_id = display_name_item.data(Qt.UserRole)
+        recipient_id = display_name_item.data(Qt.ItemDataRole.UserRole)
 
         reply = QMessageBox.question(
             self,
@@ -1092,11 +1098,11 @@ class RecipientListWidget(QWidget):
                 self.logger.error(f"Error deleting recipient: {e}")
                 QMessageBox.critical(self, "Error", f"Failed to delete recipient: {e}")
 
-    def export_csv(self):
+    def export_csv(self) -> None:
         """Export recipients to CSV file."""
         try:
             # Open file dialog to select save location
-            file_path, _ = QFileDialog.getSaveFileName(
+            file_path, _selected_filter = QFileDialog.getSaveFileName(
                 self, "Export Recipients", "recipients.csv", "CSV Files (*.csv)"
             )
 
@@ -1110,7 +1116,7 @@ class RecipientListWidget(QWidget):
                 from sqlmodel import select
 
                 recipients = session.exec(
-                    select(Recipient).where(Recipient.is_deleted.is_(False))
+                    select(Recipient).where(Recipient.is_deleted.is_(False))  # type: ignore[attr-defined]
                 ).all()
             finally:
                 session.close()
@@ -1157,7 +1163,7 @@ class RecipientListWidget(QWidget):
             self.logger.error(f"Error exporting recipients: {e}")
             QMessageBox.critical(self, "Export Error", f"Failed to export recipients: {e}")
 
-    def filter_recipients(self):
+    def filter_recipients(self) -> None:
         """Filter recipients based on search text."""
         search_text = self.search_edit.text().lower()
 
@@ -1183,7 +1189,7 @@ class RecipientListWidget(QWidget):
                 # Check if search text matches tags or notes
                 display_name_item = self.recipients_table.item(row, 0)
                 if display_name_item:
-                    recipient_id = display_name_item.data(Qt.UserRole)
+                    recipient_id = display_name_item.data(Qt.ItemDataRole.UserRole)
                     if recipient_id:
                         # Get recipient data to check tags and notes
                         session = get_session()
@@ -1216,7 +1222,7 @@ class RecipientListWidget(QWidget):
 
             self.recipients_table.setRowHidden(row, not should_show)
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Recreate the UI with new translations
@@ -1227,7 +1233,7 @@ class RecipientListWidget(QWidget):
 class RecipientWidget(QWidget):
     """Main recipient management widget."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
@@ -1237,7 +1243,7 @@ class RecipientWidget(QWidget):
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -1249,16 +1255,16 @@ class RecipientWidget(QWidget):
         self.recipient_list.recipient_selected.connect(self.on_recipient_selected)
         self.recipient_list.recipient_updated.connect(self.on_recipient_updated)
 
-    def on_recipient_selected(self, recipient_id):
+    def on_recipient_selected(self, recipient_id: int) -> None:
         """Handle recipient selection."""
         # This could show recipient details in a side panel
 
-    def on_recipient_updated(self, recipient_id):
+    def on_recipient_updated(self, recipient_id: int) -> None:
         """Handle recipient update."""
         # Refresh the list
         self.recipient_list.refresh_recipients()
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # The recipient_list widget will handle its own language change

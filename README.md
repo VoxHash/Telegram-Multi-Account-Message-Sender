@@ -12,6 +12,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-1674b1.svg)](https://github.com/pycqa/isort)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/VoxHash?label=Sponsors&logo=github&color=ea4aaa)](https://github.com/sponsors/VoxHash)
+[![GitHub Discussions](https://img.shields.io/badge/Discussions-community-blue?logo=github)](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
 
 A professional-grade desktop application for managing and sending messages across multiple Telegram accounts with advanced features like scheduling, spintax, media support, and compliance controls.
 
@@ -399,7 +400,9 @@ This application is for educational and legitimate business purposes only. Users
 
 ## 🆘 Support
 
-- **Documentation**: [GitHub Wiki](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/wiki)
+**Community hub (Discussions-first):** [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions) — questions, ideas, and [beta tester signup](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions/2). No Discord invite yet; see [SUPPORT.md](SUPPORT.md).
+
+- **Documentation**: [docs/index.md](docs/index.md) · [SUPPORT.md](SUPPORT.md)
 - **Issues**: [GitHub Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
 - **Email**: [contact@voxhash.dev](mailto:contact@voxhash.dev)
@@ -449,9 +452,9 @@ See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
 
 - **SendGram (hosted SaaS)**: [sendgram.pro](https://www.sendgram.pro) — managed cloud edition for teams
 - **Repository**: [GitHub](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender)
-- **Documentation**: [GitHub Wiki](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/wiki)
+- **Documentation**: [docs/index.md](docs/index.md) · [SUPPORT.md](SUPPORT.md)
 - **Issues**: [GitHub Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
+- **Discussions**: [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions) ([beta testers](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions/2))
 - **Releases**: [GitHub Releases](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/releases)
 - **PyPI**: [PyPI Package](https://pypi.org/project/telegram-multi-account-sender/)
 

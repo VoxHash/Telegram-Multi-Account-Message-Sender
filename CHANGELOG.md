@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.46] - 2026-10-25
+
+### Added
+- **Community: Discussions-first channel**: GitHub Discussions enabled for the repo; welcome, Q&A, and beta-tester threads; `SUPPORT.md` / README / CONTRIBUTING / FAQ routing with real URLs.
+- **Beta tester interest path**: [Discussions #2](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions/2) plus `.github/ISSUE_TEMPLATE/beta_tester.md` and `beta-tester` label (cloud backup / early features).
+- **Unit tests** asserting community docs link Discussions and the beta-tester template.
+
+### Changed
+- Docs (SUPPORT, README, CONTRIBUTING, FAQ, architecture, troubleshooting, ROADMAP) and packaging metadata bump to **1.2.46**.
+- Discord remains deferred until a real invite exists — no invented Discord link.
+
 ## [1.2.45] - 2026-10-25
 
 ### Added

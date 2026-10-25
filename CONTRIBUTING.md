@@ -666,9 +666,9 @@ We follow [Semantic Versioning](https://semver.org/):
 
 If you have questions about contributing:
 
-- **GitHub Discussions**: Use GitHub Discussions for general questions
-- **Issues**: Create an issue for specific problems
-- **Email**: Contact us at contact@voxhash.dev
+- **GitHub Discussions** (primary community channel): [Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions) — Q&A, ideas, and [beta tester interest](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions/2). Full routing guide: [SUPPORT.md](SUPPORT.md). There is no Discord server yet.
+- **Issues**: Bugs, tracked features, [plugin submissions](.github/ISSUE_TEMPLATE/plugin_submission.md), or [beta tester template](.github/ISSUE_TEMPLATE/beta_tester.md)
+- **Email**: Contact us at contact@voxhash.dev (security: see [SECURITY.md](SECURITY.md))
 
 ## 📄 License
 

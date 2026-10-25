@@ -457,7 +457,7 @@ If you're still experiencing problems:
 
 5. **Contact Support:**
    - [GitHub Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
-   - [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
+   - [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions) (primary community channel; see [SUPPORT.md](../SUPPORT.md))
    - Email: contact@voxhash.dev
 
 ## Prevention Tips

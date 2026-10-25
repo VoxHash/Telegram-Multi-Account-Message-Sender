@@ -151,10 +151,15 @@ CI runs **blocking** mypy (strict flags in `pyproject.toml`) on:
 
 See [ROADMAP](../ROADMAP.md) and [CONTRIBUTING](../CONTRIBUTING.md).
 
+## Community
+
+GitHub **Discussions** is the primary community channel (enabled on the repo). Routing and beta-tester signup: [SUPPORT.md](../SUPPORT.md). Discord is not published yet — no unofficial invite is official.
+
 ## See Also
 
 - [API Documentation](api.md) for API details
 - [Development Guide](../CONTRIBUTING.md) for development setup
 - [Installation](installation.md#optional-rust-native-accelerator) for the build step
 - [SECURITY.md](../SECURITY.md) for threat model and dependency audit
+- [SUPPORT.md](../SUPPORT.md) for Discussions, Issues, and beta testers
 

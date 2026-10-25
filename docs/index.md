@@ -26,5 +26,5 @@ Welcome to the Telegram Multi-Account Message Sender documentation!
 ## Project Information
 - **[CHANGELOG](../CHANGELOG.md)**: Version history
 - **[ROADMAP](../ROADMAP.md)**: Future development plans
-- **[Support](../SUPPORT.md)**: Getting help and support
+- **[Support](../SUPPORT.md)**: Discussions-first community hub, beta testers, and contact
 - **[Security](../SECURITY.md)**: Security policy and reporting

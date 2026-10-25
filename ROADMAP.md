@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.45)
+## Current Status (v1.2.46)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -42,16 +42,19 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **Richer community registry submissions** (Whitespace Normalize + Failure Counter installables; analytics sample template; `plugin-catalog-entry` CLI; plugin submission issue template)
 - **Further third-party registry volume** (Emoji Strip Filter + Success Counter Analytics; six downloadable catalog plugins)
 - **Security posture** (threat model for proxies/shared machines; session/credential storage review + `security-check`/`security-harden`; periodic `pip-audit` CI)
+- **Discussions-first community channel** (GitHub Discussions enabled; SUPPORT / README / CONTRIBUTING routing; welcome + Q&A + beta threads; Discord deferred until a real invite exists)
+- **Beta tester interest path** (Discussions #2 + `beta_tester` issue template / label)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Ongoing community registry PRs beyond the curated seed set
 
-### Latest release (v1.2.45 — 2026-10-25)
-- Security: threat model, credential storage review/harden CLI, periodic dependency audit
+### Latest release (v1.2.46 — 2026-10-25)
+- Community: Discussions-first channel + beta tester interest path (no Discord invent)
 
 ### Previous highlights
+- **v1.2.45**: Security: threat model, credential storage review/harden CLI, periodic dependency audit
 - **v1.2.44**: Technical debt: type `app/utils` / `app/cli.py` under the same blocking mypy gate
 - **v1.2.43**: Technical debt: expand blocking mypy GUI subset (`settings_widget` / `account_widget` / `campaign_widget`)
 - **v1.2.42**: Technical debt: expand blocking mypy GUI subset (`log_widget` / `template_widget` / `recipient_widget`)
@@ -95,6 +98,7 @@ Realistic, shippable work — not a full platform rewrite.
 
 | Priority | Item | Outcome |
 | --- | --- | --- |
+| Done (v1.2.46) | Discussions-first community + beta testers | GitHub Discussions enabled; SUPPORT/README/CONTRIBUTING routing; beta discussion + issue template; Discord deferred |
 | Done (v1.2.22) | Plugin marketplace / registry | Discover/install curated plugins via JSON catalog (remote + bundled offline); SHA-256 verify; Plugins → Browse Registry |
 | Done (v1.2.21) | AI-assisted copy tools (optional keys) | Templates rewrite / spintax / variations via OpenAI-compatible Chat Completions; user-supplied `AI_API_KEY`; no SDK hard dependency |
 | Done (v1.2.20 / v1.2.39–v1.2.44) | Stricter mypy (blocking) | Strict flags + CI fail for core/services/models; v1.2.39–v1.2.43 plugins + expanded GUI; v1.2.44 `app/utils` + `app/cli.py` |
@@ -180,8 +184,8 @@ Realistic, shippable work — not a full platform rewrite.
 ## Community
 
 - [x] GitHub Sponsors + issue/PR templates + CODE_OF_CONDUCT
-- [ ] Discord or Discussions-first community channel (Discussions linked in SUPPORT; Discord still open)
-- [ ] Beta tester list for cloud-backup MVP
+- [x] Discussions-first community channel (Discussions enabled + linked in SUPPORT/README/CONTRIBUTING; Discord still open when a real invite exists) — v1.2.46
+- [x] Beta tester list for cloud-backup MVP (Discussions #2 + `beta_tester` issue template) — v1.2.46
 
 ---
 

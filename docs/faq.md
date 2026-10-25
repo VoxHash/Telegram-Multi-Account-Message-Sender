@@ -305,10 +305,16 @@ Yes, configure proxy settings per account in the Accounts tab (HTTP/HTTPS/SOCKS4
 
 ### Where can I get help?
 
-- **Documentation**: See [Documentation Index](index.md)
+**Primary community channel:** [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions) (Questions, Ideas, [beta testers](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions/2)). There is no Discord invite yet — see [SUPPORT.md](../SUPPORT.md).
+
+- **Documentation**: See [Documentation Index](index.md) · [SUPPORT.md](../SUPPORT.md)
 - **Issues**: [GitHub Issues](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions)
 - **Email**: contact@voxhash.dev
+
+### How do I join the beta tester list?
+
+Reply on [Beta testers: cloud backup & early features](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/discussions/2), or open a [Beta tester interest](../.github/ISSUE_TEMPLATE/beta_tester.md) issue. Never paste session files, API keys, or tokens.
 
 ### How do I report a bug?
 

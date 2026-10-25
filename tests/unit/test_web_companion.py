@@ -33,6 +33,7 @@ from app.services.web_companion import (
     maybe_autostart_companion_from_settings,
     parse_web_monitor_argv,
     require_token_for_bind,
+    run_web_monitor_cli,
     start_companion_from_settings,
     stop_companion,
     tokens_match,
@@ -154,6 +155,15 @@ class TestParseWebMonitorArgv:
     def test_non_web_mode(self):
         is_web, _, _, _ = parse_web_monitor_argv(["prog", "--help"])
         assert is_web is False
+
+    def test_help_flags_do_not_start_server(self, capsys):
+        """--help must print usage and exit without binding a port."""
+        for flag in ("--help", "-h"):
+            code = run_web_monitor_cli(["prog", "web-monitor", flag])
+            assert code == 0
+            out = capsys.readouterr().out
+            assert "web companion" in out.lower()
+            assert "--host" in out
 
 
 class TestAuthHelpers:

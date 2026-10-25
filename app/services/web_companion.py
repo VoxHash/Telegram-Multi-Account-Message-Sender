@@ -1134,6 +1134,27 @@ def parse_web_monitor_argv(
     return True, host, port, token
 
 
+def _print_web_monitor_help() -> None:
+    print(
+        """TMAS web companion (read-only local monitor)
+
+  telegram-sender web-monitor
+  telegram-sender web-monitor --host 127.0.0.1 --port 8765
+  telegram-sender web-monitor --host 0.0.0.0 --port 8765 --token <secret>
+
+Options:
+  --host / -H   Bind address (default 127.0.0.1)
+  --port / -p   Port (default 8765)
+  --token / -t  Bearer token (required for non-localhost binds)
+
+Read-only endpoints: /  /api/status  /api/accounts  /api/campaigns
+  /api/activity  /api/overview  /api/charts
+No write/control routes. Prefer localhost; use a TLS reverse proxy for remote access.
+See docs/configuration.md and SECURITY.md.
+"""
+    )
+
+
 def run_web_monitor_cli(argv: Sequence[str]) -> int:
     """
     CLI entry for read-only monitoring server (blocks until Ctrl+C).
@@ -1147,6 +1168,10 @@ def run_web_monitor_cli(argv: Sequence[str]) -> int:
     is_web, host_override, port_override, token_override = parse_web_monitor_argv(argv)
     if not is_web:
         raise ValueError("run_web_monitor_cli requires a web-monitor argv")
+
+    if any(tok in ("-h", "--help") for tok in list(argv[1:])):
+        _print_web_monitor_help()
+        return 0
 
     initialize = __import__("app.services.db", fromlist=["initialize_database"]).initialize_database
     initialize()

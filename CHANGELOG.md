@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`web-monitor --help` / `-h`**: print usage and exit instead of starting the read-only companion server (run hygiene).
+
 ### Changed
 - **ROADMAP**: document Proton Drive cloud backup as a Phase 2 leftover (deferred). Feasibility notes cover Proton Drive SDK (not third-party GA / no auth yet), official Drive CLI for out-of-process upload, rclone Beta constraints, and absence of official WebDAV / Bridge-for-Drive — no in-app Proton provider until a viable first-party path exists.
 - **Docs (FAQ / configuration)**: note that Proton Drive is not a Settings provider yet; use Google Drive, S3, Dropbox, OneDrive, or local handoff export.

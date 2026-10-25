@@ -514,7 +514,7 @@ from app.services.plugin_sdk import (
     check_min_app_version,
 )
 
-catalog, report = validate_catalog_file(Path("registry/catalog.json"), app_version="1.2.35")
+catalog, report = validate_catalog_file(Path("registry/catalog.json"), app_version="1.2.36")
 assert report.ok
 sha_report = validate_catalog_sha256(catalog, Path("registry/plugins"))
 plugin_report = validate_plugin_file(Path("registry/templates/sample_filter_plugin.py"))

@@ -95,6 +95,8 @@ class TestOfficialCatalogHasCommunityPlugins:
         ids = {p["id"] for p in payload["plugins"]}
         assert "voxhash.whitespace-normalize-filter" in ids
         assert "voxhash.failure-counter-analytics" in ids
+        assert "voxhash.emoji-strip-filter" in ids
+        assert "voxhash.success-counter-analytics" in ids
         by_id = {p["id"]: p for p in payload["plugins"]}
         assert by_id["voxhash.whitespace-normalize-filter"]["sha256"] == compute_file_sha256(
             WHITESPACE

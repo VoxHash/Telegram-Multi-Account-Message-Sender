@@ -56,7 +56,7 @@ The application provides a graphical interface for managing multiple Telegram ac
 ## Plugin Registry
 
 1. Open **Plugins → Browse Registry**.
-2. Search or filter by type; the catalog source (remote or bundled offline) is shown above the list.
+2. Search or filter by type; the catalog source (remote or bundled offline) is shown above the list. Curated downloadable entries include URL Strip, Event Logger, Whitespace Normalize, Failure Counter, Emoji Strip, and Success Counter.
 3. Select **Install** on an available entry. The app downloads the plugin into `app_data/plugins/` and verifies SHA-256 when the catalog provides it.
 4. Back on the Plugins list, **Enable** the plugin after reviewing the file. Install never auto-enables third-party code.
 5. Optional: set `PLUGIN_REGISTRY_URL` in Settings / `.env` to point at a mirror. See [Configuration Guide](configuration.md) and [API Reference](api.md).

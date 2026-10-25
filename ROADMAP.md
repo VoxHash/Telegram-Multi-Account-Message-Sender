@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.35)
+## Current Status (v1.2.36)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -40,16 +40,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **OneDrive cloud backup** (Microsoft Graph Bearer token + folder; stdlib HTTP; Settings provider selector)
 - **Signed plugin catalogs** (Ed25519 + `json-sorted-compact`; official `trusted_keys.json`; `plugin-catalog-sign` CLI)
 - **Richer community registry submissions** (Whitespace Normalize + Failure Counter installables; analytics sample template; `plugin-catalog-entry` CLI; plugin submission issue template)
+- **Further third-party registry volume** (Emoji Strip Filter + Success Counter Analytics; six downloadable catalog plugins)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
-- Further third-party registry volume beyond the seed community plugins
+- Ongoing community registry PRs beyond the curated seed set
 
-### Latest release (v1.2.35 — 2026-10-24)
-- Phase 2/4 leftover: richer community registry submissions (seed plugins + catalog-entry tooling)
+### Latest release (v1.2.36 — 2026-10-24)
+- Phase 2/4 leftover: further third-party registry volume (Emoji Strip + Success Counter)
 
 ### Previous highlights
+- **v1.2.35**: Phase 2/4 leftover: richer community registry submissions (seed plugins + catalog-entry tooling)
 - **v1.2.34**: Phase 4 leftover: signed plugin catalogs (Ed25519)
 - **v1.2.33**: Phase 2 leftover: OneDrive cloud backup provider (Microsoft Graph)
 - **v1.2.32**: Phase 2 leftover: Dropbox cloud backup provider (beyond Google Drive + S3)
@@ -114,7 +116,8 @@ Realistic, shippable work — not a full platform rewrite.
   - Leftover: provider presets beyond generic OpenAI-compatible base URL (Azure path quirks, Anthropic native API)
 - [x] Plugin marketplace / registry (curated catalog discover + verified install)
   - [x] Community seed submissions beyond the original two official plugins (Whitespace Normalize Filter + Failure Counter Analytics; analytics sample template; `plugin-catalog-entry` CLI) — v1.2.35
-  - Leftover: further third-party volume beyond seed community plugins
+  - [x] Further third-party registry volume (Emoji Strip Filter + Success Counter Analytics; six downloadable plugins) — v1.2.36
+  - Leftover: ongoing community PRs / external third-party authors beyond the curated seed set
 
 ### Phase 3 (later): Platform expansion
 - [x] Enhanced macOS/Linux packaging and file associations
@@ -132,7 +135,8 @@ Realistic, shippable work — not a full platform rewrite.
 - [x] Broader developer SDK polish as registry submissions grow (v1.2.30)
 - [x] Signed plugin catalogs (Ed25519; `plugin-catalog-sign`; optional require-signature) — v1.2.34
 - [x] Richer community registry submissions (seed installables + catalog-entry tooling + submission issue template) — v1.2.35
-  - Leftover: further third-party volume beyond seed community plugins
+- [x] Further third-party registry volume (Emoji Strip + Success Counter; six downloadable plugins) — v1.2.36
+  - Leftover: ongoing community PRs / external third-party authors beyond the curated seed set
 
 ---
 

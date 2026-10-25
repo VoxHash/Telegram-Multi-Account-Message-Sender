@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.36] - 2026-10-24
+
+### Added
+- **Phase 2/4 leftover: further third-party registry volume**: Two additional community installables — Emoji Strip Filter and Success Counter Analytics — bringing the curated catalog to six downloadable plugins (plus two bundled documentation entries).
+- **Unit tests** for emoji strip / success counter behavior, catalog SHA-256 presence, and official↔bundled catalog sync.
+
+### Changed
+- Official signed `registry/catalog.json` (and bundled offline copy) lists the expanded community set; ROADMAP marks further seed volume as shipped (ongoing community PRs still welcome).
+
 ## [1.2.35] - 2026-10-24
 
 ### Added

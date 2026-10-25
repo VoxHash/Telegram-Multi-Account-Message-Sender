@@ -135,12 +135,58 @@
       "sha256": "9dfa7406bcf9e239ca873d555c0a5153461bd3853ff7a9f1d22f42af25a2969f",
       "filename": "failure_counter_analytics.py",
       "bundled": false
+    },
+    {
+      "id": "voxhash.emoji-strip-filter",
+      "name": "Emoji Strip Filter",
+      "version": "1.0.0",
+      "description": "Removes emoji and pictograph characters from outgoing campaign messages (optional space tidy).",
+      "author": "VoxHash",
+      "plugin_type": "filter",
+      "tags": [
+        "filter",
+        "emoji",
+        "hygiene",
+        "compliance",
+        "community",
+        "registry"
+      ],
+      "homepage": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender",
+      "repository": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/tree/main/registry/plugins",
+      "license": "EPL-2.0",
+      "min_app_version": "1.2.0",
+      "download_url": "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender/main/registry/plugins/emoji_strip_filter.py",
+      "sha256": "87cd877be75a66fd3ebf394c4b39282e36845885d458d12650750905f8496392",
+      "filename": "emoji_strip_filter.py",
+      "bundled": false
+    },
+    {
+      "id": "voxhash.success-counter-analytics",
+      "name": "Success Counter Analytics",
+      "version": "1.0.0",
+      "description": "Counts message/campaign success events and keeps a short recent success list for operators.",
+      "author": "VoxHash",
+      "plugin_type": "analytics",
+      "tags": [
+        "analytics",
+        "success",
+        "community",
+        "registry"
+      ],
+      "homepage": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender",
+      "repository": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/tree/main/registry/plugins",
+      "license": "EPL-2.0",
+      "min_app_version": "1.2.0",
+      "download_url": "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender/main/registry/plugins/success_counter_analytics.py",
+      "sha256": "1f9a13327be10c45f3f79a49806ddc583bc21529c402ed87c476708e28c2f0e1",
+      "filename": "success_counter_analytics.py",
+      "bundled": false
     }
   ],
   "signature": {
     "alg": "ed25519",
     "key_id": "voxhash-registry-2026",
     "canonicalization": "json-sorted-compact",
-    "sig": "RS0CEklcLKAyZnMprHi4TEFF1p1HNjmBSfl71kl2_7dKDm5q81a_k1Ih2OanYSnuZZLPzrhj2aensAyWATAMCQ"
+    "sig": "RE4BjaHbTisypvXBcsMqKFwNJiVmihxOIz6HvQOe7_lIyCZeOr29jgoHVDTSmHb1nKcoBOXpDZYe3RWTNI28CA"
   }
 }

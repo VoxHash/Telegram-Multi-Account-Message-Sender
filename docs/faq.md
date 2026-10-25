@@ -109,10 +109,11 @@ Open **Plugins → Browse Registry** to discover curated plugins from the offici
 
 ### How do I submit or validate a registry plugin?
 
-1. Start from `registry/templates/sample_filter_plugin.py` (absolute imports only).
-2. Add the `.py` under `registry/plugins/` and an entry in `registry/catalog.json` (`download_url`, `filename`, `sha256`).
-3. Run `telegram-sender plugin-validate path/to/plugin.py` and `telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins`.
-4. Open a pull request. Install never auto-enables third-party code.
+1. Start from `registry/templates/sample_filter_plugin.py` or `sample_analytics_plugin.py` (absolute imports only).
+2. Add the `.py` under `registry/plugins/`.
+3. Generate an entry with `telegram-sender plugin-catalog-entry path/to/plugin.py` (optionally `--append-to registry/catalog.json`).
+4. Run `telegram-sender plugin-validate path/to/plugin.py` and `telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins`.
+5. Open a pull request (or a **Plugin registry submission** issue). Install never auto-enables third-party code. Maintainers re-sign the official catalog after merge.
 
 ### What is the web companion?
 

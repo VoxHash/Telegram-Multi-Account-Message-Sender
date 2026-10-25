@@ -81,7 +81,7 @@ Validate a catalog submission or a plugin `.py` package before opening a registr
 ```bash
 telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins
 telegram-sender plugin-validate registry/plugins/url_strip_filter.py
-telegram-sender plugin-validate registry/templates/sample_filter_plugin.py --app-version 1.2.31
+telegram-sender plugin-validate registry/templates/sample_filter_plugin.py --app-version 1.2.35
 python -m app.cli plugin-validate path/to/plugin.py
 ```
 
@@ -91,7 +91,25 @@ python -m app.cli plugin-validate path/to/plugin.py
 | `--plugins-dir` / `-d` | With a catalog: verify SHA-256 digests against local plugin files |
 | `--app-version` / `-a` | App version for `min_app_version` checks (defaults to this install) |
 
-Catalog checks cover schema version, entry fields, versions, and known `plugin_type` values. Unsigned catalogs warn; invalid signatures fail. Plugin checks require absolute imports (`from app.core.plugin import …`), a concrete `Plugin` subclass, metadata, and a valid default config. See [API](api.md) and `registry/templates/sample_filter_plugin.py`.
+Catalog checks cover schema version, entry fields, versions, and known `plugin_type` values. Unsigned catalogs warn; invalid signatures fail. Plugin checks require absolute imports (`from app.core.plugin import …`), a concrete `Plugin` subclass, metadata, and a valid default config. See [API](api.md) and `registry/templates/sample_filter_plugin.py` / `sample_analytics_plugin.py`.
+
+### Build a catalog entry (community submissions)
+
+Generate a ready-to-paste catalog JSON object (metadata + SHA-256) from a plugin file:
+
+```bash
+telegram-sender plugin-catalog-entry registry/plugins/whitespace_normalize_filter.py
+telegram-sender plugin-catalog-entry path/to/plugin.py --id community.my-filter \
+    --append-to registry/catalog.json
+```
+
+| Flag | Description |
+| --- | --- |
+| path | Plugin `.py` to inspect |
+| `--id` | Override suggested catalog id (`author.name` slug) |
+| `--download-url` / `-u` | Override HTTPS download URL |
+| `--append-to` / `-c` | Write into a catalog JSON (clears `signature`; maintainers re-sign) |
+| `--replace` | Overwrite an existing entry with the same id when appending |
 
 ### Sign a registry catalog (maintainers)
 

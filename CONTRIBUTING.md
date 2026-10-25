@@ -111,15 +111,21 @@ We welcome feature suggestions! Please:
 
 Community plugins for the curated marketplace:
 
-1. Start from `registry/templates/sample_filter_plugin.py` (absolute imports: `from app.core.plugin import …`).
-2. Add the installable file under `registry/plugins/` and an entry in `registry/catalog.json` (`id`, `download_url`, `filename`, `sha256`, `plugin_type`, `min_app_version`).
-3. Validate before opening a PR:
+1. Start from `registry/templates/sample_filter_plugin.py` or `sample_analytics_plugin.py` (absolute imports: `from app.core.plugin import …`).
+2. Add the installable file under `registry/plugins/`.
+3. Generate a catalog entry (metadata + SHA-256), then optionally append it:
+   ```bash
+   telegram-sender plugin-catalog-entry path/to/your_plugin.py --id community.your-plugin
+   telegram-sender plugin-catalog-entry path/to/your_plugin.py --id community.your-plugin \
+       --append-to registry/catalog.json
+   ```
+4. Validate before opening a PR:
    ```bash
    telegram-sender plugin-validate path/to/your_plugin.py
    telegram-sender plugin-validate registry/catalog.json --plugins-dir registry/plugins
    ```
-4. Keep the PR focused on the plugin + catalog entry; do not auto-enable third-party code on install.
-5. Maintainers re-sign the official catalog after merging catalog edits (`telegram-sender plugin-catalog-sign … --in-place`) and sync `app/plugins/registry/catalog.json`. Private keys stay offline (`registry/keys/*.priv` is gitignored).
+5. Keep the PR focused on the plugin + catalog entry; do not auto-enable third-party code on install. You can also open a GitHub issue with the **Plugin registry submission** template.
+6. Maintainers re-sign the official catalog after merging catalog edits (`telegram-sender plugin-catalog-sign … --in-place`) and sync `app/plugins/registry/catalog.json`. Private keys stay offline (`registry/keys/*.priv` is gitignored).
 
 See [docs/api.md](docs/api.md) (Plugin SDK validation) and [docs/cli.md](docs/cli.md).
 

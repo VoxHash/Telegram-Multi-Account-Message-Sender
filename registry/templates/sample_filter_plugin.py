@@ -7,8 +7,10 @@ Copy this file, rename it, then:
 2. Implement ``filter_message`` (or switch base class for analytics / etc.).
 3. Use **absolute** imports only (``from app.core.plugin import …``) so the
    file works under ``app_data/plugins/`` after registry install.
-4. Add a catalog entry in ``registry/catalog.json`` with ``download_url``,
-   ``filename``, and ``sha256`` of this file.
+4. Generate a catalog entry (SHA-256 + metadata)::
+
+       telegram-sender plugin-catalog-entry path/to/your_plugin.py
+
 5. Validate before opening a PR::
 
        telegram-sender plugin-validate path/to/your_plugin.py

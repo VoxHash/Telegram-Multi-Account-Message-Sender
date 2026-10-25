@@ -501,7 +501,7 @@ Installable registry plugins must use absolute imports (`from app.core.plugin im
 
 #### Plugin SDK validation (`app.services.plugin_sdk`)
 
-Helpers for catalog / plugin package submissions (schema version, SHA-256, Ed25519 signatures, structural checks). CLI: `telegram-sender plugin-validate` / `plugin-catalog-sign`.
+Helpers for catalog / plugin package submissions (schema version, SHA-256, Ed25519 signatures, structural checks, catalog-entry builder). CLI: `telegram-sender plugin-validate` / `plugin-catalog-entry` / `plugin-catalog-sign`.
 
 ```python
 from app.services.catalog_signing import verify_catalog_payload, sign_catalog_payload
@@ -514,7 +514,7 @@ from app.services.plugin_sdk import (
     check_min_app_version,
 )
 
-catalog, report = validate_catalog_file(Path("registry/catalog.json"), app_version="1.2.31")
+catalog, report = validate_catalog_file(Path("registry/catalog.json"), app_version="1.2.35")
 assert report.ok
 sha_report = validate_catalog_sha256(catalog, Path("registry/plugins"))
 plugin_report = validate_plugin_file(Path("registry/templates/sample_filter_plugin.py"))
@@ -526,11 +526,13 @@ plugin_report = validate_plugin_file(Path("registry/templates/sample_filter_plug
 - `compute_file_sha256`
 - `validate_catalog_schema` / `validate_catalog_file` / `validate_catalog_sha256`
 - `validate_plugin_file`
+- `build_catalog_entry_dict` / `append_catalog_entry` / `suggest_catalog_plugin_id`
 - `parse_plugin_validate_argv` / `run_plugin_validate_cli`
+- `parse_plugin_catalog_entry_argv` / `run_plugin_catalog_entry_cli`
 - `parse_plugin_catalog_sign_argv` / `run_plugin_catalog_sign_cli`
 - `app.services.catalog_signing` (`sign_catalog_payload` / `verify_catalog_payload` / trusted keys)
 
-**Sample template:** `registry/templates/sample_filter_plugin.py`  
+**Sample templates:** `registry/templates/sample_filter_plugin.py`, `sample_analytics_plugin.py`  
 **Base classes:** `app.core.plugin` (`Plugin`, `MessageFilterPlugin`, `AnalyticsPlugin`, `PluginMetadata`, `PluginType`, `PluginAPI`)
 
 ### AI Copy Service (optional)

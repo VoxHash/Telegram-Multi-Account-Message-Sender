@@ -12,8 +12,10 @@ sys.path.insert(0, str(app_dir))
 
 from app.services.handoff import parse_handoff_argv, run_handoff_cli  # noqa: E402
 from app.services.plugin_sdk import (  # noqa: E402
+    parse_plugin_catalog_entry_argv,
     parse_plugin_catalog_sign_argv,
     parse_plugin_validate_argv,
+    run_plugin_catalog_entry_cli,
     run_plugin_catalog_sign_cli,
     run_plugin_validate_cli,
 )
@@ -33,6 +35,10 @@ def main() -> None:
     is_plugin_validate, *_ = parse_plugin_validate_argv(sys.argv)
     if is_plugin_validate:
         raise SystemExit(run_plugin_validate_cli(sys.argv))
+
+    is_catalog_entry, *_ = parse_plugin_catalog_entry_argv(sys.argv)
+    if is_catalog_entry:
+        raise SystemExit(run_plugin_catalog_entry_cli(sys.argv))
 
     is_catalog_sign, *_ = parse_plugin_catalog_sign_argv(sys.argv)
     if is_catalog_sign:

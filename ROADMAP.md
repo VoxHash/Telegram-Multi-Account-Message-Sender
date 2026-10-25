@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.34)
+## Current Status (v1.2.35)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -39,16 +39,18 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **Dropbox cloud backup** (Bearer access token + folder; stdlib HTTP; Settings provider selector)
 - **OneDrive cloud backup** (Microsoft Graph Bearer token + folder; stdlib HTTP; Settings provider selector)
 - **Signed plugin catalogs** (Ed25519 + `json-sorted-compact`; official `trusted_keys.json`; `plugin-catalog-sign` CLI)
+- **Richer community registry submissions** (Whitespace Normalize + Failure Counter installables; analytics sample template; `plugin-catalog-entry` CLI; plugin submission issue template)
 
 ### In progress
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
-- Broader community registry submissions beyond official + template
+- Further third-party registry volume beyond the seed community plugins
 
-### Latest release (v1.2.34 — 2026-10-24)
-- Phase 4 leftover: signed plugin catalogs (Ed25519)
+### Latest release (v1.2.35 — 2026-10-24)
+- Phase 2/4 leftover: richer community registry submissions (seed plugins + catalog-entry tooling)
 
 ### Previous highlights
+- **v1.2.34**: Phase 4 leftover: signed plugin catalogs (Ed25519)
 - **v1.2.33**: Phase 2 leftover: OneDrive cloud backup provider (Microsoft Graph)
 - **v1.2.32**: Phase 2 leftover: Dropbox cloud backup provider (beyond Google Drive + S3)
 - **v1.2.31**: Phase 2: S3-compatible cloud backup provider (beyond Google Drive)
@@ -111,7 +113,8 @@ Realistic, shippable work — not a full platform rewrite.
   - Leftover: non-English locale strings for AI UI keys (English kit shipped; other locales fall back to key path until translated)
   - Leftover: provider presets beyond generic OpenAI-compatible base URL (Azure path quirks, Anthropic native API)
 - [x] Plugin marketplace / registry (curated catalog discover + verified install)
-  - Leftover: community submissions beyond the two official registry plugins (validation CLI + sample template shipped in v1.2.30; signed catalogs in v1.2.34)
+  - [x] Community seed submissions beyond the original two official plugins (Whitespace Normalize Filter + Failure Counter Analytics; analytics sample template; `plugin-catalog-entry` CLI) — v1.2.35
+  - Leftover: further third-party volume beyond seed community plugins
 
 ### Phase 3 (later): Platform expansion
 - [x] Enhanced macOS/Linux packaging and file associations
@@ -128,7 +131,8 @@ Realistic, shippable work — not a full platform rewrite.
 - [x] Selective entity export (templates/campaigns only) + merge-on-import vs replace (v1.2.29)
 - [x] Broader developer SDK polish as registry submissions grow (v1.2.30)
 - [x] Signed plugin catalogs (Ed25519; `plugin-catalog-sign`; optional require-signature) — v1.2.34
-  - Leftover: richer third-party submission volume beyond official + template
+- [x] Richer community registry submissions (seed installables + catalog-entry tooling + submission issue template) — v1.2.35
+  - Leftover: further third-party volume beyond seed community plugins
 
 ---
 

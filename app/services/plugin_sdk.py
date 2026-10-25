@@ -17,7 +17,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from app.core.plugin import (
     AnalyticsPlugin,
@@ -493,6 +493,144 @@ def format_validation_report(report: ValidationReport) -> str:
     return "\n".join(lines)
 
 
+DEFAULT_REGISTRY_RAW_BASE = (
+    "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender"
+    "/main/registry/plugins"
+)
+
+
+def slugify_plugin_id_part(text: str) -> str:
+    """Slugify author/name fragments for a catalog ``id`` (lowercase, hyphenated)."""
+    cleaned = re.sub(r"[^a-zA-Z0-9]+", "-", (text or "").strip().lower())
+    return cleaned.strip("-") or "plugin"
+
+
+def suggest_catalog_plugin_id(author: str, name: str) -> str:
+    """Suggest ``author.plugin-name`` style catalog id from metadata."""
+    left = slugify_plugin_id_part(author) or "community"
+    right = slugify_plugin_id_part(name) or "plugin"
+    return f"{left}.{right}"
+
+
+def build_catalog_entry_dict(
+    path: Path,
+    *,
+    plugin_id: Optional[str] = None,
+    download_url: Optional[str] = None,
+    raw_base: str = DEFAULT_REGISTRY_RAW_BASE,
+) -> Dict[str, Any]:
+    """
+    Build a registry catalog entry dict from a plugin ``.py`` file.
+
+    Loads the plugin, reads ``PluginMetadata``, and computes SHA-256 of the file.
+    Raises ``ValueError`` when the file is not a valid registry plugin package.
+    """
+    report = validate_plugin_file(path)
+    if not report.ok:
+        raise ValueError(format_validation_report(report))
+
+    module_name = f"_tmas_catalog_entry_{path.stem}"
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        raise ValueError(f"could not create import spec for {path}")
+
+    module = importlib.util.module_from_spec(spec)
+    parent = str(path.parent)
+    inserted = False
+    if parent not in sys.path:
+        sys.path.insert(0, parent)
+        inserted = True
+    try:
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        plugin_class = _find_concrete_plugin_class(module)
+        if plugin_class is None:
+            raise ValueError("no concrete Plugin subclass found")
+        api = PluginAPI(
+            services={
+                "logger": None,
+                "settings": None,
+                "session": None,
+                "campaign_manager": None,
+            }
+        )
+        instance = plugin_class(api)
+        metadata = instance.metadata
+    finally:
+        sys.modules.pop(module_name, None)
+        if inserted and parent in sys.path:
+            sys.path.remove(parent)
+
+    filename = path.name
+    entry_id = (plugin_id or "").strip() or suggest_catalog_plugin_id(
+        metadata.author, metadata.name
+    )
+    url = (download_url or "").strip() or f"{raw_base.rstrip('/')}/{filename}"
+    plugin_type = (
+        metadata.plugin_type.value
+        if isinstance(metadata.plugin_type, PluginType)
+        else str(metadata.plugin_type)
+    )
+    return {
+        "id": entry_id,
+        "name": metadata.name,
+        "version": metadata.version,
+        "description": metadata.description,
+        "author": metadata.author,
+        "plugin_type": plugin_type,
+        "tags": list(metadata.tags or []),
+        "homepage": metadata.homepage or "",
+        "repository": metadata.repository or "",
+        "license": metadata.license or "EPL-2.0",
+        "min_app_version": metadata.min_app_version or "1.2.0",
+        "download_url": url,
+        "sha256": compute_file_sha256(path),
+        "filename": filename,
+        "bundled": False,
+    }
+
+
+def append_catalog_entry(
+    catalog_path: Path,
+    entry: Dict[str, Any],
+    *,
+    replace_existing: bool = False,
+) -> None:
+    """
+    Append (or replace) a plugin entry in a catalog JSON file.
+
+    Removes any existing ``signature`` block so maintainers must re-sign.
+    """
+    payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("catalog root must be a JSON object")
+    plugins = payload.get("plugins")
+    if not isinstance(plugins, list):
+        raise ValueError("catalog plugins must be a list")
+    entry_id = entry.get("id")
+    if not isinstance(entry_id, str) or not entry_id.strip():
+        raise ValueError("entry.id is required")
+    existing_index = None
+    for index, raw in enumerate(plugins):
+        if isinstance(raw, dict) and raw.get("id") == entry_id:
+            existing_index = index
+            break
+    if existing_index is not None:
+        if not replace_existing:
+            raise ValueError(
+                f"plugin id {entry_id!r} already exists; pass --replace to overwrite"
+            )
+        plugins[existing_index] = entry
+    else:
+        plugins.append(entry)
+    payload["plugins"] = plugins
+    payload.pop("signature", None)
+    catalog_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def parse_plugin_validate_argv(
     argv: Sequence[str],
 ) -> Tuple[
@@ -627,6 +765,156 @@ def run_plugin_validate_cli(argv: Sequence[str]) -> int:
     print()
     print(_plugin_validate_help())
     return 1
+
+
+def parse_plugin_catalog_entry_argv(
+    argv: Sequence[str],
+) -> Tuple[
+    bool,
+    Optional[Path],
+    Optional[str],
+    Optional[str],
+    Optional[Path],
+    bool,
+    bool,
+]:
+    """
+    Detect ``plugin-catalog-entry`` CLI mode.
+
+    Returns
+    ``(is_mode, plugin_path, plugin_id, download_url, append_to, replace, help_requested)``.
+    """
+    tokens = list(argv[1:]) if argv else []
+    if not tokens:
+        return False, None, None, None, None, False, False
+
+    cmd = tokens[0].lower().replace("_", "-")
+    if cmd not in ("plugin-catalog-entry", "catalog-entry", "plugin-entry"):
+        return False, None, None, None, None, False, False
+
+    plugin_path: Optional[Path] = None
+    plugin_id: Optional[str] = None
+    download_url: Optional[str] = None
+    append_to: Optional[Path] = None
+    replace = False
+    help_requested = False
+    positional: List[str] = []
+    i = 1
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok in ("-h", "--help"):
+            help_requested = True
+            i += 1
+            continue
+        if tok in ("--id",) and i + 1 < len(tokens):
+            plugin_id = tokens[i + 1]
+            i += 2
+            continue
+        if tok.startswith("--id="):
+            plugin_id = tok.split("=", 1)[1]
+            i += 1
+            continue
+        if tok in ("--download-url", "-u") and i + 1 < len(tokens):
+            download_url = tokens[i + 1]
+            i += 2
+            continue
+        if tok.startswith("--download-url="):
+            download_url = tok.split("=", 1)[1]
+            i += 1
+            continue
+        if tok in ("--append-to", "-c") and i + 1 < len(tokens):
+            append_to = Path(tokens[i + 1])
+            i += 2
+            continue
+        if tok.startswith("--append-to="):
+            append_to = Path(tok.split("=", 1)[1])
+            i += 1
+            continue
+        if tok in ("--replace",):
+            replace = True
+            i += 1
+            continue
+        if tok.startswith("-"):
+            positional.append(tok)
+            i += 1
+            continue
+        positional.append(tok)
+        i += 1
+
+    if positional:
+        plugin_path = Path(positional[0])
+    return True, plugin_path, plugin_id, download_url, append_to, replace, help_requested
+
+
+def _plugin_catalog_entry_help() -> str:
+    return """Usage:
+  telegram-sender plugin-catalog-entry <plugin.py> [--id ID] [--download-url URL]
+      [--append-to catalog.json] [--replace]
+
+Build a ready-to-paste registry catalog entry (metadata + SHA-256) from a plugin .py.
+
+  --id              Override suggested catalog id (default: author.name slug)
+  --download-url    Override HTTPS download URL (default: official raw GitHub path)
+  --append-to / -c  Write the entry into a catalog JSON (clears signature; re-sign after)
+  --replace         When appending, overwrite an existing entry with the same id
+
+Examples:
+  telegram-sender plugin-catalog-entry registry/plugins/whitespace_normalize_filter.py
+  telegram-sender plugin-catalog-entry my_filter.py --id community.my-filter \\
+      --append-to registry/catalog.json
+"""
+
+
+def run_plugin_catalog_entry_cli(argv: Sequence[str]) -> int:
+    """CLI entry for ``plugin-catalog-entry``. Returns process exit code."""
+    (
+        is_mode,
+        plugin_path,
+        plugin_id,
+        download_url,
+        append_to,
+        replace,
+        help_requested,
+    ) = parse_plugin_catalog_entry_argv(argv)
+    if not is_mode:
+        raise ValueError("run_plugin_catalog_entry_cli requires a plugin-catalog-entry argv")
+
+    if help_requested:
+        print(_plugin_catalog_entry_help())
+        return 0
+    if plugin_path is None:
+        print(_plugin_catalog_entry_help())
+        return 1
+
+    try:
+        entry = build_catalog_entry_dict(
+            plugin_path, plugin_id=plugin_id, download_url=download_url
+        )
+    except ValueError as exc:
+        print(str(exc))
+        return 1
+    except Exception as exc:  # noqa: BLE001
+        print(f"Failed to build catalog entry: {exc}")
+        return 1
+
+    rendered = json.dumps(entry, indent=2, ensure_ascii=False)
+    if append_to is None:
+        print(rendered)
+        return 0
+
+    try:
+        append_catalog_entry(append_to, entry, replace_existing=replace)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        print(f"Could not append to catalog: {exc}")
+        return 1
+
+    print(rendered)
+    print()
+    print(
+        f"Appended entry id={entry['id']!r} to {append_to} "
+        "(signature cleared — maintainers must re-sign)."
+    )
+    return 0
 
 
 def parse_plugin_catalog_sign_argv(

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.35] - 2026-10-24
+
+### Added
+- **Phase 2/4 leftover: richer community registry submissions**: Two new installable catalog plugins — Whitespace Normalize Filter and Failure Counter Analytics — plus an analytics sample template (`registry/templates/sample_analytics_plugin.py`).
+- **CLI**: `telegram-sender plugin-catalog-entry <plugin.py> [--id ID] [--download-url URL] [--append-to catalog.json] [--replace]` builds a ready-to-paste catalog entry (metadata + SHA-256) for PRs.
+- **GitHub issue template**: `.github/ISSUE_TEMPLATE/plugin_submission.md` for community marketplace proposals.
+- **Unit tests** for slug/id helpers, entry builder, append/replace (clears signature), official catalog community plugins, and CLI argv.
+
+### Changed
+- Official signed `registry/catalog.json` (and bundled offline copy) now lists four installable plugins; docs/CONTRIBUTING describe the catalog-entry workflow.
+
 ## [1.2.34] - 2026-10-24
 
 ### Added

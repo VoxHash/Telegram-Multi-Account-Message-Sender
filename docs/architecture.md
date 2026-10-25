@@ -124,10 +124,10 @@ Default bind is `127.0.0.1:8765`. Non-loopback binds require `WEB_COMPANION_TOKE
 | `PluginManager` | Discover/load/enable `.py` plugins from `app_data/plugins/` and built-ins |
 | `PluginRegistryService` | Curated JSON catalog fetch/search/install with optional SHA-256 + Ed25519 catalog signature verify |
 | `catalog_signing` | Ed25519 sign/verify (`json-sorted-compact`); trusted keys under `registry/keys/` |
-| `plugin_sdk` | Catalog schema / SHA-256 / plugin package validation; CLI `plugin-validate` / `plugin-catalog-sign` |
-| `registry/` | Source catalog + installable plugins; `registry/templates/` sample for submissions |
+| `plugin_sdk` | Catalog schema / SHA-256 / plugin package validation; CLI `plugin-validate` / `plugin-catalog-entry` / `plugin-catalog-sign` |
+| `registry/` | Source catalog + installable plugins; `registry/templates/` filter + analytics samples for submissions |
 
-Install never auto-enables third-party code. Submit via PR after `telegram-sender plugin-validate`. Maintainers re-sign `registry/catalog.json` after edits.
+Install never auto-enables third-party code. Submit via PR after `plugin-catalog-entry` + `plugin-validate`. Maintainers re-sign `registry/catalog.json` after edits.
 
 ## See Also
 

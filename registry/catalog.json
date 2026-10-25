@@ -90,12 +90,57 @@
       "filename": "example_analytics_plugin.py",
       "bundled": true,
       "local_only": true
+    },
+    {
+      "id": "voxhash.whitespace-normalize-filter",
+      "name": "Whitespace Normalize Filter",
+      "version": "1.0.0",
+      "description": "Trims edges and collapses repeated spaces/newlines in outgoing campaign messages.",
+      "author": "VoxHash",
+      "plugin_type": "filter",
+      "tags": [
+        "filter",
+        "whitespace",
+        "hygiene",
+        "community",
+        "registry"
+      ],
+      "homepage": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender",
+      "repository": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/tree/main/registry/plugins",
+      "license": "EPL-2.0",
+      "min_app_version": "1.2.0",
+      "download_url": "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender/main/registry/plugins/whitespace_normalize_filter.py",
+      "sha256": "878265db479fb03c41f916e2bf59ac88c7ce2557dca742af8b1f2fd570cb1dde",
+      "filename": "whitespace_normalize_filter.py",
+      "bundled": false
+    },
+    {
+      "id": "voxhash.failure-counter-analytics",
+      "name": "Failure Counter Analytics",
+      "version": "1.0.0",
+      "description": "Counts message/campaign failure events and keeps a short recent failure list for operators.",
+      "author": "VoxHash",
+      "plugin_type": "analytics",
+      "tags": [
+        "analytics",
+        "failures",
+        "community",
+        "registry"
+      ],
+      "homepage": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender",
+      "repository": "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/tree/main/registry/plugins",
+      "license": "EPL-2.0",
+      "min_app_version": "1.2.0",
+      "download_url": "https://raw.githubusercontent.com/VoxHash/Telegram-Multi-Account-Message-Sender/main/registry/plugins/failure_counter_analytics.py",
+      "sha256": "9dfa7406bcf9e239ca873d555c0a5153461bd3853ff7a9f1d22f42af25a2969f",
+      "filename": "failure_counter_analytics.py",
+      "bundled": false
     }
   ],
   "signature": {
     "alg": "ed25519",
     "key_id": "voxhash-registry-2026",
     "canonicalization": "json-sorted-compact",
-    "sig": "Ivw9rJWEKsKCr15IbMyMQZpyhUUf00J1DWgZlIzk0DSrLj-O4DnU5_HEQe6fHWIEAGE4U5Ze2AqprmG-jVbmCg"
+    "sig": "RS0CEklcLKAyZnMprHi4TEFF1p1HNjmBSfl71kl2_7dKDm5q81a_k1Ih2OanYSnuZZLPzrhj2aensAyWATAMCQ"
   }
 }

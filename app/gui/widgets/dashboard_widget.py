@@ -48,28 +48,34 @@ class StatCard(QFrame):
     def __init__(self, title: str, value: str, subtitle: str = "", parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setFrameShape(QFrame.StyledPanel)
+        self.setObjectName("statCard")
         self.setStyleSheet("""
-            QFrame {
+            QFrame#statCard {
                 background-color: palette(base);
                 border: 1px solid palette(mid);
-                border-radius: 8px;
-                padding: 12px;
+                border-radius: 10px;
+                padding: 14px;
             }
         """)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(4)
 
         self.title_label = QLabel(title)
-        self.title_label.setStyleSheet("color: palette(mid); font-size: 12px;")
+        self.title_label.setStyleSheet(
+            "color: palette(mid); font-size: 11px; font-weight: 600; letter-spacing: 0.3px;"
+        )
         layout.addWidget(self.title_label)
 
         self.value_label = QLabel(value)
-        self.value_label.setStyleSheet("color: palette(text); font-size: 24px; font-weight: bold;")
+        self.value_label.setStyleSheet(
+            "color: palette(text); font-size: 26px; font-weight: 700;"
+        )
         layout.addWidget(self.value_label)
 
         self.subtitle_label = QLabel(subtitle if subtitle else "")
-        self.subtitle_label.setStyleSheet("color: palette(mid); font-size: 10px;")
+        self.subtitle_label.setStyleSheet("color: palette(mid); font-size: 11px;")
         self.subtitle_label.setVisible(bool(subtitle))
         layout.addWidget(self.subtitle_label)
 

@@ -3,18 +3,23 @@ Main window for the Telegram Multi-Account Message Sender.
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
     QVBoxLayout,
-    QTabWidget,
+    QHBoxLayout,
     QLabel,
     QStatusBar,
+    QFrame,
+    QListWidget,
+    QListWidgetItem,
+    QStackedWidget,
+    QSizePolicy,
 )
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtGui import QCloseEvent, QFont
 
 from ..services import get_settings, get_logger
 from ..services.translation import get_translation_manager, _
@@ -34,7 +39,7 @@ from .widgets.about_widget import AboutWidget
 
 
 class MainWindow(QMainWindow):
-    """Main application window."""
+    """Main application window with media-style navigation rail."""
 
     def __init__(self, pending_backup_path: Optional[Path] = None):
         """Initialize main window."""
@@ -45,6 +50,20 @@ class MainWindow(QMainWindow):
         self.theme_manager = ThemeManager()
         self.translation_manager = get_translation_manager()
         self._pending_backup_path = pending_backup_path
+
+        # Nav key -> (title translation key, English subtitle for page header)
+        self._nav_entries: List[Tuple[str, str, Optional[str]]] = [
+            ("dashboard", "tabs.dashboard", "Campaign overview and account health"),
+            ("accounts", "tabs.accounts", "Connect and manage Telegram sessions"),
+            ("campaigns", "tabs.campaigns", "Schedule and control outbound campaigns"),
+            ("templates", "tabs.templates", "Spintax templates and message variants"),
+            ("recipients", "tabs.recipients", "Organize recipient lists and segments"),
+            ("testing", "tabs.testing", "Preview and validate messages before send"),
+            ("logs", "tabs.logs", "Delivery history and activity trail"),
+            ("plugins", "tabs.plugins", "Extensions and registry installs"),
+            ("settings", "tabs.settings", "Theme, language, safety, and cloud backup"),
+            ("about", "tabs.about", "Version, license, and product info"),
+        ]
 
         # Connect language change signal
         self.translation_manager.language_changed.connect(self.on_language_changed)
@@ -70,22 +89,81 @@ class MainWindow(QMainWindow):
         self.logger.info("Main window initialized")
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface with sidebar navigation."""
         self.setWindowTitle(_("app.title"))
         self.setGeometry(100, 100, self.settings.window_width, self.settings.window_height)
+        self.setMinimumSize(960, 640)
 
-        # Central widget
+        # Central shell: nav rail | content
         central_widget = QWidget()
+        central_widget.setObjectName("centralShell")
         self.setCentralWidget(central_widget)
 
-        # Main layout
-        main_layout = QVBoxLayout(central_widget)
+        shell_layout = QHBoxLayout(central_widget)
+        shell_layout.setContentsMargins(0, 0, 0, 0)
+        shell_layout.setSpacing(0)
 
-        # Tab widget
-        self.tab_widget = QTabWidget()
-        main_layout.addWidget(self.tab_widget)
+        # ——— Navigation rail ———
+        self.nav_rail = QFrame()
+        self.nav_rail.setObjectName("navRail")
+        self.nav_rail.setFixedWidth(220)
+        nav_layout = QVBoxLayout(self.nav_rail)
+        nav_layout.setContentsMargins(12, 16, 12, 16)
+        nav_layout.setSpacing(4)
 
-        # Create tabs
+        self.brand_label = QLabel("TMMS")
+        self.brand_label.setObjectName("navBrand")
+        brand_font = QFont()
+        brand_font.setPointSize(14)
+        brand_font.setBold(True)
+        self.brand_label.setFont(brand_font)
+        nav_layout.addWidget(self.brand_label)
+
+        self.brand_sub_label = QLabel("VoxHash · SendGram")
+        self.brand_sub_label.setObjectName("navBrandSub")
+        nav_layout.addWidget(self.brand_sub_label)
+
+        self.nav_list = QListWidget()
+        self.nav_list.setObjectName("navList")
+        self.nav_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.nav_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.nav_list.setSpacing(1)
+        self.nav_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        nav_layout.addWidget(self.nav_list, 1)
+
+        shell_layout.addWidget(self.nav_rail)
+
+        # ——— Content area ———
+        self.content_shell = QFrame()
+        self.content_shell.setObjectName("contentShell")
+        content_layout = QVBoxLayout(self.content_shell)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(0)
+
+        self.content_header = QFrame()
+        self.content_header.setObjectName("contentHeader")
+        header_layout = QVBoxLayout(self.content_header)
+        header_layout.setContentsMargins(24, 16, 24, 12)
+        header_layout.setSpacing(2)
+
+        self.page_title = QLabel("")
+        self.page_title.setObjectName("pageTitle")
+        header_layout.addWidget(self.page_title)
+
+        self.page_subtitle = QLabel("")
+        self.page_subtitle.setObjectName("pageSubtitle")
+        header_layout.addWidget(self.page_subtitle)
+
+        content_layout.addWidget(self.content_header)
+
+        self.page_stack = QStackedWidget()
+        self.page_stack.setObjectName("pageStack")
+        content_layout.addWidget(self.page_stack, 1)
+
+        shell_layout.addWidget(self.content_shell, 1)
+
+        # Build pages + nav items (order matches _nav_entries)
         self.create_dashboard_tab()
         self.create_accounts_tab()
         self.create_campaigns_tab()
@@ -97,64 +175,101 @@ class MainWindow(QMainWindow):
         self.create_settings_tab()
         self.create_about_tab()
 
-        # Set Dashboard as the default tab
-        self.tab_widget.setCurrentIndex(0)
+        self._populate_nav()
+        self.nav_list.currentRowChanged.connect(self._on_nav_changed)
+        self.nav_list.setCurrentRow(0)
+        self._on_nav_changed(0)
+
+        # Compatibility alias: some helpers historically used tab_widget
+        self.tab_widget = self.page_stack
+
+    def _populate_nav(self) -> None:
+        """Fill the navigation list from translation keys."""
+        self.nav_list.blockSignals(True)
+        self.nav_list.clear()
+        for _key, title_key, _sub_key in self._nav_entries:
+            item = QListWidgetItem(_(title_key))
+            self.nav_list.addItem(item)
+        self.nav_list.blockSignals(False)
+
+    def _on_nav_changed(self, index: int) -> None:
+        """Switch stacked page and update header when nav selection changes."""
+        if index < 0 or index >= len(self._nav_entries):
+            return
+        self.page_stack.setCurrentIndex(index)
+        _key, title_key, subtitle = self._nav_entries[index]
+        self.page_title.setText(_(title_key))
+        if subtitle:
+            self.page_subtitle.setText(subtitle)
+            self.page_subtitle.setVisible(True)
+        else:
+            self.page_subtitle.clear()
+            self.page_subtitle.setVisible(False)
+
+    def _add_page(self, widget: QWidget) -> None:
+        """Add a page to the stacked content area."""
+        page = QWidget()
+        page_layout = QVBoxLayout(page)
+        page_layout.setContentsMargins(20, 16, 20, 16)
+        page_layout.setSpacing(0)
+        page_layout.addWidget(widget)
+        self.page_stack.addWidget(page)
 
     def create_dashboard_tab(self) -> None:
-        """Create dashboard tab."""
+        """Create dashboard page."""
         self.dashboard_widget = DashboardWidget()
-        self.tab_widget.addTab(self.dashboard_widget, _("tabs.dashboard"))
+        self._add_page(self.dashboard_widget)
 
     def create_accounts_tab(self) -> None:
-        """Create accounts management tab."""
+        """Create accounts management page."""
         self.accounts_widget = AccountWidget()
-        self.tab_widget.addTab(self.accounts_widget, _("tabs.accounts"))
+        self._add_page(self.accounts_widget)
 
     def create_campaigns_tab(self) -> None:
-        """Create campaigns management tab."""
+        """Create campaigns management page."""
         self.campaigns_widget = CampaignWidget()
-        self.tab_widget.addTab(self.campaigns_widget, _("tabs.campaigns"))
+        self._add_page(self.campaigns_widget)
 
     def create_templates_tab(self) -> None:
-        """Create templates management tab."""
+        """Create templates management page."""
         from .widgets.template_widget import TemplateWidget
 
         self.templates_widget = TemplateWidget()
-        self.tab_widget.addTab(self.templates_widget, _("tabs.templates"))
+        self._add_page(self.templates_widget)
 
     def create_recipients_tab(self) -> None:
-        """Create recipients management tab."""
+        """Create recipients management page."""
         self.recipients_widget = RecipientWidget()
-        self.tab_widget.addTab(self.recipients_widget, _("tabs.recipients"))
+        self._add_page(self.recipients_widget)
 
     def create_testing_tab(self) -> None:
-        """Create testing tab."""
+        """Create testing page."""
         from .widgets.testing_widget import TestingWidget
 
         self.testing_widget = TestingWidget()
-        self.tab_widget.addTab(self.testing_widget, _("tabs.testing"))
+        self._add_page(self.testing_widget)
 
     def create_logs_tab(self) -> None:
-        """Create logs viewer tab."""
+        """Create logs viewer page."""
         self.logs_widget = LogWidget()
-        self.tab_widget.addTab(self.logs_widget, _("tabs.logs"))
+        self._add_page(self.logs_widget)
 
     def create_plugins_tab(self) -> None:
-        """Create plugins management tab."""
+        """Create plugins management page."""
         self.plugins_widget = PluginWidget()
-        self.tab_widget.addTab(self.plugins_widget, _("tabs.plugins"))
+        self._add_page(self.plugins_widget)
 
     def create_settings_tab(self) -> None:
-        """Create settings tab."""
+        """Create settings page."""
         self.settings_widget = SettingsWidget()
         # Connect settings update signal to update status bar
         self.settings_widget.settings_updated.connect(self.on_settings_updated)
-        self.tab_widget.addTab(self.settings_widget, _("tabs.settings"))
+        self._add_page(self.settings_widget)
 
     def create_about_tab(self) -> None:
-        """Create about tab."""
+        """Create about page."""
         self.about_widget = AboutWidget()
-        self.tab_widget.addTab(self.about_widget, _("tabs.about"))
+        self._add_page(self.about_widget)
 
     def _handle_pending_backup(self) -> None:
         """Open Settings → Cloud Backup for an OS file-association launch."""
@@ -162,15 +277,22 @@ class MainWindow(QMainWindow):
         self._pending_backup_path = None
         if path is None:
             return
-        settings_index = self.tab_widget.indexOf(self.settings_widget)
+        settings_index = self._nav_key_index("settings")
         if settings_index >= 0:
-            self.tab_widget.setCurrentIndex(settings_index)
+            self.nav_list.setCurrentRow(settings_index)
         cloud_index = self.settings_widget.tab_widget.indexOf(
             self.settings_widget.cloud_backup_widget
         )
         if cloud_index >= 0:
             self.settings_widget.tab_widget.setCurrentIndex(cloud_index)
         self.settings_widget.cloud_backup_widget.offer_associated_backup(path)
+
+    def _nav_key_index(self, key: str) -> int:
+        """Return nav index for a page key, or -1."""
+        for i, (nav_key, _title, _sub) in enumerate(self._nav_entries):
+            if nav_key == key:
+                return i
+        return -1
 
     def setup_menu(self) -> None:
         """Set up menu bar."""
@@ -356,15 +478,12 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(_("app.title"))
         self.status_label.setText(_("app.ready"))
 
-        # Update tab names
-        self.tab_widget.setTabText(0, _("tabs.accounts"))
-        self.tab_widget.setTabText(1, _("tabs.campaigns"))
-        self.tab_widget.setTabText(2, _("tabs.templates"))
-        self.tab_widget.setTabText(3, _("tabs.recipients"))
-        self.tab_widget.setTabText(4, _("tabs.testing"))
-        self.tab_widget.setTabText(5, _("tabs.logs"))
-        self.tab_widget.setTabText(6, _("tabs.settings"))
-        self.tab_widget.setTabText(7, _("tabs.about"))
+        # Refresh nav labels and current page header
+        current = self.nav_list.currentRow()
+        self._populate_nav()
+        if current >= 0:
+            self.nav_list.setCurrentRow(current)
+            self._on_nav_changed(current)
 
         # Update language label
         current_language = self.translation_manager.get_language_display_name(language)

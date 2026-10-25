@@ -4,7 +4,7 @@ Complete guide to using Telegram Multi-Account Message Sender.
 
 ## Overview
 
-The application provides a graphical interface for managing multiple Telegram accounts and sending messages.
+The application provides a graphical desktop client for managing multiple Telegram accounts and sending messages. The main window uses a left navigation rail (Dashboard, Accounts, Campaigns, Templates, Recipients, Testing, Logs, Plugins, Settings, About) with a page title header and stacked content area. Theme and language live under **Settings**.
 
 ## Main Features
 

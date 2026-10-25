@@ -10,9 +10,9 @@ Telegram Multi-Account Message Sender is built with a modular architecture using
 
 ### Presentation Layer
 
-- **GUI**: PyQt5-based graphical interface
-- **Widgets**: Reusable UI components
-- **Themes**: Theme system for UI customization
+- **GUI**: PyQt5-based graphical interface with a left navigation rail and stacked content pages
+- **Widgets**: Reusable feature pages (dashboard, accounts, campaigns, templates, recipients, testing, logs, plugins, settings, about)
+- **Themes**: `ThemeManager` QSS palettes — dense dark charcoal + teal accent, light, Dracula, high-contrast, auto/system
 
 ### Business Logic Layer
 

@@ -78,10 +78,10 @@ Then launch with `telegram-sender` or `python -m app.cli`. Full setup: [docs/qui
 
 ### 🎨 User Interface
 
-- **Modern UI**: Clean, intuitive interface with multiple themes
+- **Modern desktop shell**: Left navigation rail, page headers, and dense dark surfaces with a VoxHash teal accent (SendGram-ready branding)
 - **Multi-Language Support**: Available in 13 languages (English, French, Spanish, Chinese, Japanese, German, Russian, Estonian, Portuguese, Korean, Catalan, Basque, Galician)
-- **Responsive Design**: Adapts to different screen sizes
-- **Dark/Light Themes**: Multiple theme options including Dracula theme
+- **Responsive Design**: Adapts to different window sizes with a fixed nav rail and flexible content stack
+- **Themes**: Dark (default dense look), light, Dracula, high-contrast, and auto (follow system)
 
 ### 🔧 Advanced Features
 
@@ -111,10 +111,10 @@ Then launch with `telegram-sender` or `python -m app.cli`. Full setup: [docs/qui
 
 ## 🖼️ Screenshots
 
-### Main Interface - Campaigns Tab
+### Main Interface - Campaigns
 
 Campaign Management
-*Comprehensive campaign management with scheduling, status tracking, and bulk operations*
+*Sidebar navigation into campaigns with scheduling, status tracking, and bulk operations*
 
 ### Template System
 

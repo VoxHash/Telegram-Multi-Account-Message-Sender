@@ -783,9 +783,10 @@ theme_manager.apply_theme(Theme.DARK)
 ```
 
 **Methods:**
-- `apply_theme(theme: Theme) -> None`: Apply theme
-- `get_current_theme() -> Theme`: Get current theme
-- `get_theme_stylesheet(theme: Theme) -> str`: Get theme stylesheet
+- `apply_theme(theme: str) -> None`: Apply theme (`auto`, `light`, `dark`, `dracula`, `high_contrast`)
+- `get_current_theme() -> str`: Get current theme id
+- `get_stylesheet(theme: str) -> str`: Build QSS for a named theme (dense dark desktop-client palette by default)
+- `get_stylesheet_from_colors(colors: dict) -> str`: Build QSS from a custom color map
 
 ## Utilities (`app.utils`)
 

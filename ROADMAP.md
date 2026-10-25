@@ -6,13 +6,13 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.46)
+## Current Status (v1.2.47)
 
 ### Completed
 - Multi-account management (phone auth + session import)
 - Proxy support with connection testing (HTTP/HTTPS/SOCKS4/SOCKS5)
 - Campaigns, templates (spintax), recipients, message testing, logging
-- 13 languages, themes (including Dracula), Windows startup option
+- 13 languages, modern dense themes (including Dracula) with navigation rail shell, Windows startup option
 - Rate limiting, warmup, dry-run, and compliance controls
 - Plugin API + example filter/analytics plugins
 - PyPI package, GitHub Releases / installers, GHCR container images with OCI description metadata
@@ -51,10 +51,11 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Ongoing community registry PRs beyond the curated seed set
 - Proton Drive as an in-app cloud backup provider remains **deferred** (SDK not third-party-ready; see Phase 2 feasibility notes)
 
-### Latest release (v1.2.46 — 2026-10-25)
-- Community: Discussions-first channel + beta tester interest path (no Discord invent)
+### Latest release (v1.2.47 — 2026-10-25)
+- UI: modern desktop-client shell (navigation rail, dense dark theme, VoxHash teal accent)
 
 ### Previous highlights
+- **v1.2.46**: Community: Discussions-first channel + beta tester interest path (no Discord invent)
 - **v1.2.45**: Security: threat model, credential storage review/harden CLI, periodic dependency audit
 - **v1.2.44**: Technical debt: type `app/utils` / `app/cli.py` under the same blocking mypy gate
 - **v1.2.43**: Technical debt: expand blocking mypy GUI subset (`settings_widget` / `account_widget` / `campaign_widget`)
@@ -99,6 +100,7 @@ Realistic, shippable work — not a full platform rewrite.
 
 | Priority | Item | Outcome |
 | --- | --- | --- |
+| Done (v1.2.47) | Modern desktop UI shell | Navigation rail + page headers; dense dark/light/Dracula/high-contrast themes with VoxHash teal accent |
 | Done (v1.2.46) | Discussions-first community + beta testers | GitHub Discussions enabled; SUPPORT/README/CONTRIBUTING routing; beta discussion + issue template; Discord deferred |
 | Done (v1.2.22) | Plugin marketplace / registry | Discover/install curated plugins via JSON catalog (remote + bundled offline); SHA-256 verify; Plugins → Browse Registry |
 | Done (v1.2.21) | AI-assisted copy tools (optional keys) | Templates rewrite / spintax / variations via OpenAI-compatible Chat Completions; user-supplied `AI_API_KEY`; no SDK hard dependency |

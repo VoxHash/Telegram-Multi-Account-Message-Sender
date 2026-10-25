@@ -7,12 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- **`web-monitor --help` / `-h`**: print usage and exit instead of starting the read-only companion server (run hygiene).
+## [1.2.47] - 2026-10-25
+
+### Added
+- **Modern desktop shell**: left navigation rail with page header (title + short context), stacked content pages, and VoxHash / SendGram branding in the rail.
+- **Dense dark theme refresh**: cohesive charcoal surfaces, teal accent palette, polished controls (buttons, inputs, tables, tabs, scrollbars, status bar), plus matching light / Dracula / high-contrast variants.
 
 ### Changed
-- **ROADMAP**: document Proton Drive cloud backup as a Phase 2 leftover (deferred). Feasibility notes cover Proton Drive SDK (not third-party GA / no auth yet), official Drive CLI for out-of-process upload, rclone Beta constraints, and absence of official WebDAV / Bridge-for-Drive — no in-app Proton provider until a viable first-party path exists.
-- **Docs (FAQ / configuration)**: note that Proton Drive is not a Settings provider yet; use Google Drive, S3, Dropbox, OneDrive, or local handoff export.
+- Main window navigation moves from top tabs to a media-style sidebar; nested Settings tabs and all existing widgets keep their behavior.
+- Dashboard stat cards use slightly tighter typography and spacing for the new shell.
+- Docs (architecture, usage, README UI) describe the navigation rail and theme language; packaging metadata bump to **1.2.47**.
+
+### Fixed
+- **`web-monitor --help` / `-h`**: print usage and exit instead of starting the read-only companion server (run hygiene).
+- Custom theme colors now feed the stylesheet builder correctly (`get_stylesheet_from_colors`).
+
+### Notes
+- **ROADMAP**: Proton Drive cloud backup remains a Phase 2 leftover (deferred). Feasibility notes cover Proton Drive SDK (not third-party GA / no auth yet), official Drive CLI for out-of-process upload, rclone Beta constraints, and absence of official WebDAV / Bridge-for-Drive — no in-app Proton provider until a viable first-party path exists.
+- **Docs (FAQ / configuration)**: Proton Drive is not a Settings provider yet; use Google Drive, S3, Dropbox, OneDrive, or local handoff export.
 
 ## [1.2.46] - 2026-10-25
 

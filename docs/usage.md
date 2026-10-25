@@ -88,6 +88,7 @@ Monitor account health, campaign status, and recent activity in a browser withou
 3. Enter draft text, then choose **Rewrite with AI**, **AI → Spintax**, or **AI variations**.
 4. Review the result before saving. Placeholders like `{name}` are preserved when the model follows instructions.
 5. With no API key configured, the buttons show a setup message and make no network calls.
+6. AI Copy Tools UI strings (Templates buttons, dialogs, and Settings labels) are translated for all 13 app languages — switch language in Settings to see localized labels.
 
 ## Cloud Backup (Google Drive + S3-compatible + Dropbox + OneDrive)
 

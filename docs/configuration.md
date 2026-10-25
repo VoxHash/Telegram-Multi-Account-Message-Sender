@@ -142,6 +142,7 @@ AI_MODEL=gpt-4o-mini
 
 3. Save settings, open a template, and use **Rewrite with AI**, **AI → Spintax**, or **AI variations**.
 4. Leave `AI_API_KEY` empty to keep AI buttons inactive (no network calls, no hard dependency).
+5. AI Copy Tools UI labels (Settings group + Templates buttons/dialogs) are translated for all 13 app languages.
 
 ### Google Drive Cloud Backup (optional)
 

@@ -85,7 +85,7 @@ Then launch with `telegram-sender` or `python -m app.cli`. Full setup: [docs/qui
 ### 🔧 Advanced Features
 
 - **Spintax Support**: Create message variations using spintax syntax with real-time processing
-- **AI Copy Tools (optional)**: Rewrite, spintax conversion, and variations via your own OpenAI-compatible API key (no AI SDK dependency)
+- **AI Copy Tools (optional)**: Rewrite, spintax conversion, and variations via your own OpenAI-compatible API key (no AI SDK dependency); UI strings localized in all 13 languages
 - **Plugin Registry**: Browse a curated marketplace catalog (Ed25519-signed official JSON), install SHA-256–verified `.py` plugins into `app_data/plugins/`, then enable from the Plugins tab; developers use `plugin-catalog-entry` / `plugin-validate` / `plugin-catalog-sign` (filter + analytics templates under `registry/templates/`)
 - **Web Companion (optional, read-only)**: Local stdlib HTTP monitor with live SVG charts (activity, status, campaigns, health), account/campaign tables, and recent activity (`telegram-sender web-monitor` or Settings → Start & Open); optional `WEB_COMPANION_AUTO_START` / Auto-start with GUI (background, no browser); optional Bearer token auth (required for non-localhost); reverse-proxy guidance in docs; no send/control routes
 - **Cloud Backup**: Encrypted `.tmas-backup.zip` upload/restore to **Google Drive**, **S3-compatible** storage (AWS, MinIO, R2, Wasabi, B2), **Dropbox**, or **OneDrive** via Settings → Cloud Backup (`pip install '.[cloud]'` for Drive/S3; Dropbox/OneDrive use stdlib HTTP)

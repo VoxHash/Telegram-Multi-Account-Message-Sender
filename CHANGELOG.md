@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.37] - 2026-10-24
+
+### Added
+- **Phase 2 leftover: AI non-English locale strings**: All 21 AI Copy Tools UI keys (`templates.ai_*` + `settings.ai_*`) translated for the 12 non-English locales (fr, es, zh, ja, de, ru, pt, ko, ca, eu, gl, et). Non-English UI no longer falls back to raw key paths for AI buttons, dialogs, and Settings labels.
+- **Unit tests** asserting every bundled locale ships the AI key set with non-English values distinct from the English kit.
+
+### Changed
+- Docs (usage, configuration, README) note that AI Copy Tools UI is localized across all 13 languages; ROADMAP marks the locale leftover as shipped.
+
 ## [1.2.36] - 2026-10-24
 
 ### Added

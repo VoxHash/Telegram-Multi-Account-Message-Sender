@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.39] - 2026-10-25
+
+### Added
+- **Technical debt: expand blocking mypy**: CI / `[tool.mypy]` now also gates `app/plugins` (example filter + analytics plugins fully annotated) and a practical GUI subset (`app/gui/theme.py`, `app/gui/widgets/about_widget.py`, package `__init__` modules) under the same strict flags as core/services/models.
+- **Unit tests** for blocking mypy path presence and typed example-plugin lifecycle/events.
+
+### Changed
+- About dialog reads version from `app.__version__` (no hard-coded release string).
+- Docs (architecture, README, CONTRIBUTING) and ROADMAP document the expanded gate; remaining large PyQt widgets stay deferred.
+
 ## [1.2.38] - 2026-10-24
 
 ### Added

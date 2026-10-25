@@ -129,6 +129,16 @@ Default bind is `127.0.0.1:8765`. Non-loopback binds require `WEB_COMPANION_TOKE
 
 Install never auto-enables third-party code. Submit via PR after `plugin-catalog-entry` + `plugin-validate`. Maintainers re-sign `registry/catalog.json` after edits.
 
+## Type checking (mypy)
+
+CI runs **blocking** mypy (strict flags in `pyproject.toml`) on:
+
+- `app/core`, `app/services`, `app/models`
+- `app/plugins` (example built-ins)
+- Practical GUI subset: `app/gui/theme.py`, `app/gui/widgets/about_widget.py`, and package `__init__` modules
+
+Large PyQt widgets (`app/gui/main.py` and most of `app/gui/widgets/`) remain outside the gate until further typing passes. See [ROADMAP](../ROADMAP.md) and [CONTRIBUTING](../CONTRIBUTING.md).
+
 ## See Also
 
 - [API Documentation](api.md) for API details

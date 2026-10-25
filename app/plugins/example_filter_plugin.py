@@ -65,13 +65,13 @@ class ExampleFilterPlugin(MessageFilterPlugin):
 
         return message
 
-    def on_enable(self):
+    def on_enable(self) -> None:
         """Called when plugin is enabled."""
         logger = self.api.get_logger()
         if logger:
             logger.info("Example Filter Plugin enabled")
 
-    def on_disable(self):
+    def on_disable(self) -> None:
         """Called when plugin is disabled."""
         logger = self.api.get_logger()
         if logger:

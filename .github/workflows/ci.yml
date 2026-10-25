@@ -82,10 +82,13 @@ jobs:
       run: |
         isort --check-only app/ || true
 
-    # Blocking mypy for app.core / app.services / app.models (strict flags in pyproject.toml).
-    # GUI and plugins are excluded; see ROADMAP remaining type gaps.
+    # Blocking mypy: core/services/models + plugins + practical GUI subset
+    # (theme/about/inits). Remaining PyQt widgets deferred; see ROADMAP.
     - name: Type check with mypy
-      run: mypy app/core app/services app/models
+      run: >
+        mypy app/core app/services app/models app/plugins
+        app/gui/__init__.py app/gui/theme.py
+        app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
 
     - name: Test with pytest
       if: ${{ !(matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11') }}

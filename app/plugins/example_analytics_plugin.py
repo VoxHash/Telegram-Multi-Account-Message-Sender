@@ -4,19 +4,19 @@ Example analytics plugin demonstrating analytics tracking.
 This plugin tracks campaign events and logs them.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-from ..core.plugin import PluginMetadata, PluginType, AnalyticsPlugin
+from ..core.plugin import PluginAPI, PluginMetadata, PluginType, AnalyticsPlugin
 
 
 class ExampleAnalyticsPlugin(AnalyticsPlugin):
     """Example plugin that tracks analytics events."""
 
-    def __init__(self, api):
+    def __init__(self, api: PluginAPI) -> None:
         """Initialize plugin."""
         super().__init__(api)
-        self.events = []
+        self.events: List[Dict[str, Any]] = []
         self._metadata = PluginMetadata(
             name="Example Analytics Plugin",
             version="1.0.0",
@@ -43,7 +43,7 @@ class ExampleAnalyticsPlugin(AnalyticsPlugin):
                 return False, "max_events must be a positive integer"
         return True, None
 
-    def track_event(self, event_name: str, data: Dict[str, Any]):
+    def track_event(self, event_name: str, data: Dict[str, Any]) -> None:
         """
         Track an analytics event.
 
@@ -57,7 +57,11 @@ class ExampleAnalyticsPlugin(AnalyticsPlugin):
         max_events = self._config.get("max_events", 1000)
 
         # Store event
-        event = {"name": event_name, "data": data, "timestamp": datetime.utcnow().isoformat()}
+        event: Dict[str, Any] = {
+            "name": event_name,
+            "data": data,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
 
         self.events.append(event)
 
@@ -70,18 +74,18 @@ class ExampleAnalyticsPlugin(AnalyticsPlugin):
         if logger:
             logger.debug(f"Analytics event: {event_name} - {data}")
 
-    def on_enable(self):
+    def on_enable(self) -> None:
         """Called when plugin is enabled."""
         logger = self.api.get_logger()
         if logger:
             logger.info("Example Analytics Plugin enabled")
 
-    def on_disable(self):
+    def on_disable(self) -> None:
         """Called when plugin is disabled."""
         logger = self.api.get_logger()
         if logger:
             logger.info("Example Analytics Plugin disabled")
 
-    def get_events(self) -> list:
+    def get_events(self) -> List[Dict[str, Any]]:
         """Get tracked events."""
         return self.events.copy()

@@ -88,7 +88,9 @@ We welcome feature suggestions! Please:
    black app/
    isort app/
    flake8 app/
-   mypy app/core app/services app/models
+   mypy app/core app/services app/models app/plugins \
+     app/gui/__init__.py app/gui/theme.py \
+     app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
    ```
 
 5. **Commit your changes** (using Conventional Commits):
@@ -214,7 +216,9 @@ We use a clear branching strategy to organize development:
    black app/ --check
    isort app/ --check
    flake8 app/
-   mypy app/core app/services app/models
+   mypy app/core app/services app/models app/plugins \
+     app/gui/__init__.py app/gui/theme.py \
+     app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
    ```
 
 3. **Update documentation** if your changes affect:
@@ -293,8 +297,10 @@ isort app/
 # Lint code
 flake8 app/
 
-# Type checking
-mypy app/core app/services app/models
+# Type checking (blocking CI scope; remaining PyQt widgets deferred)
+mypy app/core app/services app/models app/plugins \
+  app/gui/__init__.py app/gui/theme.py \
+  app/gui/widgets/__init__.py app/gui/widgets/about_widget.py
 
 # Run tests
 pytest

@@ -3,7 +3,7 @@ Theme management for the application.
 """
 
 import platform
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional, cast
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QSettings
 
@@ -13,7 +13,7 @@ from ..services import get_settings, get_logger
 class ThemeManager:
     """Manages application themes and styling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme manager."""
         self.settings = get_settings()
         self.logger = get_logger()
@@ -37,15 +37,17 @@ class ThemeManager:
 
             if system == "Windows":
                 # Windows 10/11 dark mode detection
-                import winreg
+                # winreg is Windows-only; stubs omit several attrs under Linux CI.
+                import winreg as _winreg
 
+                winreg_mod: Any = _winreg
                 try:
-                    key = winreg.OpenKey(
-                        winreg.HKEY_CURRENT_USER,
+                    key = winreg_mod.OpenKey(
+                        winreg_mod.HKEY_CURRENT_USER,
                         r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
                     )
-                    value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
-                    winreg.CloseKey(key)
+                    value, _ = winreg_mod.QueryValueEx(key, "AppsUseLightTheme")
+                    winreg_mod.CloseKey(key)
                     return "dark" if value == 0 else "light"
                 except Exception:
                     return "light"
@@ -328,7 +330,7 @@ class ThemeManager:
         }}
         """
 
-    def apply_theme(self, theme: str):
+    def apply_theme(self, theme: str) -> None:
         """Apply a theme to the application."""
         if theme == "auto":
             actual_theme = self.detect_system_theme()
@@ -343,13 +345,13 @@ class ThemeManager:
 
         # Apply stylesheet
         app = QApplication.instance()
-        if app:
+        if isinstance(app, QApplication):
             stylesheet = self.get_stylesheet(actual_theme)
             app.setStyleSheet(stylesheet)
 
             self.logger.info(f"Theme applied: {actual_theme} (from setting: {theme})")
 
-    def get_available_themes(self) -> list:
+    def get_available_themes(self) -> List[str]:
         """Get list of available themes."""
         return ["auto", "light", "dark", "dracula", "high_contrast"]
 
@@ -364,9 +366,14 @@ class ThemeManager:
             try:
                 import json
 
-                return (
+                parsed: Any = (
                     json.loads(custom_colors) if isinstance(custom_colors, str) else custom_colors
                 )
+                if isinstance(parsed, dict) and all(
+                    isinstance(k, str) and isinstance(v, str) for k, v in parsed.items()
+                ):
+                    return cast(Dict[str, str], parsed)
+                return None
             except Exception:
                 return None
         return None
@@ -382,7 +389,7 @@ class ThemeManager:
         """Apply a custom theme with provided colors."""
         self.set_custom_theme_colors(colors)
         app = QApplication.instance()
-        if app:
+        if isinstance(app, QApplication):
             stylesheet = self.get_stylesheet_from_colors(colors)
             app.setStyleSheet(stylesheet)
             self.current_theme = "custom"

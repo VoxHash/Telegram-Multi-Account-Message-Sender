@@ -2,10 +2,13 @@
 About widget for displaying application information.
 """
 
+from typing import Optional
+
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
+from ... import __version__
 from ...services import get_logger
 from ...services.translation import _, get_translation_manager
 
@@ -13,7 +16,7 @@ from ...services.translation import _, get_translation_manager
 class AboutWidget(QWidget):
     """Widget for displaying application information."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.translation_manager = get_translation_manager()
@@ -23,7 +26,7 @@ class AboutWidget(QWidget):
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
 
@@ -36,15 +39,16 @@ class AboutWidget(QWidget):
         title_font.setPointSize(18)
         title_font.setBold(True)
         self.title_label.setFont(title_font)
-        self.title_label.setAlignment(Qt.AlignCenter)
+        # PyQt5 stubs often omit AlignCenter on Qt; AlignmentFlag works at runtime.
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(self.title_label)
 
         # Version
-        self.version_label = QLabel(_("app.version").format(version="1.2.38"))
+        self.version_label = QLabel(_("app.version").format(version=__version__))
         version_font = QFont()
         version_font.setPointSize(12)
         self.version_label.setFont(version_font)
-        self.version_label.setAlignment(Qt.AlignCenter)
+        self.version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(self.version_label)
 
         # Spacer
@@ -62,7 +66,7 @@ class AboutWidget(QWidget):
         layout.addLayout(content_layout)
         layout.addStretch()
 
-    def update_about_content(self):
+    def update_about_content(self) -> None:
         """Update the about content with current translations."""
         self.about_text.setHtml(f"""
         <div style="text-align: center; font-family: Arial, sans-serif;">
@@ -84,10 +88,10 @@ class AboutWidget(QWidget):
         </div>
         """)
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Update the content with new translations
         self.title_label.setText(f"🚀 {_('app.title')}")
-        self.version_label.setText(_("app.version").format(version="1.2.38"))
+        self.version_label.setText(_("app.version").format(version=__version__))
         self.update_about_content()

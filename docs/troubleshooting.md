@@ -58,12 +58,23 @@ Common issues and solutions for Telegram Multi-Account Message Sender.
 4. No extra Python package is required for Dropbox (stdlib HTTP); Drive/S3 still need `pip install '.[cloud]'`
 5. After restore, restart the app so the database connection reloads
 
+### Cloud backup / OneDrive verify fails
+
+**Problem:** Settings → Cloud Backup → OneDrive cannot verify token or upload
+
+**Solutions:**
+1. Set `ONEDRIVE_ACCESS_TOKEN` in `.env` (Microsoft Graph user token from an Entra app with delegated **Files.ReadWrite**)
+2. Optional: set `ONEDRIVE_FOLDER` (default `TMAS/backups`); the folder path is created on first upload
+3. Confirm the token is not expired and can call `GET https://graph.microsoft.com/v1.0/me/drive`
+4. No extra Python package is required for OneDrive (stdlib HTTP); Drive/S3 still need `pip install '.[cloud]'`
+5. After restore, restart the app so the database connection reloads
+
 ### Cloud restore fails while offline
 
 **Problem:** Restore (or list/backup) shows “Offline or cloud unreachable” / “Cannot restore while offline”
 
 **Solutions:**
-1. Confirm internet connectivity (and that VPN/firewall allows `googleapis.com`, `api.dropboxapi.com` / `content.dropboxapi.com`, or your S3 endpoint)
+1. Confirm internet connectivity (and that VPN/firewall allows `googleapis.com`, `api.dropboxapi.com` / `content.dropboxapi.com`, `graph.microsoft.com`, or your S3 endpoint)
 2. Retry **Refresh List**, then restore when online
 3. Local data is left unchanged until a download succeeds; if a pre-restore snapshot path is shown after a mid-flight failure, keep that file under `app_data/`
 4. You can continue using the app fully offline; only cloud sync needs the network

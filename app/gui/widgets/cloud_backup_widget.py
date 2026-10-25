@@ -1,5 +1,5 @@
 """
-Cloud backup settings widget (Google Drive + S3-compatible + Dropbox).
+Cloud backup settings widget (Google Drive + S3 + Dropbox + OneDrive).
 """
 
 from pathlib import Path
@@ -32,6 +32,7 @@ from ...services.translation import _
 PROVIDER_GOOGLE_DRIVE = "google_drive"
 PROVIDER_S3 = "s3"
 PROVIDER_DROPBOX = "dropbox"
+PROVIDER_ONEDRIVE = "onedrive"
 
 
 class CloudBackupWorker(QThread):
@@ -57,6 +58,11 @@ class CloudBackupWorker(QThread):
                     self.finished.emit(
                         True, _("settings.cloud_dropbox_connect_success"), None
                     )
+                elif provider == PROVIDER_ONEDRIVE:
+                    service.connect_onedrive()
+                    self.finished.emit(
+                        True, _("settings.cloud_onedrive_connect_success"), None
+                    )
                 else:
                     service.connect_google_drive()
                     self.finished.emit(True, _("settings.cloud_connect_success"), None)
@@ -70,6 +76,11 @@ class CloudBackupWorker(QThread):
                     service.disconnect_dropbox()
                     self.finished.emit(
                         True, _("settings.cloud_dropbox_disconnect_success"), None
+                    )
+                elif provider == PROVIDER_ONEDRIVE:
+                    service.disconnect_onedrive()
+                    self.finished.emit(
+                        True, _("settings.cloud_onedrive_disconnect_success"), None
                     )
                 else:
                     service.disconnect_google_drive()
@@ -89,6 +100,13 @@ class CloudBackupWorker(QThread):
                     self.finished.emit(
                         True, _("settings.cloud_dropbox_backup_success"), remote_id
                     )
+                elif provider == PROVIDER_ONEDRIVE:
+                    remote_id = service.backup_to_onedrive(
+                        password=self.kwargs.get("password") or None
+                    )
+                    self.finished.emit(
+                        True, _("settings.cloud_onedrive_backup_success"), remote_id
+                    )
                 else:
                     remote_id = service.backup_to_google_drive(
                         password=self.kwargs.get("password") or None
@@ -99,6 +117,8 @@ class CloudBackupWorker(QThread):
                     backups = service.list_s3_backups()
                 elif provider == PROVIDER_DROPBOX:
                     backups = service.list_dropbox_backups()
+                elif provider == PROVIDER_ONEDRIVE:
+                    backups = service.list_onedrive_backups()
                 else:
                     backups = service.list_google_drive_backups()
                 self.finished.emit(True, _("settings.cloud_list_success"), backups)
@@ -110,6 +130,11 @@ class CloudBackupWorker(QThread):
                     )
                 elif provider == PROVIDER_DROPBOX:
                     pre_restore = service.restore_from_dropbox(
+                        self.kwargs["remote_id"],
+                        password=self.kwargs.get("password") or None,
+                    )
+                elif provider == PROVIDER_ONEDRIVE:
+                    pre_restore = service.restore_from_onedrive(
                         self.kwargs["remote_id"],
                         password=self.kwargs.get("password") or None,
                     )
@@ -160,7 +185,7 @@ class CloudBackupWorker(QThread):
 
 
 class CloudBackupWidget(QWidget):
-    """Settings tab for Google Drive / S3 / Dropbox cloud backup and restore."""
+    """Settings tab for Google Drive / S3 / Dropbox / OneDrive cloud backup."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -186,6 +211,9 @@ class CloudBackupWidget(QWidget):
         self.provider_combo.addItem(_("settings.cloud_provider_s3"), PROVIDER_S3)
         self.provider_combo.addItem(
             _("settings.cloud_provider_dropbox"), PROVIDER_DROPBOX
+        )
+        self.provider_combo.addItem(
+            _("settings.cloud_provider_onedrive"), PROVIDER_ONEDRIVE
         )
         self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
         provider_row.addWidget(self.provider_combo)
@@ -287,6 +315,17 @@ class CloudBackupWidget(QWidget):
                 self.status_label.setText(_("settings.cloud_dropbox_status_configured"))
             else:
                 self.status_label.setText(_("settings.cloud_dropbox_status_disconnected"))
+        elif provider == PROVIDER_ONEDRIVE:
+            self.connect_button.setText(_("settings.cloud_connect_onedrive"))
+            connected = self.service.is_onedrive_connected()
+            if connected:
+                self.status_label.setText(_("settings.cloud_onedrive_status_connected"))
+            elif self.service.is_onedrive_configured():
+                self.status_label.setText(_("settings.cloud_onedrive_status_configured"))
+            else:
+                self.status_label.setText(
+                    _("settings.cloud_onedrive_status_disconnected")
+                )
         else:
             self.connect_button.setText(_("settings.cloud_connect_drive"))
             connected = self.service.is_google_drive_connected()
@@ -438,6 +477,9 @@ class CloudBackupWidget(QWidget):
         elif provider == PROVIDER_DROPBOX:
             connected = self.service.is_dropbox_connected()
             disconnected_msg = _("settings.cloud_dropbox_status_disconnected")
+        elif provider == PROVIDER_ONEDRIVE:
+            connected = self.service.is_onedrive_connected()
+            disconnected_msg = _("settings.cloud_onedrive_status_disconnected")
         else:
             connected = self.service.is_google_drive_connected()
             disconnected_msg = _("settings.cloud_status_disconnected")

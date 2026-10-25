@@ -1,5 +1,6 @@
 """
-Orchestrates local backup packages and cloud upload/restore (Drive + S3 + Dropbox).
+Orchestrates local backup packages and cloud upload/restore
+(Drive + S3 + Dropbox + OneDrive).
 """
 
 import json
@@ -36,6 +37,7 @@ from .entity_transfer import (
 )
 from .google_drive import GoogleDriveError, GoogleDriveProvider
 from .network import check_network_available, format_offline_error
+from .onedrive_provider import OneDriveError, OneDriveProvider
 from .provider_base import RemoteBackupItem
 from .s3_compatible import S3CompatibleError, S3CompatibleProvider
 
@@ -52,6 +54,7 @@ class CloudBackupService:
         provider: Optional[GoogleDriveProvider] = None,
         s3_provider: Optional[S3CompatibleProvider] = None,
         dropbox_provider: Optional[DropboxProvider] = None,
+        onedrive_provider: Optional[OneDriveProvider] = None,
         package_builder: Optional[BackupPackageBuilder] = None,
     ) -> None:
         self.logger = get_logger()
@@ -59,7 +62,9 @@ class CloudBackupService:
         self.provider = provider or GoogleDriveProvider()
         self.s3_provider = s3_provider or S3CompatibleProvider()
         self.dropbox_provider = dropbox_provider or DropboxProvider()
+        self.onedrive_provider = onedrive_provider or OneDriveProvider()
         self.package_builder = package_builder or BackupPackageBuilder()
+
     def _require_online(self, operation: str) -> None:
         """Fail fast with offline-friendly messaging when the network is down."""
         if not check_network_available():
@@ -530,4 +535,91 @@ class CloudBackupService:
                 package_path,
                 password=password,
                 source_label=f"Dropbox backup {remote_id}",
+            )
+
+    def connect_onedrive(self) -> None:
+        """Validate OneDrive / Microsoft Graph access token (``GET /me/drive``)."""
+        self._require_online("OneDrive connect")
+        try:
+            if not self.onedrive_provider.authenticate():
+                raise CloudBackupServiceError("OneDrive authentication failed")
+        except OneDriveError as exc:
+            raise CloudBackupServiceError(str(exc)) from exc
+
+    def disconnect_onedrive(self) -> None:
+        """Clear in-memory OneDrive auth (``.env`` token is unchanged)."""
+        self.onedrive_provider.disconnect()
+
+    def is_onedrive_connected(self) -> bool:
+        """Return True when the OneDrive token verifies against Microsoft Graph."""
+        return self.onedrive_provider.is_authenticated()
+
+    def is_onedrive_configured(self) -> bool:
+        """Return True when ``ONEDRIVE_ACCESS_TOKEN`` is present."""
+        return OneDriveProvider.is_configured()
+
+    def backup_to_onedrive(self, password: Optional[str] = None) -> str:
+        """Build a backup package and upload it to OneDrive."""
+        if not self.is_onedrive_connected():
+            raise CloudBackupServiceError(
+                "Verify OneDrive credentials before creating a backup"
+            )
+        self._require_online("cloud backup upload")
+
+        filename = BackupPackageBuilder.generate_filename()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package_path = Path(temp_dir) / filename
+            try:
+                self.package_builder.build(
+                    package_path,
+                    password=password,
+                    include_settings=True,
+                    include_sessions=False,
+                    purpose=PURPOSE_CLOUD_BACKUP,
+                )
+            except BackupPackageError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+            try:
+                remote_id = self.onedrive_provider.upload(package_path, filename)
+            except OneDriveError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+        self.logger.info(f"OneDrive cloud backup uploaded: {filename} ({remote_id})")
+        return remote_id
+
+    def list_onedrive_backups(self) -> List[RemoteBackupItem]:
+        """List backup packages stored under the configured OneDrive folder."""
+        if not self.is_onedrive_connected():
+            raise CloudBackupServiceError("Verify OneDrive credentials to list backups")
+        self._require_online("listing cloud backups")
+        try:
+            return self.onedrive_provider.list_backups()
+        except OneDriveError as exc:
+            raise CloudBackupServiceError(str(exc)) from exc
+
+    def restore_from_onedrive(
+        self, remote_id: str, password: Optional[str] = None
+    ) -> Path:
+        """
+        Download a OneDrive backup, verify it, snapshot the current DB, and restore.
+
+        Returns the path to the pre-restore local database snapshot.
+        Raises before modifying the local database when offline / OneDrive unreachable.
+        """
+        if not self.is_onedrive_connected():
+            raise CloudBackupServiceError("Verify OneDrive credentials before restoring")
+        self._require_online("cloud restore")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package_path = Path(temp_dir) / "restore-package.tmas-backup.zip"
+            try:
+                self.onedrive_provider.download(remote_id, package_path)
+            except OneDriveError as exc:
+                raise CloudBackupServiceError(str(exc)) from exc
+
+            return self._snapshot_and_restore_package(
+                package_path,
+                password=password,
+                source_label=f"OneDrive backup {remote_id}",
             )

@@ -144,6 +144,10 @@ class Settings(BaseSettings):
     dropbox_access_token: Optional[str] = None
     dropbox_folder: str = "/TMAS/backups"
 
+    # Cloud backup (OneDrive — Microsoft Graph Bearer token with Files.ReadWrite)
+    onedrive_access_token: Optional[str] = None
+    onedrive_folder: str = "TMAS/backups"
+
     # Optional AI copy tools (OpenAI-compatible; user-supplied key, no SDK dependency)
     ai_api_key: Optional[str] = None
     ai_base_url: str = "https://api.openai.com/v1"

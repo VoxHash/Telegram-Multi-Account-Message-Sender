@@ -120,11 +120,15 @@ An optional **read-only** local monitor (`telegram-sender web-monitor` or Settin
 
 ### Can I back up to S3 instead of Google Drive?
 
-Yes. Install `pip install '.[cloud]'`, set `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `S3_BUCKET` (optional `S3_ENDPOINT_URL` for MinIO / R2 / Wasabi / B2), then choose **S3-Compatible** under **Settings → Cloud Backup** and click **Verify S3 Credentials**. Google Drive and Dropbox remain available as other providers. See [Configuration](configuration.md) and [Usage](usage.md).
+Yes. Install `pip install '.[cloud]'`, set `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `S3_BUCKET` (optional `S3_ENDPOINT_URL` for MinIO / R2 / Wasabi / B2), then choose **S3-Compatible** under **Settings → Cloud Backup** and click **Verify S3 Credentials**. Google Drive, Dropbox, and OneDrive remain available as other providers. See [Configuration](configuration.md) and [Usage](usage.md).
 
 ### Can I back up to Dropbox?
 
 Yes. Set `DROPBOX_ACCESS_TOKEN` (optional `DROPBOX_FOLDER`, default `/TMAS/backups`) from the [Dropbox App Console](https://www.dropbox.com/developers/apps), then choose **Dropbox** under **Settings → Cloud Backup** and click **Verify Dropbox Token**. Dropbox uses stdlib HTTP (no extra package). See [Configuration](configuration.md) and [Usage](usage.md).
+
+### Can I back up to OneDrive?
+
+Yes. Set `ONEDRIVE_ACCESS_TOKEN` (optional `ONEDRIVE_FOLDER`, default `TMAS/backups`) from a Microsoft Entra app with Graph delegated **Files.ReadWrite**, then choose **OneDrive** under **Settings → Cloud Backup** and click **Verify OneDrive Token**. OneDrive uses stdlib HTTP to Microsoft Graph (no extra package). See [Configuration](configuration.md) and [Usage](usage.md).
 
 ### How do I hand off my workspace to another machine?
 

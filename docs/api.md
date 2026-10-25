@@ -893,6 +893,8 @@ service.restore_from_local_package(entities, mode="merge")
 | `S3CompatibleProvider` | `CloudProvider` for AWS S3 / MinIO / R2 / Wasabi / B2 |
 | `CloudBackupService.backup_to_dropbox` / `list_dropbox_backups` / `restore_from_dropbox` | Dropbox cloud backup (stdlib HTTP; `DROPBOX_ACCESS_TOKEN`) |
 | `DropboxProvider` | `CloudProvider` for Dropbox folder upload/list/download |
+| `CloudBackupService.backup_to_onedrive` / `list_onedrive_backups` / `restore_from_onedrive` | OneDrive cloud backup (Microsoft Graph stdlib HTTP; `ONEDRIVE_ACCESS_TOKEN`) |
+| `OneDriveProvider` | `CloudProvider` for OneDrive folder upload/list/download |
 | `collect_entities` / `import_entities` | Build / apply selective payload |
 | `parse_handoff_argv` / `run_handoff_cli` | CLI: `handoff-export` / `handoff-import` |
 

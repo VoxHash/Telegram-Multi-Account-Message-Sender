@@ -48,6 +48,8 @@ You can configure the application using environment variables. See `example_file
 - `S3_PREFIX`: Object key prefix for backups (default `tmas/backups/`)
 - `DROPBOX_ACCESS_TOKEN`: Dropbox Bearer access token for cloud backup (from [Dropbox App Console](https://www.dropbox.com/developers/apps))
 - `DROPBOX_FOLDER`: Dropbox folder for backups (default `/TMAS/backups`)
+- `ONEDRIVE_ACCESS_TOKEN`: Microsoft Graph Bearer access token for OneDrive cloud backup (Azure app with delegated `Files.ReadWrite`)
+- `ONEDRIVE_FOLDER`: OneDrive folder path for backups (default `TMAS/backups`)
 - Operator handoff (no cloud): Settings → **Export for Handoff…** / **Export Templates/Campaigns…**, or CLI `telegram-sender handoff-export` / `handoff-import` (`--entities`, `--mode`) — see [CLI](cli.md) and [Usage](usage.md)
 - `AI_API_KEY`: Optional OpenAI-compatible API key for AI copy tools (leave unset to disable)
 - `AI_BASE_URL`: Chat Completions base URL (default `https://api.openai.com/v1`)
@@ -191,6 +193,23 @@ DROPBOX_FOLDER=/TMAS/backups
 
 3. In the app, open **Settings → Cloud Backup**, select **Dropbox**, and click **Verify Dropbox Token**.
 4. Use **Backup Now** / **Refresh List** / **Restore Selected Backup** as with Drive/S3. Disconnect clears in-memory auth only (`.env` token stays).
+
+### OneDrive Cloud Backup (optional)
+
+No extra Python package beyond the existing `[cloud]` install path (stdlib HTTP to [Microsoft Graph](https://learn.microsoft.com/en-us/graph/api/driveitem-put-content); works on Python 3.10+).
+
+1. Register an app in [Microsoft Entra ID (Azure AD)](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) and grant Microsoft Graph delegated permission **Files.ReadWrite** (personal or work/school OneDrive).
+2. Obtain a user access token for that app and add it to `.env`:
+
+```env
+ONEDRIVE_ACCESS_TOKEN=your-graph-access-token
+# Optional folder (created on first upload):
+ONEDRIVE_FOLDER=TMAS/backups
+```
+
+3. In the app, open **Settings → Cloud Backup**, select **OneDrive**, and click **Verify OneDrive Token**.
+4. Use **Backup Now** / **Refresh List** / **Restore Selected Backup** as with Drive/S3/Dropbox. Disconnect clears in-memory auth only (`.env` token stays).
+5. Simple Graph upload supports packages up to 250 MiB; typical TMAS backups are far smaller.
 
 ## Account Configuration
 

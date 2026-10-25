@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.33] - 2026-10-24
+
+### Added
+- **Phase 2 leftover: OneDrive cloud backup**: `OneDriveProvider` (stdlib HTTP to Microsoft Graph `v1.0`) for encrypted `.tmas-backup.zip` upload/list/download/delete. Settings env: `ONEDRIVE_ACCESS_TOKEN`, optional `ONEDRIVE_FOLDER` (default `TMAS/backups`). Requires Graph delegated `Files.ReadWrite`.
+- **Settings → Cloud Backup** provider selector now includes OneDrive alongside Google Drive, S3-Compatible, and Dropbox; verify / backup / list / restore wired through `CloudBackupService`.
+- **Unit tests** for OneDrive helpers, mocked upload/list/download/delete, missing-folder list, service backup/list/restore offline guards.
+
+### Changed
+- Docs (configuration, usage, architecture, API, FAQ, troubleshooting, README) and ROADMAP mark OneDrive as shipped; further non-S3 providers remain optional leftovers.
+
 ## [1.2.32] - 2026-10-24
 
 ### Added

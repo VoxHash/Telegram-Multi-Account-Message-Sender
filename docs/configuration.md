@@ -238,6 +238,10 @@ ONEDRIVE_FOLDER=TMAS/backups
 4. Use **Backup Now** / **Refresh List** / **Restore Selected Backup** as with Drive/S3/Dropbox. Disconnect clears in-memory auth only (`.env` token stays).
 5. Simple Graph upload supports packages up to 250 MiB; typical TMAS backups are far smaller.
 
+### Proton Drive (not in-app yet)
+
+There is **no** Settings → Cloud Backup Proton Drive provider. Proton has no production third-party Drive OAuth/REST API like the providers above; the Drive SDK is not third-party-ready (auth still missing). Prefer Google Drive, S3, Dropbox, or OneDrive inside the app. For Proton storage, export a password-protected local package (**Export for Handoff…** / `handoff-export`) and upload it with Proton’s own tools outside TMAS. See [FAQ](faq.md) and [ROADMAP](../ROADMAP.md).
+
 ## Account Configuration
 
 ### Adding Accounts

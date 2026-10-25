@@ -49,6 +49,7 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Performance and database/UI polishing based on real usage
 - Contributor and sponsor community growth
 - Ongoing community registry PRs beyond the curated seed set
+- Proton Drive as an in-app cloud backup provider remains **deferred** (SDK not third-party-ready; see Phase 2 feasibility notes)
 
 ### Latest release (v1.2.46 — 2026-10-25)
 - Community: Discussions-first channel + beta tester interest path (no Discord invent)
@@ -124,6 +125,7 @@ Realistic, shippable work — not a full platform rewrite.
 - [x] Dropbox cloud backup (access token + folder; stdlib HTTP) — v1.2.32
 - [x] OneDrive cloud backup (Microsoft Graph access token + folder; stdlib HTTP) — v1.2.33
   - Leftover: other niche non-S3 providers only if demand appears
+  - [ ] **Proton Drive cloud backup** (deferred — see scope notes below; demand-driven, lower priority than shipped Drive / S3 / Dropbox / OneDrive)
 - [x] Offline-friendly restore and conflict messaging
 - [x] Stronger campaign analytics export (CSV/JSON)
 - [x] AI-assisted copy tools only behind optional, user-supplied API keys (no hard dependency)
@@ -133,6 +135,27 @@ Realistic, shippable work — not a full platform rewrite.
   - [x] Community seed submissions beyond the original two official plugins (Whitespace Normalize Filter + Failure Counter Analytics; analytics sample template; `plugin-catalog-entry` CLI) — v1.2.35
   - [x] Further third-party registry volume (Emoji Strip Filter + Success Counter Analytics; six downloadable plugins) — v1.2.36
   - Leftover: ongoing community PRs / external third-party authors beyond the curated seed set
+
+### Proton Drive cloud backup — feasibility (Phase 2 leftover)
+
+**Status:** Planned / deferred until a viable first-party integration path exists. No in-app Proton provider in the current release.
+
+| Option | Reality (as of research) | Fit for TMAS |
+| --- | --- | --- |
+| Official public REST / OAuth API (like Drive, Dropbox, Graph) | **Does not exist** for third-party production apps | Cannot mirror the Dropbox/OneDrive token pattern |
+| [Proton Drive SDK](https://github.com/ProtonDriveApps/sdk) (JS / C# / bindings) | Preview for Proton first-party clients; **not ready for commercial/third-party production**; **auth / session modules not included**; crypto model migration targeted ~end 2026 / early 2027 | Wrong stack for a Python desktop app today; would need bindings + wait for GA + auth |
+| [Proton Drive CLI](https://proton.me/support/drive-cli) | Official CLI on the SDK; browser login (`proton-drive auth login`); upload/download from scripts | Viable **out-of-process** user workflow (export local `.tmas-backup.zip`, then CLI upload) — not an in-app provider |
+| [rclone](https://rclone.org/protondrive/) `protondrive` | Community backend (Beta); reverse-engineered / bridge-based; CAPTCHA / anti-bot friction; Proton does not formally support rclone | Fragile for a shipped Settings provider; optional docs-only “use rclone yourself” path only |
+| Proton Bridge | Mail (IMAP/SMTP), **not** Drive file storage | Not applicable |
+| Official WebDAV | **None**. Unofficial local bridges (e.g. community WebDAV daemons) exist | External-only; do not embed undocumented bridges |
+
+**Recommended scope when demand justifies work:**
+
+1. Prefer waiting for Proton Drive SDK **third-party GA** (with documented auth) before a first-class Settings provider.
+2. Short-term: keep using shipped providers (Google Drive, S3, Dropbox, OneDrive) or local handoff export; optionally document CLI/rclone as **unsupported** external upload of an already-encrypted package.
+3. Do **not** ship a reverse-engineered in-app Proton client (ToS / breakage / CAPTCHA / crypto-migration risk).
+
+**Priority:** Phase 2 leftover, demand-driven — below shipped providers; same “niche non-S3 only if demand” bucket.
 
 ### Phase 3 (later): Platform expansion
 - [x] Enhanced macOS/Linux packaging and file associations

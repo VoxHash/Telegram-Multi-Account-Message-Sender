@@ -131,6 +131,10 @@ Yes. Set `DROPBOX_ACCESS_TOKEN` (optional `DROPBOX_FOLDER`, default `/TMAS/backu
 
 Yes. Set `ONEDRIVE_ACCESS_TOKEN` (optional `ONEDRIVE_FOLDER`, default `TMAS/backups`) from a Microsoft Entra app with Graph delegated **Files.ReadWrite**, then choose **OneDrive** under **Settings → Cloud Backup** and click **Verify OneDrive Token**. OneDrive uses stdlib HTTP to Microsoft Graph (no extra package). See [Configuration](configuration.md) and [Usage](usage.md).
 
+### Can I back up to Proton Drive?
+
+Not as an in-app Settings provider yet. Proton does not offer a stable third-party Drive REST/OAuth API comparable to Google Drive, Dropbox, or Microsoft Graph. The [Proton Drive SDK](https://github.com/ProtonDriveApps/sdk) is still preview for first-party clients (auth/session not shipped for standalone apps). Use Google Drive, S3-compatible storage, Dropbox, OneDrive, or **Export for Handoff** / a password-protected local `.tmas-backup.zip`. External tools (official [Proton Drive CLI](https://proton.me/support/drive-cli), or community rclone) can upload that package outside TMAS — unsupported and not wired into Settings. Tracked on the [ROADMAP](../ROADMAP.md) as a deferred Phase 2 leftover.
+
 ### How do I hand off my workspace to another machine?
 
 Desktop TMAS is **single-operator**. Use **Settings → Cloud Backup → Export for Handoff…** (or `telegram-sender handoff-export`) for a full `.tmas-backup.zip` (database, safe settings, Telethon sessions), or **Export Templates/Campaigns…** / `--entities templates,campaigns` for a selective package. Entity imports support **merge** (upsert by name) or **replace**. Prefer an encryption password for off-machine transfer. Multi-user roles belong to [SendGram](https://www.sendgram.pro).

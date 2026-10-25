@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.49] - 2026-10-25
+
+### Added
+- **Phase 3 leftover: Windows file-association installer polish**: `packaging/windows/install.ps1` registers per-user HKCU ProgID `dev.voxhash.tmas-backup` for `*.tmas-backup.zip` (open → local restore), copies the EXE under `%LOCALAPPDATA%\Programs\TelegramMultiAccountSender\`, supports `-ExePath` portable associate-only and `-Uninstall`. `assemble-dist.sh` builds a release folder; CI publishes `*-windows.zip` alongside the bare EXE.
+- **Unit tests** for Windows packaging metadata and assemble-dist layout.
+
+### Changed
+- Docs (installation, usage, FAQ, README, ROADMAP) and packaging metadata bump to **1.2.49**.
+- ROADMAP marks Windows file-association polish done; Apple code signing / notarization remains a leftover (requires Apple Developer credentials outside this repo).
+
 ## [1.2.48] - 2026-10-25
 
 ### Added

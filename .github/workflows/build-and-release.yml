@@ -60,6 +60,24 @@ jobs:
         if [ -f "dist/telegram-multi-account-sender.exe" ]; then
           cp "dist/telegram-multi-account-sender.exe" "telegram-multi-account-sender-${{ steps.set_version_windows.outputs.version }}-windows.exe"
         fi
+
+    - name: Assemble Windows distribution (EXE + install.ps1 file association)
+      shell: bash
+      run: |
+        VERSION="${{ steps.set_version_windows.outputs.version }}"
+        chmod +x packaging/windows/assemble-dist.sh
+        packaging/windows/assemble-dist.sh \
+          dist/telegram-multi-account-sender.exe \
+          "telegram-multi-account-sender-${VERSION}-windows" \
+          "${VERSION}"
+        # Prefer zip if present; fall back to PowerShell Compress-Archive on windows-latest.
+        if command -v zip >/dev/null 2>&1; then
+          zip -r "telegram-multi-account-sender-${VERSION}-windows.zip" \
+            "telegram-multi-account-sender-${VERSION}-windows"
+        else
+          powershell.exe -NoProfile -Command \
+            "Compress-Archive -Path 'telegram-multi-account-sender-${VERSION}-windows' -DestinationPath 'telegram-multi-account-sender-${VERSION}-windows.zip' -Force"
+        fi
     
     - name: Upload Windows artifacts
       if: success() || failure()
@@ -68,6 +86,7 @@ jobs:
         name: windows-build
         path: |
           telegram-multi-account-sender-*-windows.exe
+          telegram-multi-account-sender-*-windows.zip
         retention-days: 30
         if-no-files-found: warn
 
@@ -354,6 +373,7 @@ jobs:
           
           **Windows:**
           - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-windows.exe` - Standalone executable
+          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-windows.zip` - EXE + `install.ps1` (per-user `*.tmas-backup.zip` file association)
           
           **Linux:**
           - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-linux.tar.gz` - Binary + `install.sh` (desktop entry, icons, `*.tmas-backup.zip` MIME)

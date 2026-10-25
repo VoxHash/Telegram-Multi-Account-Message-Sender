@@ -67,6 +67,18 @@ ghcr.io/voxhash/telegram-multi-account-message-sender
 
 Download platform installers or executables from the [GitHub Releases](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/releases) page.
 
+### Windows release zip (EXE + file association)
+
+The Windows zip (`telegram-multi-account-sender-v*-windows.zip`) includes the standalone EXE plus `install.ps1` for a per-user `*.tmas-backup.zip` association (HKCU ProgID `dev.voxhash.tmas-backup`). A bare `*-windows.exe` is also published for portable runs without association.
+
+```powershell
+Expand-Archive telegram-multi-account-sender-v*-windows.zip
+cd telegram-multi-account-sender-v*-windows
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+That copies the EXE to `%LOCALAPPDATA%\Programs\TelegramMultiAccountSender\` (no admin). Uninstall with `.\install.ps1 -Uninstall`. Portable associate-only: `.\install.ps1 -ExePath .\telegram-multi-account-sender.exe`.
+
 ### Linux release tarball (desktop + MIME)
 
 The Linux asset is a directory archive (`telegram-multi-account-sender-v*-linux.tar.gz`) that includes the binary, icons, FreeDesktop `.desktop` entry, `application/x-tmas-backup` MIME XML for `*.tmas-backup.zip`, and `install.sh`:
@@ -94,10 +106,16 @@ pip install pyinstaller
 pyinstaller main.spec
 ```
 
+Windows release layout (after building the EXE):
+
+```bash
+./packaging/windows/assemble-dist.sh dist/telegram-multi-account-sender.exe ./tmms-windows v1.2.49
+```
+
 Linux release layout (after building the binary):
 
 ```bash
-./packaging/linux/assemble-dist.sh dist/telegram-multi-account-sender ./tmms-linux v1.2.26
+./packaging/linux/assemble-dist.sh dist/telegram-multi-account-sender ./tmms-linux v1.2.49
 ```
 
 Alternative (hook directory):

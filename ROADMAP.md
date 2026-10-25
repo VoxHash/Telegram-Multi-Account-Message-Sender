@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.48)
+## Current Status (v1.2.49)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -31,6 +31,7 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - **Optional AI copy tools** (user-supplied API key; provider presets: OpenAI-compatible, Azure OpenAI, Anthropic Messages API; stdlib HTTP; Templates rewrite / spintax / variations; AI UI strings in all 13 locales)
 - **Plugin marketplace / registry** (curated JSON catalog, offline bundled fallback, SHA-256 install into `app_data/plugins/`)
 - **Enhanced macOS/Linux packaging and file associations** (Linux desktop/MIME/`install.sh`; macOS `.app` Info.plist UTI; local `.tmas-backup.zip` restore)
+- **Windows file-association installer polish** (`install.ps1` + release zip; HKCU ProgID `dev.voxhash.tmas-backup`) — v1.2.49
 - **Optional lightweight web companion (read-only monitoring)** (stdlib `http.server`; CLI `web-monitor` + Settings open; localhost by default; Bearer token auth + reverse-proxy guidance; live SVG charts; optional GUI auto-start)
 - **Single-operator handoff export/import** (local `.tmas-backup.zip` with sessions; CLI `handoff-export` / `handoff-import`; Settings Export for Handoff)
 - **Selective entity export + merge-on-import** (templates/campaigns `entities.json`; CLI `--entities` / `--mode merge|replace`; Settings Export Templates/Campaigns)
@@ -51,10 +52,11 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Contributor and sponsor community growth
 - Ongoing community registry PRs beyond the curated seed set
 
-### Latest release (v1.2.48 — 2026-10-25)
-- Phase 2: Proton Drive cloud backup via official `proton-drive` CLI (out-of-process; OS keyring auth)
+### Latest release (v1.2.49 — 2026-10-25)
+- Phase 3 leftover: Windows file-association installer polish (`install.ps1` + `*-windows.zip`)
 
 ### Previous highlights
+- **v1.2.48**: Phase 2: Proton Drive cloud backup via official `proton-drive` CLI (out-of-process; OS keyring auth)
 - **v1.2.47**: UI: modern desktop-client shell (navigation rail, dense dark theme, VoxHash teal accent)
 - **v1.2.46**: Community: Discussions-first channel + beta tester interest path (no Discord invent)
 - **v1.2.45**: Security: threat model, credential storage review/harden CLI, periodic dependency audit
@@ -101,6 +103,7 @@ Realistic, shippable work — not a full platform rewrite.
 
 | Priority | Item | Outcome |
 | --- | --- | --- |
+| Done (v1.2.49) | Windows file-association polish | Release zip + `install.ps1` registers HKCU `*.tmas-backup.zip` → local restore; bare EXE still published |
 | Done (v1.2.48) | Proton Drive cloud backup | Official `proton-drive` CLI provider; Settings selector; `PROTON_DRIVE_CLI` / `PROTON_DRIVE_FOLDER` |
 | Done (v1.2.47) | Modern desktop UI shell | Navigation rail + page headers; dense dark/light/Dracula/high-contrast themes with VoxHash teal accent |
 | Done (v1.2.46) | Discussions-first community + beta testers | GitHub Discussions enabled; SUPPORT/README/CONTRIBUTING routing; beta discussion + issue template; Discord deferred |
@@ -158,7 +161,8 @@ Realistic, shippable work — not a full platform rewrite.
 
 ### Phase 3 (later): Platform expansion
 - [x] Enhanced macOS/Linux packaging and file associations
-  - Leftover: Apple code signing / notarization; Windows file-association installer polish
+- [x] Windows file-association installer polish (`packaging/windows/install.ps1` + release zip) — v1.2.49
+  - Leftover: Apple code signing / notarization (requires Apple Developer ID; not shippable from CI secrets in this repo alone)
 - [x] Optional lightweight web companion (read-only monitoring first)
   - [x] Auth token / reverse-proxy guidance for non-localhost (v1.2.25)
   - [x] Richer live charts (v1.2.26)

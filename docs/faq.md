@@ -57,7 +57,7 @@ You can install the application in three ways:
 
 ### Do I need to install Python?
 
-If you use the Windows installer (.exe), you don't need to install Python separately. If you install from source or via pip, you need Python 3.10 or higher.
+If you use the Windows release EXE or zip (`install.ps1`), you don't need to install Python separately. If you install from source or via pip, you need Python 3.10 or higher. The zip’s `install.ps1` also registers `*.tmas-backup.zip` for double-click restore (per-user, no admin).
 
 ### How do I get Telegram API credentials?
 

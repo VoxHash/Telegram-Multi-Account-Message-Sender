@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.41] - 2026-10-25
+
+### Added
+- **Technical debt: expand blocking mypy GUI subset**: CI / `[tool.mypy]` now also gates `app/gui/main.py`, `cloud_backup_widget.py`, and `dashboard_widget.py` under the same strict flags as core/services/models/plugins.
+- **Unit tests** for blocking mypy path presence updated to include the three new GUI modules.
+
+### Changed
+- Annotated main window, cloud backup settings, and dashboard widgets for strict mypy (return types, Qt enum paths, null-safe headers, SQLModel count/`is_` ignores).
+- Docs (architecture, README, CONTRIBUTING) and ROADMAP document the expanded gate; remaining large PyQt widgets (settings/account/campaign/recipient/template/log) stay deferred.
+
 ## [1.2.40] - 2026-10-25
 
 ### Added

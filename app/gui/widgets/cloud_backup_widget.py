@@ -3,7 +3,7 @@ Cloud backup settings widget (Google Drive + S3 + Dropbox + OneDrive).
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import (
@@ -40,12 +40,12 @@ class CloudBackupWorker(QThread):
 
     finished = pyqtSignal(bool, str, object)
 
-    def __init__(self, operation: str, **kwargs):
+    def __init__(self, operation: str, **kwargs: Any) -> None:
         super().__init__()
         self.operation = operation
         self.kwargs = kwargs
 
-    def run(self):
+    def run(self) -> None:
         service = CloudBackupService()
         provider = self.kwargs.get("provider") or PROVIDER_GOOGLE_DRIVE
         try:
@@ -187,7 +187,7 @@ class CloudBackupWorker(QThread):
 class CloudBackupWidget(QWidget):
     """Settings tab for Google Drive / S3 / Dropbox / OneDrive cloud backup."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.service = CloudBackupService()
@@ -196,7 +196,7 @@ class CloudBackupWidget(QWidget):
         self.setup_ui()
         self.refresh_connection_status()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
 
         status_group = QGroupBox(_("settings.cloud_backup"))
@@ -295,7 +295,7 @@ class CloudBackupWidget(QWidget):
         self._remote_backups = []
         self.refresh_connection_status()
 
-    def refresh_connection_status(self):
+    def refresh_connection_status(self) -> None:
         provider = self._selected_provider()
         if provider == PROVIDER_S3:
             self.connect_button.setText(_("settings.cloud_connect_s3"))
@@ -335,7 +335,7 @@ class CloudBackupWidget(QWidget):
                 self.status_label.setText(_("settings.cloud_status_disconnected"))
         self._set_actions_enabled(connected)
 
-    def _set_actions_enabled(self, connected: bool):
+    def _set_actions_enabled(self, connected: bool) -> None:
         self.disconnect_button.setEnabled(connected)
         self.backup_button.setEnabled(connected)
         self.refresh_button.setEnabled(connected)
@@ -350,7 +350,7 @@ class CloudBackupWidget(QWidget):
         value = self.password_edit.text().strip()
         return value or None
 
-    def _start_worker(self, operation: str, **kwargs):
+    def _start_worker(self, operation: str, **kwargs: Any) -> None:
         if self._worker and self._worker.isRunning():
             QMessageBox.warning(
                 self,
@@ -365,7 +365,7 @@ class CloudBackupWidget(QWidget):
         self._worker.finished.connect(self._on_worker_finished)
         self._worker.start()
 
-    def _set_busy(self, busy: bool):
+    def _set_busy(self, busy: bool) -> None:
         for widget in (
             self.provider_combo,
             self.connect_button,
@@ -379,12 +379,13 @@ class CloudBackupWidget(QWidget):
         ):
             widget.setEnabled(not busy)
 
-    def _on_worker_finished(self, success: bool, message: str, result):
+    def _on_worker_finished(self, success: bool, message: str, result: object) -> None:
         self._set_busy(False)
         self.refresh_connection_status()
 
         if self._worker and self._worker.operation == "list" and success:
-            self._populate_backup_list(result or [])
+            backups = result if isinstance(result, list) else []
+            self._populate_backup_list(backups)
 
         if success:
             QMessageBox.information(self, _("common.success"), message)
@@ -416,29 +417,29 @@ class CloudBackupWidget(QWidget):
             return
         QMessageBox.critical(self, _("common.error"), message)
 
-    def connect_provider(self):
+    def connect_provider(self) -> None:
         self._start_worker("connect")
 
-    def disconnect_provider(self):
+    def disconnect_provider(self) -> None:
         self._start_worker("disconnect")
 
     # Backwards-compatible aliases used by older call sites / tests
-    def connect_google_drive(self):
+    def connect_google_drive(self) -> None:
         self.provider_combo.setCurrentIndex(
             self.provider_combo.findData(PROVIDER_GOOGLE_DRIVE)
         )
         self._start_worker("connect", provider=PROVIDER_GOOGLE_DRIVE)
 
-    def disconnect_google_drive(self):
+    def disconnect_google_drive(self) -> None:
         self._start_worker("disconnect", provider=PROVIDER_GOOGLE_DRIVE)
 
-    def backup_now(self):
+    def backup_now(self) -> None:
         self._start_worker("backup", password=self._password())
 
-    def refresh_backup_list(self):
+    def refresh_backup_list(self) -> None:
         self._start_worker("list")
 
-    def _populate_backup_list(self, backups: List[RemoteBackupItem]):
+    def _populate_backup_list(self, backups: List[RemoteBackupItem]) -> None:
         self._remote_backups = backups
         self.backups_list.clear()
         for item in backups:
@@ -446,10 +447,10 @@ class CloudBackupWidget(QWidget):
             size_kb = max(1, item.size_bytes // 1024)
             label = f"{item.name} — {size_kb} KB — {created}"
             list_item = QListWidgetItem(label)
-            list_item.setData(Qt.UserRole, item.remote_id)
+            list_item.setData(Qt.ItemDataRole.UserRole, item.remote_id)
             self.backups_list.addItem(list_item)
 
-    def restore_selected(self):
+    def restore_selected(self) -> None:
         selected = self.backups_list.currentItem()
         if not selected:
             QMessageBox.warning(
@@ -459,7 +460,7 @@ class CloudBackupWidget(QWidget):
             )
             return
 
-        remote_id = selected.data(Qt.UserRole)
+        remote_id = selected.data(Qt.ItemDataRole.UserRole)
         confirm = QMessageBox.warning(
             self,
             _("settings.cloud_restore_confirm_title"),
@@ -493,13 +494,13 @@ class CloudBackupWidget(QWidget):
 
         self._start_worker("restore", remote_id=remote_id, password=self._password())
 
-    def restore_local_file(self, package_path: Optional[Path] = None):
+    def restore_local_file(self, package_path: Optional[Path] = None) -> None:
         """Restore from a local ``.tmas-backup.zip`` (picker or file association)."""
         from PyQt5.QtWidgets import QFileDialog
 
         path = Path(package_path) if package_path else None
         if path is None or not path.is_file():
-            chosen, _ = QFileDialog.getOpenFileName(
+            chosen, _filter = QFileDialog.getOpenFileName(
                 self,
                 _("settings.cloud_restore_local_title"),
                 "",
@@ -546,14 +547,14 @@ class CloudBackupWidget(QWidget):
             mode=mode,
         )
 
-    def export_handoff_package(self):
+    def export_handoff_package(self) -> None:
         """Export a local handoff package (DB + sessions) without cloud upload."""
         from PyQt5.QtWidgets import QFileDialog
 
         from ...services.cloud import BackupPackageBuilder
 
         default_name = BackupPackageBuilder.generate_handoff_filename()
-        chosen, _ = QFileDialog.getSaveFileName(
+        chosen, _filter = QFileDialog.getSaveFileName(
             self,
             _("settings.cloud_export_handoff_title"),
             default_name,
@@ -580,7 +581,7 @@ class CloudBackupWidget(QWidget):
             include_sessions=True,
         )
 
-    def export_entities_package(self):
+    def export_entities_package(self) -> None:
         """Export templates and/or campaigns only (merge-friendly entities.json)."""
         from PyQt5.QtWidgets import QFileDialog
 
@@ -603,7 +604,7 @@ class CloudBackupWidget(QWidget):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        kinds = []
+        kinds: List[str] = []
         if templates_cb.isChecked():
             kinds.append("templates")
         if campaigns_cb.isChecked():
@@ -617,7 +618,7 @@ class CloudBackupWidget(QWidget):
             return
 
         default_name = BackupPackageBuilder.generate_entities_filename()
-        chosen, _ = QFileDialog.getSaveFileName(
+        chosen, _filter = QFileDialog.getSaveFileName(
             self,
             _("settings.cloud_export_entities_save_title"),
             default_name,
@@ -634,6 +635,6 @@ class CloudBackupWidget(QWidget):
             entity_kinds=kinds,
         )
 
-    def offer_associated_backup(self, package_path: Path):
+    def offer_associated_backup(self, package_path: Path) -> None:
         """Prompt restore when the OS opened a ``.tmas-backup.zip`` via file association."""
         self.restore_local_file(package_path=package_path)

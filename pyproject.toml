@@ -1,6 +1,6 @@
 [project]
 name = "telegram-multi-account-sender"
-version = "1.2.40"
+version = "1.2.41"
 description = "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"
 readme = "README.md"
 license = {text = "Eclipse Public License 2.0"}
@@ -161,7 +161,7 @@ max-line-length = 100
 
 [tool.mypy]
 python_version = "3.10"
-# Blocking CI scope (v1.2.40+): core/services/models + plugins + expanded GUI subset.
+# Blocking CI scope (v1.2.41+): core/services/models + plugins + expanded GUI subset.
 # Remaining large PyQt widgets stay outside until further typing passes (see ROADMAP).
 files = [
     "app/core",
@@ -169,9 +169,12 @@ files = [
     "app/models",
     "app/plugins",
     "app/gui/__init__.py",
+    "app/gui/main.py",
     "app/gui/theme.py",
     "app/gui/widgets/__init__.py",
     "app/gui/widgets/about_widget.py",
+    "app/gui/widgets/cloud_backup_widget.py",
+    "app/gui/widgets/dashboard_widget.py",
     "app/gui/widgets/plugin_widget.py",
     "app/gui/widgets/testing_widget.py",
     "app/gui/widgets/telegram_selector.py",
@@ -190,9 +193,8 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
-# Remaining GUI widgets (`app/gui/main.py`, dashboard/settings/account/campaign/
-# recipient/template/log/cloud_backup) are still outside the blocking files= scope;
-# see ROADMAP.
+# Remaining GUI widgets (settings/account/campaign/recipient/template/log)
+# are still outside the blocking files= scope; see ROADMAP.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,4 +1,4 @@
-"""Regression checks for the blocking mypy scope (v1.2.40+)."""
+"""Regression checks for the blocking mypy scope (v1.2.41+)."""
 
 from __future__ import annotations
 
@@ -21,9 +21,12 @@ BLOCKING_MYPY_PATHS = [
     "app/models",
     "app/plugins",
     "app/gui/__init__.py",
+    "app/gui/main.py",
     "app/gui/theme.py",
     "app/gui/widgets/__init__.py",
     "app/gui/widgets/about_widget.py",
+    "app/gui/widgets/cloud_backup_widget.py",
+    "app/gui/widgets/dashboard_widget.py",
     "app/gui/widgets/plugin_widget.py",
     "app/gui/widgets/testing_widget.py",
     "app/gui/widgets/telegram_selector.py",

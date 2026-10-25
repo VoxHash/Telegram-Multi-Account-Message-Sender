@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QStatusBar,
 )
 from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QCloseEvent
 
 from ..services import get_settings, get_logger
 from ..services.translation import get_translation_manager, _
@@ -68,7 +69,7 @@ class MainWindow(QMainWindow):
 
         self.logger.info("Main window initialized")
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         self.setWindowTitle(_("app.title"))
         self.setGeometry(100, 100, self.settings.window_width, self.settings.window_height)
@@ -99,63 +100,63 @@ class MainWindow(QMainWindow):
         # Set Dashboard as the default tab
         self.tab_widget.setCurrentIndex(0)
 
-    def create_dashboard_tab(self):
+    def create_dashboard_tab(self) -> None:
         """Create dashboard tab."""
         self.dashboard_widget = DashboardWidget()
         self.tab_widget.addTab(self.dashboard_widget, _("tabs.dashboard"))
 
-    def create_accounts_tab(self):
+    def create_accounts_tab(self) -> None:
         """Create accounts management tab."""
         self.accounts_widget = AccountWidget()
         self.tab_widget.addTab(self.accounts_widget, _("tabs.accounts"))
 
-    def create_campaigns_tab(self):
+    def create_campaigns_tab(self) -> None:
         """Create campaigns management tab."""
         self.campaigns_widget = CampaignWidget()
         self.tab_widget.addTab(self.campaigns_widget, _("tabs.campaigns"))
 
-    def create_templates_tab(self):
+    def create_templates_tab(self) -> None:
         """Create templates management tab."""
         from .widgets.template_widget import TemplateWidget
 
         self.templates_widget = TemplateWidget()
         self.tab_widget.addTab(self.templates_widget, _("tabs.templates"))
 
-    def create_recipients_tab(self):
+    def create_recipients_tab(self) -> None:
         """Create recipients management tab."""
         self.recipients_widget = RecipientWidget()
         self.tab_widget.addTab(self.recipients_widget, _("tabs.recipients"))
 
-    def create_testing_tab(self):
+    def create_testing_tab(self) -> None:
         """Create testing tab."""
         from .widgets.testing_widget import TestingWidget
 
         self.testing_widget = TestingWidget()
         self.tab_widget.addTab(self.testing_widget, _("tabs.testing"))
 
-    def create_logs_tab(self):
+    def create_logs_tab(self) -> None:
         """Create logs viewer tab."""
         self.logs_widget = LogWidget()
         self.tab_widget.addTab(self.logs_widget, _("tabs.logs"))
 
-    def create_plugins_tab(self):
+    def create_plugins_tab(self) -> None:
         """Create plugins management tab."""
         self.plugins_widget = PluginWidget()
         self.tab_widget.addTab(self.plugins_widget, _("tabs.plugins"))
 
-    def create_settings_tab(self):
+    def create_settings_tab(self) -> None:
         """Create settings tab."""
         self.settings_widget = SettingsWidget()
         # Connect settings update signal to update status bar
         self.settings_widget.settings_updated.connect(self.on_settings_updated)
         self.tab_widget.addTab(self.settings_widget, _("tabs.settings"))
 
-    def create_about_tab(self):
+    def create_about_tab(self) -> None:
         """Create about tab."""
         self.about_widget = AboutWidget()
         self.tab_widget.addTab(self.about_widget, _("tabs.about"))
 
-    def _handle_pending_backup(self):
+    def _handle_pending_backup(self) -> None:
         """Open Settings → Cloud Backup for an OS file-association launch."""
         path = self._pending_backup_path
         self._pending_backup_path = None
@@ -171,11 +172,11 @@ class MainWindow(QMainWindow):
             self.settings_widget.tab_widget.setCurrentIndex(cloud_index)
         self.settings_widget.cloud_backup_widget.offer_associated_backup(path)
 
-    def setup_menu(self):
+    def setup_menu(self) -> None:
         """Set up menu bar."""
         # Menu bar removed as requested
 
-    def setup_status_bar(self):
+    def setup_status_bar(self) -> None:
         """Set up status bar."""
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
@@ -200,7 +201,7 @@ class MainWindow(QMainWindow):
         self.theme_label.setStyleSheet("background-color: transparent;")
         self.status_bar.addPermanentWidget(self.theme_label)
 
-    def toggle_theme(self):
+    def toggle_theme(self) -> None:
         """Toggle between light and dark theme."""
         current = self.theme_manager.get_current_theme()
         if current == "light":
@@ -208,14 +209,14 @@ class MainWindow(QMainWindow):
         else:
             self.set_theme("light")
 
-    def set_theme(self, theme: str):
+    def set_theme(self, theme: str) -> None:
         """Set application theme."""
         self.theme_manager.apply_theme(theme)
         actual_theme = self.theme_manager.get_current_theme()
         formatted_theme = self.format_theme_name(actual_theme)
         self.theme_label.setText(f"{_('app.theme')}: {formatted_theme}")
 
-    def on_settings_updated(self):
+    def on_settings_updated(self) -> None:
         """Handle settings update."""
         # Reload settings to get updated values
         from ..services import reload_settings
@@ -243,7 +244,7 @@ class MainWindow(QMainWindow):
             f"Settings updated, theme changed to: {self.theme_manager.get_current_theme()}"
         )
 
-    def refresh_status_bar_theme(self):
+    def refresh_status_bar_theme(self) -> None:
         """Refresh the theme display in the status bar."""
         actual_theme = self.theme_manager.get_current_theme()
         formatted_theme = self.format_theme_name(actual_theme)
@@ -260,7 +261,7 @@ class MainWindow(QMainWindow):
         }
         return theme_formats.get(theme, theme.title())
 
-    def update_status(self):
+    def update_status(self) -> None:
         """Update status bar with current application status."""
         try:
             # Get current status information
@@ -270,7 +271,7 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Error updating status: {e}")
             self.status_label.setText(_("common.error"))
 
-    def get_application_status(self):
+    def get_application_status(self) -> str:
         """Get current application status information."""
         try:
             from ..services import get_session
@@ -283,7 +284,9 @@ class MainWindow(QMainWindow):
 
                 account_count = (
                     session.exec(
-                        select(func.count(Account.id)).where(Account.is_deleted.is_(False))
+                        select(func.count())
+                        .select_from(Account)
+                        .where(Account.is_deleted.is_(False))  # type: ignore[attr-defined]
                     ).first()
                     or 0
                 )
@@ -291,7 +294,9 @@ class MainWindow(QMainWindow):
                 # Count campaigns
                 campaign_count = (
                     session.exec(
-                        select(func.count(Campaign.id)).where(Campaign.is_deleted.is_(False))
+                        select(func.count())
+                        .select_from(Campaign)
+                        .where(Campaign.is_deleted.is_(False))  # type: ignore[attr-defined]
                     ).first()
                     or 0
                 )
@@ -299,7 +304,9 @@ class MainWindow(QMainWindow):
                 # Count recipients
                 recipient_count = (
                     session.exec(
-                        select(func.count(Recipient.id)).where(Recipient.is_deleted.is_(False))
+                        select(func.count())
+                        .select_from(Recipient)
+                        .where(Recipient.is_deleted.is_(False))  # type: ignore[attr-defined]
                     ).first()
                     or 0
                 )
@@ -309,8 +316,9 @@ class MainWindow(QMainWindow):
                 if account_count > 0:
                     online_accounts = (
                         session.exec(
-                            select(func.count(Account.id))
-                            .where(Account.is_deleted.is_(False))
+                            select(func.count())
+                            .select_from(Account)
+                            .where(Account.is_deleted.is_(False))  # type: ignore[attr-defined]
                             .where(Account.status == "ONLINE")
                         ).first()
                         or 0
@@ -341,7 +349,7 @@ class MainWindow(QMainWindow):
             self.logger.error(f"Error getting application status: {e}")
             return _("app.ready")
 
-    def on_language_changed(self, language: str):
+    def on_language_changed(self, language: str) -> None:
         """Handle language change."""
         self.logger.info(f"Language changed to: {language}")
         # Update UI text
@@ -373,7 +381,7 @@ class MainWindow(QMainWindow):
         # Force refresh all widgets
         self.refresh_all_widgets()
 
-    def refresh_all_widgets(self):
+    def refresh_all_widgets(self) -> None:
         """Refresh all widgets to apply language changes."""
         try:
             # Refresh each widget if it has a refresh method
@@ -402,7 +410,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Error refreshing widgets: {e}")
 
-    def _maybe_autostart_web_companion(self):
+    def _maybe_autostart_web_companion(self) -> None:
         """Start the read-only web companion in the background when Settings/env request it."""
         try:
             from ..services.web_companion import maybe_autostart_companion_from_settings
@@ -415,7 +423,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Web companion auto-start error: {e}")
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: Optional[QCloseEvent]) -> None:
         """Handle window close event."""
         self.logger.info("Application closing")
         try:
@@ -425,4 +433,5 @@ class MainWindow(QMainWindow):
             stop_companion(only_if_gui_owned=True)
         except Exception as e:
             self.logger.error(f"Error stopping web companion on exit: {e}")
-        event.accept()
+        if event is not None:
+            event.accept()

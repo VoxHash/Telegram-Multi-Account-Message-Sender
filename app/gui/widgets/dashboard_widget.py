@@ -45,7 +45,7 @@ _HEALTH_COLORS = {
 class StatCard(QFrame):
     """Stat card widget for displaying metrics."""
 
-    def __init__(self, title: str, value: str, subtitle: str = "", parent=None):
+    def __init__(self, title: str, value: str, subtitle: str = "", parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setFrameShape(QFrame.StyledPanel)
         self.setStyleSheet("""
@@ -75,16 +75,16 @@ class StatCard(QFrame):
 
         layout.addStretch()
 
-    def set_value(self, value: str):
+    def set_value(self, value: str) -> None:
         """Update the value displayed in the card."""
         self.value_label.setText(value)
 
-    def set_subtitle(self, subtitle: str):
+    def set_subtitle(self, subtitle: str) -> None:
         """Update the subtitle under the value."""
         self.subtitle_label.setText(subtitle)
         self.subtitle_label.setVisible(bool(subtitle))
 
-    def set_value_color(self, color: QColor):
+    def set_value_color(self, color: QColor) -> None:
         """Tint the primary value for status emphasis."""
         self.value_label.setStyleSheet(
             f"color: {color.name()}; font-size: 24px; font-weight: bold;"
@@ -96,7 +96,7 @@ class DashboardWidget(QWidget):
 
     refresh_requested = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.logger = get_logger()
         self.analytics_collector = AnalyticsCollector()
@@ -163,7 +163,7 @@ class DashboardWidget(QWidget):
         campaigns_layout = QVBoxLayout(campaigns_group)
 
         self.campaigns_empty_label = QLabel(_("dashboard.no_campaigns"))
-        self.campaigns_empty_label.setAlignment(Qt.AlignCenter)
+        self.campaigns_empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.campaigns_empty_label.setStyleSheet("color: palette(mid); padding: 16px;")
         self.campaigns_empty_label.setVisible(False)
         campaigns_layout.addWidget(self.campaigns_empty_label)
@@ -181,12 +181,13 @@ class DashboardWidget(QWidget):
             ]
         )
         campaigns_header = self.campaigns_table.horizontalHeader()
-        campaigns_header.setSectionResizeMode(0, QHeaderView.Stretch)
-        campaigns_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        campaigns_header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        campaigns_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        campaigns_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        campaigns_header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        if campaigns_header is not None:
+            campaigns_header.setSectionResizeMode(0, QHeaderView.Stretch)
+            campaigns_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+            campaigns_header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+            campaigns_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+            campaigns_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+            campaigns_header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.campaigns_table.setAlternatingRowColors(True)
         self.campaigns_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.campaigns_table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -212,7 +213,7 @@ class DashboardWidget(QWidget):
         health_layout.addLayout(health_summary_layout)
 
         self.health_empty_label = QLabel(_("dashboard.no_accounts_health"))
-        self.health_empty_label.setAlignment(Qt.AlignCenter)
+        self.health_empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.health_empty_label.setStyleSheet("color: palette(mid); padding: 16px;")
         self.health_empty_label.setWordWrap(True)
         self.health_empty_label.setVisible(False)
@@ -231,12 +232,13 @@ class DashboardWidget(QWidget):
             ]
         )
         health_header = self.health_table.horizontalHeader()
-        health_header.setSectionResizeMode(0, QHeaderView.Stretch)
-        health_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        health_header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        health_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        health_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        health_header.setSectionResizeMode(5, QHeaderView.Stretch)
+        if health_header is not None:
+            health_header.setSectionResizeMode(0, QHeaderView.Stretch)
+            health_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+            health_header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+            health_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+            health_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+            health_header.setSectionResizeMode(5, QHeaderView.Stretch)
         self.health_table.setAlternatingRowColors(True)
         self.health_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.health_table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -279,8 +281,8 @@ class DashboardWidget(QWidget):
             campaigns = list(
                 session.exec(
                     select(Campaign)
-                    .where(Campaign.is_deleted.is_(False))
-                    .order_by(Campaign.updated_at.desc())
+                    .where(Campaign.is_deleted.is_(False))  # type: ignore[attr-defined]
+                    .order_by(Campaign.updated_at.desc())  # type: ignore[attr-defined]
                 ).all()
             )
             if not campaigns:
@@ -290,7 +292,9 @@ class DashboardWidget(QWidget):
             logs_by_campaign: Dict[int, List[SendLog]] = {cid: [] for cid in campaign_ids}
             if campaign_ids:
                 logs = session.exec(
-                    select(SendLog).where(SendLog.campaign_id.in_(campaign_ids))
+                    select(SendLog).where(
+                        SendLog.campaign_id.in_(campaign_ids)  # type: ignore[union-attr]
+                    )
                 ).all()
                 for log in logs:
                     if log.campaign_id in logs_by_campaign:
@@ -367,37 +371,50 @@ class DashboardWidget(QWidget):
                 _("dashboard.export_failed").format(error="write failed"),
             )
 
-    def update_stats_cards(self):
+    def update_stats_cards(self) -> None:
         """Update statistics cards."""
         try:
             with get_session() as session:
-                query = select(func.count(Campaign.id)).where(Campaign.is_deleted.is_(False))
+                query = select(func.count()).select_from(Campaign).where(
+                    Campaign.is_deleted.is_(False)  # type: ignore[attr-defined]
+                )
                 total_campaigns = session.exec(query).first() or 0
 
-                query = select(func.count(Campaign.id)).where(
-                    Campaign.is_deleted.is_(False), Campaign.status == CampaignStatus.RUNNING
+                query = select(func.count()).select_from(Campaign).where(
+                    Campaign.is_deleted.is_(False),  # type: ignore[attr-defined]
+                    Campaign.status == CampaignStatus.RUNNING,
                 )
                 running_campaigns = session.exec(query).first() or 0
 
-                query = select(func.count(Account.id)).where(Account.is_deleted.is_(False))
+                query = select(func.count()).select_from(Account).where(
+                    Account.is_deleted.is_(False)  # type: ignore[attr-defined]
+                )
                 total_accounts = session.exec(query).first() or 0
 
-                query = select(func.count(Account.id)).where(
-                    Account.is_deleted.is_(False), Account.status == AccountStatus.ONLINE
+                query = select(func.count()).select_from(Account).where(
+                    Account.is_deleted.is_(False),  # type: ignore[attr-defined]
+                    Account.status == AccountStatus.ONLINE,
                 )
                 online_accounts = session.exec(query).first() or 0
 
                 since = datetime.utcnow() - timedelta(hours=24)
-                query = select(func.count(SendLog.id)).where(
-                    SendLog.sent_at >= since, SendLog.status == SendStatus.SENT
+                query = select(func.count()).select_from(SendLog).where(
+                    SendLog.sent_at.is_not(None),  # type: ignore[union-attr]
+                    SendLog.sent_at >= since,  # type: ignore[operator]
+                    SendLog.status == SendStatus.SENT,
                 )
                 messages_sent = session.exec(query).first() or 0
 
-                query = select(func.count(SendLog.id)).where(SendLog.sent_at >= since)
+                query = select(func.count()).select_from(SendLog).where(
+                    SendLog.sent_at.is_not(None),  # type: ignore[union-attr]
+                    SendLog.sent_at >= since,  # type: ignore[operator]
+                )
                 total_messages = session.exec(query).first() or 0
 
-                query = select(func.count(SendLog.id)).where(
-                    SendLog.sent_at >= since, SendLog.status == SendStatus.SENT
+                query = select(func.count()).select_from(SendLog).where(
+                    SendLog.sent_at.is_not(None),  # type: ignore[union-attr]
+                    SendLog.sent_at >= since,  # type: ignore[operator]
+                    SendLog.status == SendStatus.SENT,
                 )
                 successful_messages = session.exec(query).first() or 0
 
@@ -415,14 +432,14 @@ class DashboardWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Error updating stats cards: {e}")
 
-    def update_campaigns_table(self):
+    def update_campaigns_table(self) -> None:
         """Update campaigns table."""
         try:
             with get_session() as session:
                 query = (
                     select(Campaign)
-                    .where(Campaign.is_deleted.is_(False))
-                    .order_by(Campaign.updated_at.desc())
+                    .where(Campaign.is_deleted.is_(False))  # type: ignore[attr-defined]
+                    .order_by(Campaign.updated_at.desc())  # type: ignore[attr-defined]
                     .limit(10)
                 )
                 campaigns = session.exec(query).all()
@@ -469,7 +486,7 @@ class DashboardWidget(QWidget):
         except Exception as e:
             self.logger.error(f"Error updating campaigns table: {e}")
 
-    def update_health_table(self):
+    def update_health_table(self) -> None:
         """Update account health summary cards and table."""
         try:
             health_data = self.health_monitor.get_all_accounts_health()
@@ -492,11 +509,14 @@ class DashboardWidget(QWidget):
 
             for row, health in enumerate(health_data):
                 name_item = QTableWidgetItem(health.get("account_name") or "")
-                name_item.setData(Qt.UserRole, health.get("account_id"))
+                name_item.setData(Qt.ItemDataRole.UserRole, health.get("account_id"))
                 self.health_table.setItem(row, 0, name_item)
 
                 status = health.get("status")
-                status_text = status.value.title() if hasattr(status, "value") else str(status)
+                if status is not None and hasattr(status, "value"):
+                    status_text = str(status.value).title()
+                else:
+                    status_text = str(status)
                 status_item = QTableWidgetItem(status_text)
                 if status == AccountStatus.ONLINE:
                     status_item.setForeground(QColor(22, 163, 74))
@@ -523,13 +543,13 @@ class DashboardWidget(QWidget):
 
                 score = float(health.get("score", 0.0))
                 score_item = QTableWidgetItem()
-                score_item.setData(Qt.DisplayRole, round(score, 1))
+                score_item.setData(Qt.ItemDataRole.DisplayRole, round(score, 1))
                 score_item.setForeground(
                     _HEALTH_COLORS.get(
                         health_status, _HEALTH_COLORS[HealthStatus.OFFLINE.value]
                     )
                 )
-                score_item.setTextAlignment(Qt.AlignCenter)
+                score_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.health_table.setItem(row, 3, score_item)
 
                 metrics = health.get("metrics") or {}
@@ -547,7 +567,7 @@ class DashboardWidget(QWidget):
                         rate_item.setForeground(_HEALTH_COLORS[HealthStatus.WARNING.value])
                     else:
                         rate_item.setForeground(_HEALTH_COLORS[HealthStatus.GOOD.value])
-                rate_item.setTextAlignment(Qt.AlignCenter)
+                rate_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.health_table.setItem(row, 4, rate_item)
 
                 warnings = health.get("warnings") or []
@@ -581,7 +601,7 @@ class DashboardWidget(QWidget):
 
             self.health_table.setSortingEnabled(True)
             # Default: worst scores first (actionable)
-            self.health_table.sortItems(3, Qt.AscendingOrder)
+            self.health_table.sortItems(3, Qt.SortOrder.AscendingOrder)
 
             if self.health_table.currentRow() < 0 and self.health_table.rowCount() > 0:
                 self.health_table.selectRow(0)
@@ -592,7 +612,7 @@ class DashboardWidget(QWidget):
             self.logger.error(f"Error updating health table: {e}")
             self.health_detail_label.setText(_("dashboard.health_refresh_error").format(error=str(e)))
 
-    def _update_health_summary_cards(self, summary: dict):
+    def _update_health_summary_cards(self, summary: Dict[str, Any]) -> None:
         """Refresh the four health summary StatCards."""
         total = summary.get("total", 0)
         if total == 0:
@@ -646,7 +666,7 @@ class DashboardWidget(QWidget):
             else _HEALTH_COLORS[HealthStatus.GOOD.value]
         )
 
-    def _on_health_selection_changed(self):
+    def _on_health_selection_changed(self) -> None:
         """Show actionable detail for the selected health row."""
         row = self.health_table.currentRow()
         if row < 0 or not self._health_rows:
@@ -658,7 +678,7 @@ class DashboardWidget(QWidget):
             self.health_detail_label.setText(_("dashboard.health_detail_hint"))
             return
 
-        account_id = name_item.data(Qt.UserRole)
+        account_id = name_item.data(Qt.ItemDataRole.UserRole)
         health = next(
             (h for h in self._health_rows if h.get("account_id") == account_id),
             None,

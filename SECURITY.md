@@ -145,6 +145,7 @@ When audit finds a CVE: pin or upgrade the dependency, note the change in `CHANG
 - Keep dependencies updated; watch the dependency-audit workflow
 - Review code changes for security implications
 - Follow secure coding practices
+- **macOS release signing**: store Developer ID `.p12` / App Store Connect `.p8` only as GitHub Actions secrets (`APPLE_*`); never commit them. See `docs/installation.md` (macOS DMG) and `packaging/macos/sign-and-notarize.sh`
 
 ## Security Considerations
 

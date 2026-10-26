@@ -118,6 +118,15 @@ Common issues and solutions for Telegram Multi-Account Message Sender.
 2. Try: `pip install --upgrade PyQt5`
 3. Use pre-built wheels: `pip install PyQt5 --only-binary :all:`
 
+### macOS Gatekeeper blocks the app
+
+**Problem:** “App can’t be opened because it is from an unidentified developer”
+
+**Solutions:**
+1. Right-click the `.app` → **Open** → confirm (unsigned builds).
+2. Prefer a notarized release when Apple Developer secrets are configured in CI (see `docs/installation.md`).
+3. Do not disable Gatekeeper system-wide.
+
 ## Application Startup Issues
 
 ### Application Won't Start

@@ -211,6 +211,35 @@ jobs:
         fi
         ./packaging/macos/assemble-app.sh "${SRC}" "${OUT_APP}" "${VERSION}"
         test -f "${OUT_APP}/Contents/Info.plist"
+
+    # Optional: Developer ID sign + Apple notarization.
+    # Skips cleanly when secrets are absent (unsigned DMG still published).
+    # Never commit .p12 / .p8 / passwords — configure Actions secrets only.
+    - name: Optional Apple code sign and notarize
+      id: apple_sign
+      env:
+        APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+        APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+        APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        chmod +x packaging/macos/import-identity.sh packaging/macos/sign-and-notarize.sh
+        ./packaging/macos/sign-and-notarize.sh --self-check
+        OUT_APP="dist/Telegram-Multi-Account-Sender.app"
+        if [ -z "${APPLE_CERTIFICATE_BASE64}" ]; then
+          echo "Apple Developer secrets not configured; publishing unsigned .app/DMG."
+          echo "signed=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        # shellcheck disable=SC1091
+        source ./packaging/macos/import-identity.sh
+        ./packaging/macos/sign-and-notarize.sh "${OUT_APP}"
+        echo "signed=true" >> "$GITHUB_OUTPUT"
     
     - name: Create .dmg
       run: |
@@ -221,6 +250,25 @@ jobs:
           -format UDZO \
           "telegram-multi-account-sender-${{ steps.set_version_macos.outputs.version }}-macOS.dmg"
         test -f "telegram-multi-account-sender-${{ steps.set_version_macos.outputs.version }}-macOS.dmg"
+
+    - name: Optional notarize DMG
+      if: steps.apple_sign.outputs.signed == 'true'
+      env:
+        APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+        APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        DMG="telegram-multi-account-sender-${{ steps.set_version_macos.outputs.version }}-macOS.dmg"
+        # Identity may already be in the runner keychain from the previous step
+        if [ -z "${APPLE_SIGNING_IDENTITY}" ]; then
+          APPLE_SIGNING_IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Developer ID Application[^"]*\)".*/\1/p' | head -n1 || true)"
+          export APPLE_SIGNING_IDENTITY
+        fi
+        ./packaging/macos/sign-and-notarize.sh "${DMG}" --dmg-only
     
     - name: Upload macOS artifacts
       if: success() || failure()
@@ -379,7 +427,7 @@ jobs:
           - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-linux.tar.gz` - Binary + `install.sh` (desktop entry, icons, `*.tmas-backup.zip` MIME)
           
           **macOS:**
-          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-macOS.dmg` - `.app` with backup document types (built on macOS runners; signing/notarization not included)
+          - `telegram-multi-account-sender-${{ steps.set_version.outputs.version }}-macOS.dmg` - `.app` with backup document types (built on macOS runners; Developer ID sign + notarization run when Apple secrets are configured, otherwise unsigned)
 
           **Optional native accelerator (Linux x86_64):**
           - `tmms_native-linux-x86_64` — place as `bin/tmms_native` (see docs/installation.md)

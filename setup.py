@@ -16,7 +16,7 @@ with open("requirements.txt", "r", encoding="utf-8") as f:
     requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 # Read version
-version = "1.2.49"
+version = "1.2.50"
 
 setup(
     name="telegram-multi-account-sender",

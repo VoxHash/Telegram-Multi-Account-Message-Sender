@@ -59,6 +59,10 @@ You can install the application in three ways:
 
 If you use the Windows release EXE or zip (`install.ps1`), you don't need to install Python separately. If you install from source or via pip, you need Python 3.10 or higher. The zip’s `install.ps1` also registers `*.tmas-backup.zip` for double-click restore (per-user, no admin).
 
+### Why does macOS block the DMG / .app?
+
+Unsigned release builds trigger Gatekeeper. Right-click the app → **Open** → confirm. Developer ID signing and Apple notarization are prepared in-repo (`packaging/macos/sign-and-notarize.sh`) and run in CI when Apple Actions secrets are configured; until then DMGs may remain unsigned. Details: [installation.md](installation.md).
+
 ### How do I get Telegram API credentials?
 
 1. Go to [my.telegram.org](https://my.telegram.org)

@@ -400,3 +400,13 @@ ipython_config.py
 # Plugin registry signing private keys
 registry/keys/*.priv
 *.priv
+
+# Apple Developer ID / notarization material (never commit)
+*.p12
+*.p8
+AuthKey_*.p8
+*.cer
+*.mobileprovision
+tmas-signing.keychain-db
+tmas-developer-id.p12
+tmas-notary-key*.p8

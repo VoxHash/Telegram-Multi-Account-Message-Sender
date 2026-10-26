@@ -93,7 +93,25 @@ That installs into `~/.local` (no root). Uninstall with `./install.sh --uninstal
 
 ### macOS DMG
 
-The macOS asset is a `.dmg` built on GitHub Actions `macos-latest` runners. The `.app` ships `Info.plist` document types / UTI `dev.voxhash.tmas-backup` for `*.tmas-backup.zip`. **Code signing and notarization are not included** in this repo’s workflow — Gatekeeper may require right-click → Open on unsigned builds. Local ICNS generation uses `packaging/macos/build-icns.sh` (`iconutil`; macOS only).
+The macOS asset is a `.dmg` built on GitHub Actions `macos-latest` runners. The `.app` ships `Info.plist` document types / UTI `dev.voxhash.tmas-backup` for `*.tmas-backup.zip`. Local ICNS generation uses `packaging/macos/build-icns.sh` (`iconutil`; macOS only).
+
+**Signing / notarization (prep shipped; live ticket needs Developer ID secrets):**
+
+| Artifact | Role |
+| --- | --- |
+| `packaging/macos/entitlements.plist` | Hardened Runtime entitlements for PyInstaller/Qt |
+| `packaging/macos/import-identity.sh` | Import Developer ID `.p12` (from env) into a temp keychain |
+| `packaging/macos/sign-and-notarize.sh` | `codesign` + `notarytool` + `stapler` |
+| Release workflow | Runs the scripts when Actions secrets exist; otherwise publishes an **unsigned** DMG |
+
+Without Apple secrets, Gatekeeper may require right-click → Open. To enable signed releases, add Actions secrets (never commit `*.p12` / `*.p8` / passwords): `APPLE_CERTIFICATE_BASE64`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, plus either `APPLE_API_KEY_BASE64` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER` or `APPLE_ID` + `APPLE_APP_PASSWORD` + `APPLE_TEAM_ID`.
+
+```bash
+./packaging/macos/sign-and-notarize.sh --self-check
+# On macOS, after assemble-app.sh and with secrets exported:
+# source ./packaging/macos/import-identity.sh
+# ./packaging/macos/sign-and-notarize.sh dist/Telegram-Multi-Account-Sender.app
+```
 
 ## Frozen builds (PyInstaller)
 
@@ -109,13 +127,13 @@ pyinstaller main.spec
 Windows release layout (after building the EXE):
 
 ```bash
-./packaging/windows/assemble-dist.sh dist/telegram-multi-account-sender.exe ./tmms-windows v1.2.49
+./packaging/windows/assemble-dist.sh dist/telegram-multi-account-sender.exe ./tmms-windows v1.2.50
 ```
 
 Linux release layout (after building the binary):
 
 ```bash
-./packaging/linux/assemble-dist.sh dist/telegram-multi-account-sender ./tmms-linux v1.2.49
+./packaging/linux/assemble-dist.sh dist/telegram-multi-account-sender ./tmms-linux v1.2.50
 ```
 
 Alternative (hook directory):

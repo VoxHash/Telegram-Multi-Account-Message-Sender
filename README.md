@@ -177,7 +177,7 @@ Download the appropriate installer from the [Releases](https://github.com/VoxHas
 
 - **Windows**: extract `*-windows.zip` and run `install.ps1` (per-user `*.tmas-backup.zip` association), or run the standalone `.exe` without association.
 - **Linux**: extract the `*-linux.tar.gz` asset and run `./install.sh` (registers the app menu entry and `*.tmas-backup.zip` MIME type under `~/.local`).
-- **macOS**: open the `.dmg` (unsigned builds may need right-click → Open; signing/notarization not shipped).
+- **macOS**: open the `.dmg` (unsigned builds may need right-click → Open; Developer ID sign + notarization run in CI when Apple secrets are configured — see [docs/installation.md](docs/installation.md)).
 
 Details: [docs/installation.md](docs/installation.md).
 

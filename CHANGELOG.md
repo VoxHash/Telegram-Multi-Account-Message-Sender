@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.50] - 2026-10-26
+
+### Added
+- **Phase 3 leftover (partial): Apple code signing / notarization prep**: `packaging/macos/entitlements.plist` (hardened runtime for PyInstaller/Qt), `import-identity.sh` (Developer ID `.p12` → temp keychain), `sign-and-notarize.sh` (`codesign` + `notarytool` + `stapler`). Release workflow runs them when `APPLE_*` Actions secrets exist; otherwise publishes an unsigned DMG with a clear skip message.
+- **Unit tests** for entitlements keys, script self-check, and missing-identity exit behavior.
+
+### Changed
+- Docs (installation, FAQ, troubleshooting, SECURITY, README, ROADMAP) and packaging metadata bump to **1.2.50**.
+- ROADMAP marks Apple signing/notarization **prep** done; leftover remains a live notarized DMG once Developer ID credentials are configured outside this repo.
+
+### Notes
+- No Apple credentials are committed or invented. Configure Actions secrets to enable signed releases.
+
 ## [1.2.49] - 2026-10-25
 
 ### Added

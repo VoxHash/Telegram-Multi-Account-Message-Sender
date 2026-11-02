@@ -91,6 +91,20 @@ cd telegram-multi-account-sender-v*-linux
 
 That installs into `~/.local` (no root). Uninstall with `./install.sh --uninstall`. After install, opening a `.tmas-backup.zip` from the file manager launches a local restore prompt.
 
+### Linux desktop entry for `uv tool` / pip (no frozen binary)
+
+If you already installed the app with `uv tool` or `pip` (CLIs on `~/.local/bin`), register the FreeDesktop menu entry and icons without copying another binary:
+
+```bash
+uv tool install git+https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender.git@v1.2.51
+# from a clone of this repo:
+./packaging/linux/install.sh --from-path
+```
+
+That writes `~/.local/share/applications/dev.voxhash.telegram-multi-account-sender.desktop` with `Exec`/`TryExec` pointing at `telegram-multi-account-sender-gui` (preferred) and installs hicolor icons. Uninstall desktop/MIME/icons only with `./packaging/linux/install.sh --from-path --uninstall` (PATH/`uv tool` binaries are left alone).
+
+**Add to Favorites (KDE / Glytherra Studio launcher):** open the Application Launcher → All Applications → search “Telegram Multi-Account” → right-click → **Add to Favorites** (or pin / Add to Panel).
+
 ### macOS DMG
 
 The macOS asset is a `.dmg` built on GitHub Actions `macos-latest` runners. The `.app` ships `Info.plist` document types / UTI `dev.voxhash.tmas-backup` for `*.tmas-backup.zip`. Local ICNS generation uses `packaging/macos/build-icns.sh` (`iconutil`; macOS only).

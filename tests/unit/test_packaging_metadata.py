@@ -19,6 +19,8 @@ class TestLinuxPackaging:
         assert "MimeType=application/x-tmas-backup;" in desktop
         assert "Exec=telegram-multi-account-sender %f" in desktop
         assert "Icon=dev.voxhash.telegram-multi-account-sender" in desktop
+        assert "StartupWMClass=dev.voxhash.telegram-multi-account-sender" in desktop
+        assert "StartupWMClass=python" not in desktop
 
     def test_mime_xml_registers_tmas_backup_glob(self):
         mime_path = LINUX / "application-x-tmas-backup.xml"

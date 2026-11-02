@@ -41,11 +41,12 @@ def main():
     if pending_backup is not None:
         logger.info(f"Opened via file association: {pending_backup}")
 
-    # Create Qt application
+    # Unique Wayland app_id / WM_CLASS (must not share python3 with sibling apps)
+    from app.core.desktop_identity import apply_desktop_identity, configure_qt_identity
+
+    configure_qt_identity(__version__)
     app = QApplication(qt_argv)
-    app.setApplicationName("Telegram Multi-Account Message Sender")
-    app.setApplicationVersion(__version__)
-    app.setOrganizationName("VoxHash")
+    apply_desktop_identity(app, __version__)
 
     # Set application icon
     icon_path = Path(__file__).parent / "assets" / "icons" / "favicon.ico"

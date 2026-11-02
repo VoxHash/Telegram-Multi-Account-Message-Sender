@@ -36,6 +36,9 @@ class TestCliEntrypoint:
             qapp.assert_called_once()
             mock_app.setApplicationName.assert_called_once()
             mock_app.setApplicationVersion.assert_called_once()
+            mock_app.setDesktopFileName.assert_called_once_with(
+                "dev.voxhash.telegram-multi-account-sender"
+            )
             main_window.assert_called_once_with(pending_backup_path=None)
             mock_window.show.assert_called_once_with()
             mock_app.exec_.assert_called_once_with()

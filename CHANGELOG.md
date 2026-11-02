@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Linux `install.sh --from-path`**: register FreeDesktop `.desktop`, hicolor icons, and MIME for an existing `uv tool` / pip CLI without copying a frozen binary; docs cover Favorites pinning on KDE / Glytherra Studio.
+## [1.2.52] - 2026-11-02
+
+### Fixed
+- **Linux window identity**: set a unique FreeDesktop desktop-file id (`dev.voxhash.telegram-multi-account-sender`) via Qt `setDesktopFileName` so Wayland/KDE no longer treats the app as generic `python3` and groups or closes it with sibling VoxHash Python GUIs (e.g. DB Storage Manager). `StartupWMClass` matches the desktop id.
 
 ## [1.2.51] - 2026-11-01
 

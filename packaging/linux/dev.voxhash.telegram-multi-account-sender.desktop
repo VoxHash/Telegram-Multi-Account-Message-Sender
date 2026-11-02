@@ -12,4 +12,4 @@ Categories=Network;Office;Qt;
 MimeType=application/x-tmas-backup;
 Keywords=telegram;messaging;campaign;spintax;TMAS;
 StartupNotify=true
-StartupWMClass=telegram-multi-account-sender
+StartupWMClass=dev.voxhash.telegram-multi-account-sender

@@ -3,7 +3,7 @@
 [![CI/CD Pipeline](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/actions/workflows/ci.yml/badge.svg)](https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/telegram-multi-account-sender.svg)](https://pypi.org/project/telegram-multi-account-sender/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/telegram-multi-account-sender.svg)](https://pypi.org/project/telegram-multi-account-sender/)
-[![License: EPL-2.0](https://img.shields.io/badge/License-EPL--2.0-blue.svg)](https://opensource.org/licenses/EPL-2.0)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Made with ❤️ by VoxHash](https://img.shields.io/badge/Made%20with%20❤️%20by-VoxHash%20Technologies-red.svg)](https://voxhash.dev)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -392,7 +392,9 @@ Please use our [Issue Templates](.github/ISSUE_TEMPLATE/) when reporting bugs or
 
 ## 📄 License
 
-This project is licensed under the Eclipse Public License 2.0 (EPL-2.0) - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GNU General Public License v3 or later** (GPL-3.0-or-later) — see the [LICENSE](LICENSE) file for details.
+
+The desktop app is free and open source for local use. The separately developed hosted product [SendGram](https://www.sendgram.pro) is a private paid SaaS and is **not** licensed under this repository’s GPL terms. See [SECURITY.md](SECURITY.md#licensing--hosted-offering) and [docs/faq.md](docs/faq.md#licensing--hosted-offering).
 
 ## ⚠️ Disclaimer
 

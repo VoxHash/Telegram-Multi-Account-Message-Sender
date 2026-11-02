@@ -14,7 +14,7 @@
   "about": {
     "title": "About",
     "description": "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts safely with advanced features like scheduling, spintax, media support, and compliance controls.",
-    "license": "License: BSD 3-Clause License - See LICENSE file for details",
+    "license": "License: GNU GPL v3 or later — see the LICENSE file",
     "developer": "Developer: VoxHash - contact@voxhash.dev",
     "disclaimer": "Disclaimer: This application is for educational and legitimate business purposes only. Users are responsible for complying with Telegram's Terms of Service and applicable laws.",
     "made_with": "Made with ❤️ by VoxHash"

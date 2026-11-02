@@ -14,7 +14,7 @@
   "about": {
     "title": "About",
     "description": "스케줄링, 스핀택스, 미디어 지원 및 컴플라이언스 제어와 같은 고급 기능을 갖춘 여러 Telegram 계정을 통해 안전하게 메시지를 관리하고 전송하는 전문가급 데스크톱 애플리케이션입니다.",
-    "license": "라이선스: BSD 3-Clause 라이선스 - 자세한 내용은 LICENSE 파일을 참조하세요",
+    "license": "라이선스: GNU GPL v3 이상 — 자세한 내용은 LICENSE 파일을 참조하세요",
     "developer": "개발자: VoxHash - contact@voxhash.dev",
     "disclaimer": "면책 조항: 이 애플리케이션은 교육 및 합법적인 비즈니스 목적으로만 사용됩니다. 사용자는 Telegram의 서비스 약관 및 적용 가능한 법률을 준수할 책임이 있습니다.",
     "made_with": "VoxHash가 ❤️로 제작"

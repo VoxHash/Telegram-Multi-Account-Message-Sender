@@ -47,7 +47,7 @@ class SampleAnalyticsPlugin(AnalyticsPlugin):
                 "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender"
                 "/tree/main/registry/templates"
             ),
-            license="EPL-2.0",
+            license="GPL-3.0-or-later",
             tags=["example", "analytics", "template", "registry"],
         )
 

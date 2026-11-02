@@ -14,7 +14,7 @@
   "about": {
     "title": "About",
     "description": "Aplicació d'escriptori de nivell professional per gestionar i enviar missatges a través de múltiples comptes de Telegram de forma segura amb funcions avançades com programació, spintax, suport multimèdia i controls de compliment.",
-    "license": "Llicència: BSD 3-Clause - Vegeu el fitxer LICENSE per a més detalls",
+    "license": "Llicència: GNU GPL v3 o posterior — vegeu el fitxer LICENSE",
     "developer": "Desenvolupador: VoxHash - contact@voxhash.dev",
     "disclaimer": "Descàrrec de responsabilitat: Aquesta aplicació és només per a finalitats educatives i comercials legítimes. Els usuaris són responsables de complir amb els Termes de Servei de Telegram i les lleis aplicables.",
     "made_with": "Fet amb ❤️ per VoxHash"

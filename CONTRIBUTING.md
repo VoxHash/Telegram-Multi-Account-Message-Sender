@@ -672,7 +672,7 @@ If you have questions about contributing:
 
 ## 📄 License
 
-By contributing to this project, you agree that your contributions will be licensed under the BSD 3-Clause License.
+By contributing to this project, you agree that your contributions will be licensed under the **GNU General Public License v3 or later** (GPL-3.0-or-later), the same license as this repository.
 
 ## 🙏 Recognition
 

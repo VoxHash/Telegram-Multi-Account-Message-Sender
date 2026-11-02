@@ -14,7 +14,7 @@
   "about": {
     "title": "について",
     "description": "スケジューリング、spintax、メディアサポート、コンプライアンス制御などの高度な機能を備えた、複数のTelegramアカウント間でメッセージを安全に管理・送信するためのプロフェッショナルグレードのデスクトップアプリケーション。",
-    "license": "ライセンス：BSD 3-Clauseライセンス - 詳細はLICENSEファイルを参照",
+    "license": "ライセンス：GNU GPL v3 以降 — 詳細は LICENSE ファイルを参照",
     "developer": "開発者：VoxHash - contact@voxhash.dev",
     "disclaimer": "免責事項：このアプリケーションは教育および合法的なビジネス目的のみに使用されます。ユーザーはTelegramの利用規約および適用される法律の遵守に責任があります。",
     "made_with": "VoxHashが❤️で作成"

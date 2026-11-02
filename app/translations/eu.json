@@ -14,7 +14,7 @@
   "about": {
     "title": "About",
     "description": "Telegram kontu anitzeko mezuak segurtasunez kudeatu eta bidaltzeko maila profesionaleko mahaigaineko aplikazioa, programazioa, spintax, multimedia euskarria eta betetze kontrolak bezalako funtzio aurreratuekin.",
-    "license": "Lizentzia: BSD 3-Clause Lizentzia - Ikusi LICENSE fitxategia xehetasunetarako",
+    "license": "Lizentzia: GNU GPL v3 edo berriagoa — ikusi LICENSE fitxategia",
     "developer": "Garatzailea: VoxHash - contact@voxhash.dev",
     "disclaimer": "Erantzukizun-ukapena: Aplikazio hau hezkuntza eta negozio legitimorako bakarrik da. Erabiltzaileek Telegram-en Zerbitzu Baldintzak eta aplikagarri diren legeak betetzeaz arduratu behar dute.",
     "made_with": "VoxHash-ek ❤️-rekin egina"

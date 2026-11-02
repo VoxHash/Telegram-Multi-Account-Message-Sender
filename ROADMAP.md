@@ -6,7 +6,7 @@
 
 Deliver a reliable multi-account Telegram messaging desktop app (this repo) with a clear upgrade path to hosted SaaS ([SendGram](https://www.sendgram.pro)) for teams that outgrow single-machine installs.
 
-## Current Status (v1.2.50)
+## Current Status (v1.2.51)
 
 ### Completed
 - Multi-account management (phone auth + session import)
@@ -53,10 +53,11 @@ Deliver a reliable multi-account Telegram messaging desktop app (this repo) with
 - Contributor and sponsor community growth
 - Ongoing community registry PRs beyond the curated seed set
 
-### Latest release (v1.2.50 — 2026-10-26)
-- Phase 3 leftover (partial): Apple code signing / notarization prep (scripts + optional CI; live ticket needs Developer ID secrets)
+### Latest release (v1.2.51 — 2026-11-01)
+- License: GPL-3.0-or-later for the FOSS desktop app; documented FOSS vs SendGram hosted SaaS split (SECURITY/FAQ)
 
 ### Previous highlights
+- **v1.2.50**: Phase 3 leftover (partial): Apple code signing / notarization prep (scripts + optional CI; live ticket needs Developer ID secrets)
 - **v1.2.49**: Phase 3 leftover: Windows file-association installer polish (`install.ps1` + `*-windows.zip`)
 - **v1.2.48**: Phase 2: Proton Drive cloud backup via official `proton-drive` CLI (out-of-process; OS keyring auth)
 - **v1.2.47**: UI: modern desktop-client shell (navigation rail, dense dark theme, VoxHash teal accent)

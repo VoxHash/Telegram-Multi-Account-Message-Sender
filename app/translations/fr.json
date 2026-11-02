@@ -14,7 +14,7 @@
   "about": {
     "title": "À propos",
     "description": "Application de bureau de niveau professionnel pour gérer et envoyer des messages sur plusieurs comptes Telegram en toute sécurité avec des fonctionnalités avancées comme la planification, spintax, support multimédia et contrôles de conformité.",
-    "license": "Licence : Licence BSD 3-Clause - Voir le fichier LICENSE pour plus de détails",
+    "license": "Licence : GNU GPL v3 ou ultérieure — voir le fichier LICENSE",
     "developer": "Développeur : VoxHash - contact@voxhash.dev",
     "disclaimer": "Avertissement : Cette application est destinée à des fins éducatives et commerciales légitimes uniquement. Les utilisateurs sont responsables de se conformer aux Conditions d'Utilisation de Telegram et aux lois applicables.",
     "made_with": "Fait avec ❤️ par VoxHash"

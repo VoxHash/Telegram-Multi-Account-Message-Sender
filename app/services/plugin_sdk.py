@@ -581,7 +581,7 @@ def build_catalog_entry_dict(
         "tags": list(metadata.tags or []),
         "homepage": metadata.homepage or "",
         "repository": metadata.repository or "",
-        "license": metadata.license or "EPL-2.0",
+        "license": metadata.license or "GPL-3.0-or-later",
         "min_app_version": metadata.min_app_version or "1.2.0",
         "download_url": url,
         "sha256": compute_file_sha256(path),

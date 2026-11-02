@@ -35,7 +35,7 @@ class UrlStripFilterPlugin(MessageFilterPlugin):
                 "https://github.com/VoxHash/Telegram-Multi-Account-Message-Sender"
                 "/tree/main/registry/plugins"
             ),
-            license="EPL-2.0",
+            license="GPL-3.0-or-later",
             tags=["filter", "url", "compliance", "registry"],
         )
 

@@ -16,7 +16,7 @@ with open("requirements.txt", "r", encoding="utf-8") as f:
     requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 # Read version
-version = "1.2.50"
+version = "1.2.51"
 
 setup(
     name="telegram-multi-account-sender",
@@ -41,7 +41,7 @@ setup(
         "Topic :: Communications :: Chat",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "License :: OSI Approved :: BSD License",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -122,7 +122,7 @@ setup(
         "desktop",
         "gui",
     ],
-    license="BSD 3-Clause License",
+    license="GPL-3.0-or-later",
     zip_safe=False,
     platforms=["Windows", "macOS", "Linux"],
     maintainer="VoxHash",

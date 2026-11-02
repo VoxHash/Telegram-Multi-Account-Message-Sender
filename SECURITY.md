@@ -162,6 +162,20 @@ All operational data is stored locally. Encryption is used for password-protecte
 - Full-disk encryption on laptops
 - Monitoring Telegram account activity for unexpected sessions
 
+## Licensing & hosted offering
+
+| Offering | What it is | License / terms |
+| --- | --- | --- |
+| **This repo (TMAS desktop)** | Free open-source local desktop/CLI app | [GPL-3.0-or-later](LICENSE) |
+| **[SendGram](https://www.sendgram.pro)** | Private paid hosted SaaS (no local install required) | SendGram site terms — **not** GPL from this repository |
+
+Opsec notes for operators and redistributors:
+
+- Treat Telethon `.session` files, API hashes, proxy credentials, and backup zips as secrets regardless of license (see threat model above).
+- GPL-3.0-or-later was chosen for clear copyleft on redistributed desktop builds and compatibility with **PyQt5** (GPL) while remaining redistributable with **Telethon** (MIT) and other declared dependencies.
+- The GPL does **not** by itself stop third parties from offering competing hosted services built from related ideas; SendGram’s protection is separate product IP, infrastructure, and commercial terms — not a substitute for trademark or contract review.
+- This section is project policy documentation, not legal advice. Have a solicitor confirm licensing decisions for your jurisdiction and distribution model.
+
 ## Contact
 
 For security-related inquiries, contact: **contact@voxhash.dev**

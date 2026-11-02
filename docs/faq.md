@@ -31,7 +31,15 @@ The application supports:
 
 ### Is the application free?
 
-Yes, the application is open-source and free to use under the BSD 3-Clause License.
+Yes. This desktop application is free and open source under the **GNU GPL v3 or later** (see [LICENSE](../LICENSE)).
+
+### Licensing & hosted offering
+
+**This repository** is the FOSS local desktop/CLI app (GPL-3.0-or-later). You may run it on your own machines under those terms.
+
+**[SendGram](https://www.sendgram.pro)** is a separately developed, privately hosted paid SaaS for teams that want multi-tenant cloud delivery without a local install. SendGram is **not** distributed under this repo’s GPL license. Using SendGram is governed by SendGram’s own terms of service and privacy policy on that site.
+
+A FOSS license on the desktop app does not grant rights to SendGram’s hosted service, branding, or private infrastructure. See also [SECURITY.md — Licensing & hosted offering](../SECURITY.md#licensing--hosted-offering).
 
 ## Installation
 

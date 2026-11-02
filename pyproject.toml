@@ -1,9 +1,9 @@
 [project]
 name = "telegram-multi-account-sender"
-version = "1.2.50"
+version = "1.2.51"
 description = "Professional-grade desktop application for managing and sending messages across multiple Telegram accounts"
 readme = "README.md"
-license = {text = "Eclipse Public License 2.0"}
+license = {text = "GPL-3.0-or-later"}
 authors = [
     {name = "VoxHash", email = "contact@voxhash.dev"}
 ]
@@ -18,7 +18,7 @@ classifiers = [
     "Topic :: Communications :: Chat",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.51] - 2026-11-01
+
+### Changed
+- **License**: Relicensed the FOSS desktop app from Eclipse Public License 2.0 to **GNU GPL v3 or later** (GPL-3.0-or-later). Official GPL-3.0 text in `LICENSE`; README badge, `pyproject.toml` / `setup.py` classifiers, CONTRIBUTING, FAQ, About translations, plugin registry metadata, and native crate license aligned.
+- Documented **Licensing & hosted offering**: this repo stays FOSS local desktop; [SendGram](https://www.sendgram.pro) remains a separate private paid SaaS (SECURITY.md + FAQ).
+
+### Notes
+- Recommendation rationale: PyQt5 is GPL; Telethon is MIT-compatible; peer Telegram desktop managers that use copyleft typically use GPL-3.0; AGPL was considered for anti-SaaS-fork pressure but deferred for a desktop-first product with a separately developed hosted offering. Not legal advice — solicitor review recommended for finality.
+
 ## [1.2.50] - 2026-10-26
 
 ### Added

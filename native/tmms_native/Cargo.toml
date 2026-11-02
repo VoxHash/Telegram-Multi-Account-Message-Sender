@@ -3,7 +3,7 @@ name = "tmms_native"
 version = "0.1.0"
 edition = "2021"
 description = "Native accelerator for Telegram Multi-Account Message Sender (spintax + pacing)"
-license = "EPL-2.0"
+license = "GPL-3.0-or-later"
 publish = false
 
 [dependencies]

@@ -14,7 +14,7 @@
   "about": {
     "title": "Teave",
     "description": "Professionaalne töölauarakendus mitme Telegram konto sõnumite turvaliseks haldamiseks ja saatmiseks täiustatud funktsioonidega nagu plaanimine, spintax, meedia tugi ja vastavuse kontrollid.",
-    "license": "Litsents: BSD 3-Clause litsents - üksikasjad LICENSE failis",
+    "license": "Litsents: GNU GPL v3 või uuem — üksikasjad LICENSE failis",
     "developer": "Arendaja: VoxHash - contact@voxhash.dev",
     "disclaimer": "Vastutusest loobumine: See rakendus on mõeldud ainult haridus- ja seaduslike ärieesmärkide jaoks. Kasutajad vastutavad Telegrami teenuse tingimuste ja kohaldatavate seaduste järgimise eest.",
     "made_with": "Tehtud ❤️-ga VoxHash poolt"

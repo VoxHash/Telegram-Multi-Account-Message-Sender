@@ -14,7 +14,7 @@
   "about": {
     "title": "关于",
     "description": "专业级桌面应用程序，用于安全地管理和发送跨多个Telegram账户的消息，具有调度、spintax、媒体支持和合规控制等高级功能。",
-    "license": "许可证：BSD 3-Clause许可证 - 详见LICENSE文件",
+    "license": "许可证：GNU GPL v3 或更高版本 — 详见 LICENSE 文件",
     "developer": "开发者：VoxHash - contact@voxhash.dev",
     "disclaimer": "免责声明：此应用程序仅用于教育和合法商业目的。用户有责任遵守Telegram的服务条款和适用法律。",
     "made_with": "由VoxHash用❤️制作"
